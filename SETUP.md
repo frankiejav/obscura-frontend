@@ -1,6 +1,6 @@
 # Obscura Labs Web App - Local Development Setup
 
-This guide will help you set up the Obscura Labs Web App on your local Ubuntu development server.
+This guide will help you set up the Obscura Labs Private Intelligence Operations Dashboard on your Ubuntu development server. The application uses a dual-database architecture with PostgreSQL for user data and Elasticsearch for search operations.
 
 ## Database Architecture
 
@@ -20,47 +20,36 @@ This application uses a **dual-database architecture** for optimal performance a
 
 Before starting, ensure you have the following installed on your Ubuntu system:
 
-- **Node.js** (v18 or higher)
-- **pnpm** (for package management)
-- **Git**
-- **Docker** and **Docker Compose** (for databases)
-
-## Installation Steps
-
-### 1. Install Node.js and pnpm
-
+### 1. Update System
 \`\`\`bash
-# Update package index
-sudo apt update
+sudo apt update && sudo apt upgrade -y
+\`\`\`
 
-# Install Node.js
+### 2. Install Node.js 18+
+\`\`\`bash
+# Install Node.js via NodeSource repository
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
-# Install pnpm
-curl -fsSL https://get.pnpm.io/install.sh | sh -
-
 # Verify installation
 node --version
-pnpm --version
+npm --version
 \`\`\`
 
-### 2. Install Docker and Docker Compose
-
+### 3. Install Docker and Docker Compose
 \`\`\`bash
 # Install Docker
-sudo apt update
-sudo apt install apt-transport-https ca-certificates curl software-properties-common
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg lsb-release
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-sudo apt update
-sudo apt install docker-ce docker-ce-cli containerd.io
+echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 
 # Install Docker Compose
 sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-# Add your user to docker group
+# Add user to docker group
 sudo usermod -aG docker $USER
 newgrp docker
 
@@ -69,7 +58,14 @@ docker --version
 docker-compose --version
 \`\`\`
 
-### 3. Clone the Repository
+### 4. Install Git
+\`\`\`bash
+sudo apt-get install -y git
+\`\`\`
+
+## Installation Steps
+
+### 1. Clone the Repository
 
 \`\`\`bash
 # Clone the repository
@@ -77,268 +73,207 @@ git clone https://github.com/obscura-labs/obscura-frontend-fc.git
 cd obscura-frontend-fc
 \`\`\`
 
-### 4. Install Dependencies
+### 2. Install Dependencies
 
 \`\`\`bash
 # Install Node.js dependencies
-pnpm install
-
-# Install additional required packages
-pnpm add pg @elastic/elasticsearch bcrypt jsonwebtoken
-pnpm add -D @types/pg @types/bcrypt @types/jsonwebtoken
+npm install
 \`\`\`
 
-### 5. Set Up Databases with Docker Compose
+### 3. Set Up Databases with Docker Compose
 
 Create a `docker-compose.yml` file in the project root:
 
-\`\`\`bash
-# Create docker-compose.yml
-cat > docker-compose.yml << 'EOF'
+\`\`\`yaml
 version: '3.8'
+
 services:
-  # PostgreSQL for user data and application state
   postgres:
-    image: postgres:15-alpine
-    container_name: obscura-postgres
+    image: postgres:15
+    container_name: obscura_postgres
     environment:
-      POSTGRES_DB: obscura_labs
+      POSTGRES_DB: obscura_db
       POSTGRES_USER: obscura_user
-      POSTGRES_PASSWORD: obscura_password_dev
-      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD: obscura_secure_password_2024
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-postgres.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - obscura-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U obscura_user -d obscura_labs"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U obscura_user -d obscura_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Elasticsearch for search and analytics data
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
-    container_name: obscura-elasticsearch
+    container_name: obscura_elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - cluster.name=obscura-cluster
-      - node.name=obscura-node
     ports:
       - "9200:9200"
       - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-    networks:
-      - obscura-network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 3
 
-  # Kibana for Elasticsearch visualization (optional)
   kibana:
     image: docker.elastic.co/kibana/kibana:8.11.0
-    container_name: obscura-kibana
+    container_name: obscura_kibana
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
-      - SERVER_NAME=kibana
-      - SERVER_HOST=0.0.0.0
     ports:
       - "5601:5601"
     depends_on:
-      elasticsearch:
-        condition: service_healthy
-    networks:
-      - obscura-network
+      - elasticsearch
 
-  # Redis for session storage and caching (optional but recommended)
   redis:
     image: redis:7-alpine
-    container_name: obscura-redis
+    container_name: obscura_redis
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    networks:
-      - obscura-network
-    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 volumes:
   postgres_data:
   elasticsearch_data:
   redis_data:
-
-networks:
-  obscura-network:
-    driver: bridge
-EOF
 \`\`\`
 
-### 6. Create Database Initialization Scripts
+### 4. Create Database Initialization Scripts
 
 Create PostgreSQL initialization script:
 
-\`\`\`bash
-# Create scripts directory
-mkdir -p scripts
-
-# Create PostgreSQL initialization script
-cat > scripts/init-postgres.sql << 'EOF'
+\`\`\`sql
 -- Create users table
 CREATE TABLE IF NOT EXISTS users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) UNIQUE NOT NULL,
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role VARCHAR(50) DEFAULT 'client' CHECK (role IN ('admin', 'client')),
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_login TIMESTAMP WITH TIME ZONE
+    role VARCHAR(50) DEFAULT 'client',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_login TIMESTAMP,
+    is_active BOOLEAN DEFAULT true
 );
 
--- Create audit logs table
+-- Create sessions table
+CREATE TABLE IF NOT EXISTS sessions (
+    id VARCHAR(255) PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create audit_logs table
 CREATE TABLE IF NOT EXISTS audit_logs (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    action VARCHAR(100) NOT NULL,
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(255) NOT NULL,
+    resource VARCHAR(255),
     details JSONB,
     ip_address INET,
     user_agent TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create sessions table for JWT refresh tokens
-CREATE TABLE IF NOT EXISTS user_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    refresh_token_hash VARCHAR(255) NOT NULL,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    last_used TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create application settings table
-CREATE TABLE IF NOT EXISTS app_settings (
-    key VARCHAR(100) PRIMARY KEY,
-    value JSONB NOT NULL,
-    description TEXT,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create indexes for better performance
+-- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
 
--- Insert default admin user (password: admin123)
-INSERT INTO users (email, name, password_hash, role) 
-VALUES (
-    'admin@obscuralabs.io', 
-    'System Administrator', 
-    '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/RK.PJ/..G', -- admin123
-    'admin'
-) ON CONFLICT (email) DO NOTHING;
+-- Create function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
 
--- Insert default client user (password: client123)
-INSERT INTO users (email, name, password_hash, role) 
-VALUES (
-    'client@obscuralabs.io', 
-    'Client User', 
-    '$2b$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', -- client123
-    'client'
-) ON CONFLICT (email) DO NOTHING;
-
--- Insert default application settings
-INSERT INTO app_settings (key, value, description) VALUES
-    ('app_name', '"Obscura Labs Intelligence Platform"', 'Application display name'),
-    ('max_search_results', '1000', 'Maximum search results per query'),
-    ('session_timeout', '3600', 'Session timeout in seconds'),
-    ('rate_limit_requests', '100', 'Rate limit requests per window'),
-    ('rate_limit_window', '900', 'Rate limit window in seconds')
-ON CONFLICT (key) DO NOTHING;
-EOF
+-- Create trigger for users table
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
+CREATE TRIGGER update_users_updated_at
+    BEFORE UPDATE ON users
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
 \`\`\`
 
-### 7. Environment Configuration
+### 5. Environment Configuration
 
 Create a `.env.local` file in the project root:
 
-\`\`\`bash
-# Create environment file
-cat > .env.local << 'EOF'
-# Application
-NEXT_PUBLIC_APP_URL=http://localhost:3000
-NODE_ENV=development
+\`\`\`env
+# Database Configuration
+DATABASE_URL="postgresql://obscura_user:obscura_secure_password_2024@localhost:5432/obscura_db"
+POSTGRES_URL="postgresql://obscura_user:obscura_secure_password_2024@localhost:5432/obscura_db"
+POSTGRES_PRISMA_URL="postgresql://obscura_user:obscura_secure_password_2024@localhost:5432/obscura_db"
+DATABASE_URL_UNPOOLED="postgresql://obscura_user:obscura_secure_password_2024@localhost:5432/obscura_db"
+POSTGRES_URL_NON_POOLING="postgresql://obscura_user:obscura_secure_password_2024@localhost:5432/obscura_db"
 
-# PostgreSQL Configuration (User Data)
-DATABASE_URL=postgresql://obscura_user:obscura_password_dev@localhost:5432/obscura_labs
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-POSTGRES_DB=obscura_labs
-POSTGRES_USER=obscura_user
-POSTGRES_PASSWORD=obscura_password_dev
+# PostgreSQL Direct Connection
+PGHOST="localhost"
+PGUSER="obscura_user"
+PGPASSWORD="obscura_secure_password_2024"
+PGDATABASE="obscura_db"
+POSTGRES_USER="obscura_user"
+POSTGRES_PASSWORD="obscura_secure_password_2024"
+POSTGRES_DATABASE="obscura_db"
+POSTGRES_HOST="localhost"
 
-# Elasticsearch Configuration (Search Data)
-ELASTICSEARCH_URL=http://localhost:9200
-ELASTICSEARCH_USERNAME=elastic
-ELASTICSEARCH_PASSWORD=changeme
-ELASTICSEARCH_INDEX_PREFIX=obscura
+# Elasticsearch Configuration
+ELASTICSEARCH_URL="http://localhost:9200"
+ELASTICSEARCH_NODE="http://localhost:9200"
 
-# Redis Configuration (Sessions & Caching)
-REDIS_URL=redis://localhost:6379
-REDIS_HOST=localhost
-REDIS_PORT=6379
+# Redis Configuration
+REDIS_URL="redis://localhost:6379"
 
 # JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-change-this-in-production-min-32-chars
-JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this-in-production-min-32-chars
-JWT_EXPIRES_IN=1h
-JWT_REFRESH_EXPIRES_IN=7d
+JWT_SECRET="your-super-secure-jwt-secret-key-change-this-in-production"
+JWT_REFRESH_SECRET="your-super-secure-refresh-secret-key-change-this-too"
 
-# Rate Limiting
-RATE_LIMIT_MAX=100
-RATE_LIMIT_WINDOW=900000
+# Bcrypt Configuration
+BCRYPT_ROUNDS="12"
+
+# Application Configuration
+NODE_ENV="development"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
 # Security
-BCRYPT_ROUNDS=12
-CORS_ORIGIN=http://localhost:3000
-
-# Logging
-LOG_LEVEL=debug
-LOG_FORMAT=combined
-
-# File Upload (if needed)
-MAX_FILE_SIZE=10485760
-UPLOAD_DIR=./uploads
-EOF
+RATE_LIMIT_MAX="100"
+RATE_LIMIT_WINDOW="900000"
 \`\`\`
 
-### 8. Start All Services
+### 6. Start All Services
 
 \`\`\`bash
 # Start all database services
 docker-compose up -d
 
-# Wait for services to be ready
-echo "Waiting for databases to start..."
-sleep 30
-
-# Check service health
+# Check service status
 docker-compose ps
+
+# View logs if needed
+docker-compose logs -f
 \`\`\`
 
-### 9. Initialize Elasticsearch Indices
+### 7. Initialize Elasticsearch Indices
 
 Create and run the Elasticsearch setup script:
 
@@ -470,78 +405,20 @@ setupElasticsearch()
 EOF
 
 # Run the setup script
-pnpm run db:setup
+node scripts/setup-elasticsearch.js
 \`\`\`
 
-### 10. Verify Database Connections
-
-Create and run a verification script:
+### 8. Create Admin Account
 
 \`\`\`bash
-# Create database verification script
-cat > scripts/verify-setup.js << 'EOF'
-const { Client } = require("@elastic/elasticsearch")
-const { Client: PgClient } = require('pg')
-
-async function verifySetup() {
-  console.log("Verifying database connections...")
-
-  // Test PostgreSQL connection
-  try {
-    const pgClient = new PgClient({
-      connectionString: process.env.DATABASE_URL || "postgresql://obscura_user:obscura_password_dev@localhost:5432/obscura_labs"
-    })
-    await pgClient.connect()
-    const result = await pgClient.query('SELECT COUNT(*) FROM users')
-    console.log(`✅ PostgreSQL connected - ${result.rows[0].count} users found`)
-    await pgClient.end()
-  } catch (error) {
-    console.error("❌ PostgreSQL connection failed:", error.message)
-  }
-
-  // Test Elasticsearch connection
-  try {
-    const esClient = new Client({
-      node: process.env.ELASTICSEARCH_URL || "http://localhost:9200"
-    })
-    const health = await esClient.cluster.health()
-    console.log(`✅ Elasticsearch connected - Status: ${health.status}`)
-    
-    const indices = await esClient.cat.indices({ format: 'json' })
-    console.log(`📊 Elasticsearch indices: ${indices.map(i => i.index).join(', ')}`)
-  } catch (error) {
-    console.error("❌ Elasticsearch connection failed:", error.message)
-  }
-
-  console.log("Database verification completed!")
-}
-
-verifySetup()
-EOF
-
-# Run verification
-pnpm run db:verify
+npm run admin:create
 \`\`\`
 
-### 11. Update Package.json Scripts
-
-Add helpful scripts to your package.json:
-
-\`\`\`bash
-# Add scripts to package.json
-pnpm pkg set scripts.db:setup="node scripts/setup-elasticsearch.js"
-pnpm pkg set scripts.db:verify="node scripts/verify-setup.js"
-pnpm pkg set scripts.db:start="docker-compose up -d"
-pnpm pkg set scripts.db:stop="docker-compose down"
-pnpm pkg set scripts.db:logs="docker-compose logs -f"
-pnpm pkg set scripts.db:reset="docker-compose down -v && docker-compose up -d"
-\`\`\`
-
-### 12. Start the Development Server
+### 9. Start the Development Server
 
 \`\`\`bash
 # Start the Next.js development server
-pnpm run dev
+npm run dev
 \`\`\`
 
 The application will be available at `http://localhost:3000`
@@ -561,10 +438,8 @@ The application will be available at `http://localhost:3000`
 ### Services URLs
 
 - **Main Application**: http://localhost:3000
-- **PostgreSQL**: localhost:5432 (database: obscura_labs)
-- **Elasticsearch**: http://localhost:9200
 - **Kibana Dashboard**: http://localhost:5601
-- **Redis**: localhost:6379
+- **Elasticsearch API**: http://localhost:9200
 
 ## Quick Start Commands
 
@@ -572,203 +447,214 @@ The application will be available at `http://localhost:3000`
 # Complete setup in one go
 git clone https://github.com/obscura-labs/obscura-frontend-fc.git
 cd obscura-frontend-fc
-pnpm install
-pnpm add pg @elastic/elasticsearch bcrypt jsonwebtoken
-pnpm add -D @types/pg @types/bcrypt @types/jsonwebtoken
-
-# Copy the docker-compose.yml and scripts from above, then:
+npm install
 docker-compose up -d
 sleep 30
-pnpm run db:setup
-pnpm run db:verify
-pnpm run dev
+node scripts/setup-elasticsearch.js
+npm run admin:create
+npm run dev
 \`\`\`
 
 ## Database Management Commands
 
 \`\`\`bash
 # PostgreSQL Commands
-docker exec -it obscura-postgres psql -U obscura_user -d obscura_labs
+docker exec -it obscura_postgres psql -U obscura_user -d obscura_db
 
 # View users
-docker exec -it obscura-postgres psql -U obscura_user -d obscura_labs -c "SELECT id, email, name, role, created_at FROM users;"
+docker exec -it obscura_postgres psql -U obscura_user -d obscura_db -c "SELECT id, email, name, role, created_at FROM users;"
 
 # View audit logs
-docker exec -it obscura-postgres psql -U obscura_user -d obscura_labs -c "SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 10;"
+docker exec -it obscura_postgres psql -U obscura_user -d obscura_db -c "SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 10;"
 
 # Elasticsearch Commands
 curl -X GET "localhost:9200/_cat/indices?v"
 curl -X GET "localhost:9200/obscura_data/_search?pretty"
 
 # Redis Commands
-docker exec -it obscura-redis redis-cli
+docker exec -it obscura_redis redis-cli
 \`\`\`
 
 ## Development Commands
 
 \`\`\`bash
-# Database management
-pnpm run db:start      # Start all database services
-pnpm run db:stop       # Stop all database services
-pnpm run db:logs       # View database logs
-pnpm run db:setup      # Initialize Elasticsearch indices
-pnpm run db:verify     # Verify database connections
-pnpm run db:reset      # Reset all databases (WARNING: deletes data)
+# Development
+npm run dev              # Start development server
+npm run build           # Build for production
+npm run start           # Start production server
 
-# Application
-pnpm run dev           # Start development server
-pnpm run build         # Build for production
-pnpm run start         # Start production server
-pnpm run lint          # Run linting
+# Database Management
+npm run db:setup        # Initialize all databases
+npm run db:seed         # Seed with sample data
+npm run db:reset        # Reset all databases
+
+# Admin Management
+npm run admin:create    # Create admin account
+npm run admin:setup     # Full admin setup with prompts
+
+# Testing
+npm run test            # Run tests
+npm run test:watch      # Run tests in watch mode
+npm run lint            # Run ESLint
+npm run type-check      # Run TypeScript checks
+\`\`\`
+
+### Docker Management
+\`\`\`bash
+# Start services
+docker-compose up -d
+
+# Stop services
+docker-compose down
+
+# View logs
+docker-compose logs -f [service_name]
+
+# Restart specific service
+docker-compose restart [service_name]
+
+# Remove all data (DESTRUCTIVE)
+docker-compose down -v
 \`\`\`
 
 ## Troubleshooting
 
-### Database Connection Issues
+### Common Issues
 
+#### 1. Port Already in Use
 \`\`\`bash
-# Check if containers are running
+# Check what's using the port
+sudo lsof -i :3000
+sudo lsof -i :5432
+sudo lsof -i :9200
+
+# Kill process if needed
+sudo kill -9 <PID>
+\`\`\`
+
+#### 2. Docker Permission Denied
+\`\`\`bash
+# Add user to docker group
+sudo usermod -aG docker $USER
+newgrp docker
+
+# Or run with sudo (not recommended)
+sudo docker-compose up -d
+\`\`\`
+
+#### 3. Elasticsearch Memory Issues
+\`\`\`bash
+# Increase virtual memory
+sudo sysctl -w vm.max_map_count=262144
+
+# Make permanent
+echo 'vm.max_map_count=262144' | sudo tee -a /etc/sysctl.conf
+\`\`\`
+
+#### 4. Database Connection Issues
+\`\`\`bash
+# Check if services are running
 docker-compose ps
 
-# Check container logs
+# Check service logs
 docker-compose logs postgres
 docker-compose logs elasticsearch
 
-# Test connections manually
-docker exec -it obscura-postgres pg_isready -U obscura_user
-curl -f http://localhost:9200/_cluster/health
+# Restart services
+docker-compose restart
 \`\`\`
 
-### Common Issues
+#### 5. Environment Variables Not Loading
+\`\`\`bash
+# Ensure .env.local exists and has correct format
+cat .env.local
 
-1. **Port conflicts**: 
-   \`\`\`bash
-   # Check what's using the ports
-   sudo lsof -i :3000
-   sudo lsof -i :5432
-   sudo lsof -i :9200
-   
-   # Kill processes if needed
-   sudo kill -9 <PID>
-   \`\`\`
+# Check if variables are loaded
+node -e "console.log(process.env.DATABASE_URL)"
+\`\`\`
 
-2. **Memory issues with Elasticsearch**:
-   \`\`\`bash
-   # Edit docker-compose.yml and reduce memory:
-   # "ES_JAVA_OPTS=-Xms256m -Xmx256m"
-   \`\`\`
+### Performance Optimization
 
-3. **Permission issues**:
-   \`\`\`bash
-   sudo chown -R $USER:$USER .
-   sudo chmod +x scripts/*.js
-   \`\`\`
+#### 1. Elasticsearch Settings
+\`\`\`bash
+# Increase heap size for better performance
+# Edit docker-compose.yml:
+# ES_JAVA_OPTS=-Xms1g -Xmx1g
+\`\`\`
 
-4. **Docker permission issues**:
-   \`\`\`bash
-   sudo usermod -aG docker $USER
-   newgrp docker
-   # Or restart your session
-   \`\`\`
+#### 2. PostgreSQL Tuning
+\`\`\`bash
+# Connect to PostgreSQL and run:
+# ALTER SYSTEM SET shared_buffers = '256MB';
+# ALTER SYSTEM SET effective_cache_size = '1GB';
+# SELECT pg_reload_conf();
+\`\`\`
 
-### Elasticsearch Issues
+#### 3. Redis Configuration
+\`\`\`bash
+# Add to docker-compose.yml redis service:
+# command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+\`\`\`
 
-1. **Elasticsearch won't start**:
-   \`\`\`bash
-   # Increase virtual memory
-   sudo sysctl -w vm.max_map_count=262144
-   echo 'vm.max_map_count=262144' | sudo tee -a /etc/sysctl.conf
-   \`\`\`
+## Security Considerations
 
-2. **Index creation fails**:
-   \`\`\`bash
-   # Check Elasticsearch logs
-   docker-compose logs elasticsearch
-   
-   # Manually test connection
-   curl http://localhost:9200/_cluster/health
-   \`\`\`
+### Development Environment
+- ✅ Use strong passwords for all services
+- ✅ Keep services on localhost only
+- ✅ Regularly update dependencies
+- ✅ Use environment variables for secrets
 
-### Node.js Issues
+### Production Deployment
+- 🔒 Use SSL/TLS certificates
+- 🔒 Configure firewall rules
+- 🔒 Enable database authentication
+- 🔒 Use secrets management
+- 🔒 Enable audit logging
+- 🔒 Regular security updates
+- 🔒 Backup strategies
 
-1. **Module not found errors**:
-   \`\`\`bash
-   # Clear cache and reinstall
-   pnpm store prune
-   rm -rf node_modules pnpm-lock.yaml
-   pnpm install
-   \`\`\`
+## Backup and Recovery
 
-2. **TypeScript errors**:
-   \`\`\`bash
-   # Install missing type definitions
-   pnpm add -D @types/node @types/react @types/react-dom
-   \`\`\`
+### Database Backups
+\`\`\`bash
+# PostgreSQL backup
+docker exec obscura_postgres pg_dump -U obscura_user obscura_db > backup.sql
 
-## Production Deployment Notes
+# Elasticsearch backup
+curl -X PUT "localhost:9200/_snapshot/backup_repo" -H 'Content-Type: application/json' -d'
+{
+  "type": "fs",
+  "settings": {
+    "location": "/usr/share/elasticsearch/backup"
+  }
+}'
+\`\`\`
 
-⚠️ **Important**: This setup is for development only. For production:
+### Restore Procedures
+\`\`\`bash
+# PostgreSQL restore
+docker exec -i obscura_postgres psql -U obscura_user obscura_db < backup.sql
 
-### Security Checklist
-- [ ] Change all default passwords and secrets
-- [ ] Enable PostgreSQL SSL/TLS
-- [ ] Enable Elasticsearch security features
-- [ ] Use environment-specific configurations
-- [ ] Configure proper firewall rules
-- [ ] Use HTTPS everywhere
-- [ ] Implement rate limiting
-- [ ] Set up monitoring and alerting
+# Elasticsearch restore
+curl -X POST "localhost:9200/_snapshot/backup_repo/snapshot_1/_restore"
+\`\`\`
 
-### Performance Optimizations
-- [ ] Use managed database services (AWS RDS, Elastic Cloud)
-- [ ] Configure connection pooling
-- [ ] Set up Redis clustering
-- [ ] Implement caching strategies
-- [ ] Configure CDN for static assets
+## Support
 
-### Monitoring & Backup
-- [ ] Set up application monitoring (DataDog, New Relic)
-- [ ] Configure log aggregation (ELK stack)
-- [ ] Implement automated backups
-- [ ] Set up disaster recovery procedures
-
-## Getting Help
-
-If you encounter issues:
-
-1. **Check the logs**: `docker-compose logs`
-2. **Verify services**: `docker-compose ps`
-3. **Test connections**: `pnpm run db:verify`
-4. **Check Elasticsearch health**: `curl http://localhost:9200/_cluster/health`
-5. **Review application logs** in the terminal running `pnpm run dev`
-
-For additional help, refer to the main README.md or contact the development team.
+For issues and questions:
+1. Check the troubleshooting section above
+2. Review application logs: `docker-compose logs -f`
+3. Check service health endpoints
+4. Verify environment configuration
 
 ## Next Steps
 
 After successful setup:
+1. Create your admin account using `npm run admin:create`
+2. Log in to the application at http://localhost:3000
+3. Configure user roles and permissions
+4. Set up data ingestion pipelines
+5. Configure monitoring and alerting
+6. Plan production deployment strategy
 
-1. **Explore the application** at http://localhost:3000
-2. **Check Kibana dashboard** at http://localhost:5601
-3. **Review database schemas** using the PostgreSQL commands above
-4. **Test search functionality** with sample data
-5. **Set up your IDE** with proper TypeScript support
-6. **Configure git hooks** for code quality
-7. **Set up testing environment** for development
-
-The application is now ready for development! 🚀
-
-## Keeping `pnpm-lock.yaml` in sync
-
-Whenever you change **package.json** (add, remove, or upgrade a dependency) run:
-
-\`\`\`bash
-pnpm install   # regenerates pnpm-lock.yaml
-git add pnpm-lock.yaml
-git commit -m "chore: update lock-file"
-\`\`\`
-
-Failing to commit the updated lock-file will cause Vercel to stop the build with  
-`ERR_PNPM_OUTDATED_LOCKFILE` (it runs `pnpm install --frozen-lockfile` by default).
-
-If you prefer not to commit the lock-file, keep **vercel.json** (added to the repo) which overrides the install step with `--no-frozen-lockfile`.
+The application is now ready for development and testing!

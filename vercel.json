@@ -1,5 +1,4 @@
 {
-  // Disable the frozen-lockfile check so the build succeeds
   "installCommand": "pnpm install --no-frozen-lockfile",
   "buildCommand": "pnpm exec next build"
 }
