@@ -1,100 +1,55 @@
 import { Pool } from "pg"
-import { Client } from "@elastic/elasticsearch"
 
-// PostgreSQL connection for user data
-const pgPool = new Pool({
+// Create a connection pool
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
 })
 
-// Elasticsearch client for search data
-const esClient = new Client({
-  node: process.env.ELASTICSEARCH_URL || "http://localhost:9200",
-  auth: process.env.ELASTICSEARCH_USERNAME
-    ? {
-        username: process.env.ELASTICSEARCH_USERNAME,
-        password: process.env.ELASTICSEARCH_PASSWORD || "",
-      }
-    : undefined,
-  requestTimeout: 30000,
-  pingTimeout: 3000,
-})
-
-// PostgreSQL helper functions
+// Database interface
 export const db = {
-  query: (text: string, params?: any[]) => pgPool.query(text, params),
-  getClient: () => pgPool.connect(),
-}
-
-// Elasticsearch helper functions
-export const search = {
-  client: esClient,
-
-  // Search in main data index
-  searchData: async (query: any) => {
-    return await esClient.search({
-      index: "obscura_data",
-      body: query,
-    })
-  },
-
-  // Index new data
-  indexData: async (id: string, document: any) => {
-    return await esClient.index({
-      index: "obscura_data",
-      id,
-      body: document,
-    })
-  },
-
-  // Log search analytics
-  logSearch: async (searchData: any) => {
-    return await esClient.index({
-      index: "obscura_analytics",
-      body: {
-        ...searchData,
-        timestamp: new Date(),
-      },
-    })
-  },
-
-  // Search threat intelligence
-  searchThreats: async (query: any) => {
-    return await esClient.search({
-      index: "obscura_threats",
-      body: query,
-    })
-  },
-}
-
-// Health check functions
-export const healthCheck = {
-  postgres: async () => {
+  async query(text: string, params?: any[]) {
+    const start = Date.now()
     try {
-      const result = await db.query("SELECT 1")
-      return { status: "healthy", details: result.rows }
+      const res = await pool.query(text, params)
+      const duration = Date.now() - start
+      console.log("Executed query", { text, duration, rows: res.rowCount })
+      return res
     } catch (error) {
-      return { status: "unhealthy", error: error.message }
+      console.error("Database query error:", error)
+      throw error
     }
   },
 
-  elasticsearch: async () => {
+  async getClient() {
+    return pool.connect()
+  },
+
+  async end() {
+    return pool.end()
+  },
+
+  // Health check
+  async ping() {
     try {
-      const health = await esClient.cluster.health()
-      return { status: "healthy", details: health }
+      await this.query("SELECT 1")
+      return true
     } catch (error) {
-      return { status: "unhealthy", error: error.message }
+      console.error("Database ping failed:", error)
+      return false
     }
   },
 }
 
-// Graceful shutdown
-process.on("SIGINT", async () => {
-  console.log("Closing database connections...")
-  await pgPool.end()
-  await esClient.close()
-  process.exit(0)
+// Test connection on startup
+pool.on("connect", () => {
+  console.log("Connected to PostgreSQL database")
+})
+
+pool.on("error", (err) => {
+  console.error("Unexpected error on idle client", err)
+  process.exit(-1)
 })

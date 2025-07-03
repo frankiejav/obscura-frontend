@@ -12,9 +12,17 @@ type User = {
   role: "admin" | "client"
 }
 
+type SignupData = {
+  name: string
+  email: string
+  password: string
+  // role removed - always defaults to client
+}
+
 type AuthContextType = {
   user: User | null
   login: (email: string, password: string) => Promise<void>
+  signup: (data: SignupData) => Promise<void>
   logout: () => void
   refreshToken: () => Promise<void>
   isLoading: boolean
@@ -113,6 +121,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const signup = async (signupData: SignupData) => {
+    setIsLoading(true)
+    try {
+      console.log("Attempting signup with:", signupData) // Debug log
+
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(signupData),
+      })
+
+      console.log("Signup response status:", response.status) // Debug log
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error("Signup failed:", errorData) // Debug log
+        throw new Error(errorData.error || "Signup failed")
+      }
+
+      const data = await response.json()
+      console.log("Signup successful, received data:", data) // Debug log
+
+      localStorage.setItem("token", data.token)
+      localStorage.setItem("refreshToken", data.refreshToken)
+      setUser(data.user)
+    } catch (error) {
+      console.error("Signup error:", error)
+      throw error
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const refreshToken = async () => {
     const refreshToken = localStorage.getItem("refreshToken")
     if (!refreshToken) throw new Error("No refresh token")
@@ -141,7 +184,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, refreshToken, isLoading }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ user, login, signup, logout, refreshToken, isLoading }}>
+      {children}
+    </AuthContext.Provider>
   )
 }
 

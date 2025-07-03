@@ -1,7 +1,14 @@
+"use client"
+
+import { useState } from "react"
 import { LoginForm } from "@/components/login-form"
+import { SignupForm } from "@/components/signup-form"
+import { Button } from "@/components/ui/button"
 import Image from "next/image"
 
 export default function Home() {
+  const [isSignup, setIsSignup] = useState(false)
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background tactical-grid">
       <div className="container flex flex-col items-center justify-center gap-8 px-4 py-16">
@@ -19,8 +26,19 @@ export default function Home() {
             </div>
           </div>
         </div>
+
         <div className="w-full max-w-md">
-          <LoginForm />
+          {isSignup ? <SignupForm /> : <LoginForm />}
+
+          <div className="mt-4 text-center">
+            <Button
+              variant="ghost"
+              onClick={() => setIsSignup(!isSignup)}
+              className="text-muted-foreground hover:text-primary font-mono text-sm tracking-wider"
+            >
+              {isSignup ? "← RETURN TO LOGIN" : "CREATE NEW ACCOUNT →"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
