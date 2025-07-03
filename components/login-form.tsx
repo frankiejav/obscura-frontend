@@ -91,7 +91,7 @@ export function LoginForm() {
 
       <div className="mt-6 pt-4 border-t border-primary/20">
         <p className="text-xs text-muted-foreground text-center font-mono">
-          CLASSIFIED SYSTEM - AUTHORIZED PERSONNEL ONLY
+          PRIVATE SYSTEM - AUTHORIZED PERSONAL USE ONLY
         </p>
       </div>
     </div>
