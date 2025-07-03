@@ -21,25 +21,28 @@ This application uses a **dual-database architecture** for optimal performance a
 Before starting, ensure you have the following installed on your Ubuntu system:
 
 - **Node.js** (v18 or higher)
-- **npm** or **yarn**
+- **pnpm** (for package management)
 - **Git**
 - **Docker** and **Docker Compose** (for databases)
 
 ## Installation Steps
 
-### 1. Install Node.js and npm
+### 1. Install Node.js and pnpm
 
 \`\`\`bash
 # Update package index
 sudo apt update
 
-# Install Node.js and npm
+# Install Node.js
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt-get install -y nodejs
 
+# Install pnpm
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+
 # Verify installation
 node --version
-npm --version
+pnpm --version
 \`\`\`
 
 ### 2. Install Docker and Docker Compose
@@ -78,11 +81,11 @@ cd obscura-frontend-fc
 
 \`\`\`bash
 # Install Node.js dependencies
-npm install
+pnpm install
 
 # Install additional required packages
-npm install pg @elastic/elasticsearch bcrypt jsonwebtoken
-npm install -D @types/pg @types/bcrypt @types/jsonwebtoken
+pnpm add pg @elastic/elasticsearch bcrypt jsonwebtoken
+pnpm add -D @types/pg @types/bcrypt @types/jsonwebtoken
 \`\`\`
 
 ### 5. Set Up Databases with Docker Compose
@@ -467,7 +470,7 @@ setupElasticsearch()
 EOF
 
 # Run the setup script
-node scripts/setup-elasticsearch.js
+pnpm run db:setup
 \`\`\`
 
 ### 10. Verify Database Connections
@@ -517,7 +520,7 @@ verifySetup()
 EOF
 
 # Run verification
-node scripts/verify-setup.js
+pnpm run db:verify
 \`\`\`
 
 ### 11. Update Package.json Scripts
@@ -526,19 +529,19 @@ Add helpful scripts to your package.json:
 
 \`\`\`bash
 # Add scripts to package.json
-npm pkg set scripts.db:setup="node scripts/setup-elasticsearch.js"
-npm pkg set scripts.db:verify="node scripts/verify-setup.js"
-npm pkg set scripts.db:start="docker-compose up -d"
-npm pkg set scripts.db:stop="docker-compose down"
-npm pkg set scripts.db:logs="docker-compose logs -f"
-npm pkg set scripts.db:reset="docker-compose down -v && docker-compose up -d"
+pnpm pkg set scripts.db:setup="node scripts/setup-elasticsearch.js"
+pnpm pkg set scripts.db:verify="node scripts/verify-setup.js"
+pnpm pkg set scripts.db:start="docker-compose up -d"
+pnpm pkg set scripts.db:stop="docker-compose down"
+pnpm pkg set scripts.db:logs="docker-compose logs -f"
+pnpm pkg set scripts.db:reset="docker-compose down -v && docker-compose up -d"
 \`\`\`
 
 ### 12. Start the Development Server
 
 \`\`\`bash
 # Start the Next.js development server
-npm run dev
+pnpm run dev
 \`\`\`
 
 The application will be available at `http://localhost:3000`
@@ -569,16 +572,16 @@ The application will be available at `http://localhost:3000`
 # Complete setup in one go
 git clone https://github.com/obscura-labs/obscura-frontend-fc.git
 cd obscura-frontend-fc
-npm install
-npm install pg @elastic/elasticsearch bcrypt jsonwebtoken
-npm install -D @types/pg @types/bcrypt @types/jsonwebtoken
+pnpm install
+pnpm add pg @elastic/elasticsearch bcrypt jsonwebtoken
+pnpm add -D @types/pg @types/bcrypt @types/jsonwebtoken
 
 # Copy the docker-compose.yml and scripts from above, then:
 docker-compose up -d
 sleep 30
-node scripts/setup-elasticsearch.js
-node scripts/verify-setup.js
-npm run dev
+pnpm run db:setup
+pnpm run db:verify
+pnpm run dev
 \`\`\`
 
 ## Database Management Commands
@@ -605,18 +608,18 @@ docker exec -it obscura-redis redis-cli
 
 \`\`\`bash
 # Database management
-npm run db:start      # Start all database services
-npm run db:stop       # Stop all database services
-npm run db:logs       # View database logs
-npm run db:setup      # Initialize Elasticsearch indices
-npm run db:verify     # Verify database connections
-npm run db:reset      # Reset all databases (WARNING: deletes data)
+pnpm run db:start      # Start all database services
+pnpm run db:stop       # Stop all database services
+pnpm run db:logs       # View database logs
+pnpm run db:setup      # Initialize Elasticsearch indices
+pnpm run db:verify     # Verify database connections
+pnpm run db:reset      # Reset all databases (WARNING: deletes data)
 
 # Application
-npm run dev           # Start development server
-npm run build         # Build for production
-npm run start         # Start production server
-npm run lint          # Run linting
+pnpm run dev           # Start development server
+pnpm run build         # Build for production
+pnpm run start         # Start production server
+pnpm run lint          # Run linting
 \`\`\`
 
 ## Troubleshooting
@@ -691,15 +694,15 @@ curl -f http://localhost:9200/_cluster/health
 1. **Module not found errors**:
    \`\`\`bash
    # Clear cache and reinstall
-   npm cache clean --force
-   rm -rf node_modules package-lock.json
-   npm install
+   pnpm store prune
+   rm -rf node_modules pnpm-lock.yaml
+   pnpm install
    \`\`\`
 
 2. **TypeScript errors**:
    \`\`\`bash
    # Install missing type definitions
-   npm install -D @types/node @types/react @types/react-dom
+   pnpm add -D @types/node @types/react @types/react-dom
    \`\`\`
 
 ## Production Deployment Notes
@@ -735,9 +738,9 @@ If you encounter issues:
 
 1. **Check the logs**: `docker-compose logs`
 2. **Verify services**: `docker-compose ps`
-3. **Test connections**: `npm run db:verify`
+3. **Test connections**: `pnpm run db:verify`
 4. **Check Elasticsearch health**: `curl http://localhost:9200/_cluster/health`
-5. **Review application logs** in the terminal running `npm run dev`
+5. **Review application logs** in the terminal running `pnpm run dev`
 
 For additional help, refer to the main README.md or contact the development team.
 
@@ -754,3 +757,18 @@ After successful setup:
 7. **Set up testing environment** for development
 
 The application is now ready for development! 🚀
+
+## Keeping `pnpm-lock.yaml` in sync
+
+Whenever you change **package.json** (add, remove, or upgrade a dependency) run:
+
+\`\`\`bash
+pnpm install   # regenerates pnpm-lock.yaml
+git add pnpm-lock.yaml
+git commit -m "chore: update lock-file"
+\`\`\`
+
+Failing to commit the updated lock-file will cause Vercel to stop the build with  
+`ERR_PNPM_OUTDATED_LOCKFILE` (it runs `pnpm install --frozen-lockfile` by default).
+
+If you prefer not to commit the lock-file, keep **vercel.json** (added to the repo) which overrides the install step with `--no-frozen-lockfile`.
