@@ -110,14 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const data = await response.json()
       console.log("Login successful, received data:", data) // Debug log
 
-      // Store tokens in localStorage for client-side access
       localStorage.setItem("token", data.token)
       localStorage.setItem("refreshToken", data.refreshToken)
-      
-      // Also set cookies for server-side access
-      document.cookie = `token=${data.token}; path=/; max-age=${15 * 60}; SameSite=Strict`
-      document.cookie = `refreshToken=${data.refreshToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Strict`
-      
       setUser(data.user)
     } catch (error) {
       console.error("Login error:", error)
@@ -185,11 +179,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem("token")
     localStorage.removeItem("refreshToken")
-    
-    // Clear cookies
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-    document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT"
-    
     setUser(null)
     router.push("/")
   }

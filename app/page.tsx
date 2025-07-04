@@ -22,7 +22,7 @@ export default function Home() {
               <div className="status-indicator status-active"></div>
               <span>SYSTEM ONLINE</span>
               <span className="mx-2">|</span>
-              <span>UPTIME: 73:42:02</span>
+              <span>UPTIME: 72:14:33</span>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
 import {
@@ -34,50 +34,37 @@ export function DashboardHeader({ user }: { user: DashboardUser }) {
       .toUpperCase()
   }
 
-  const [currentTime, setCurrentTime] = useState("")
-
-  useEffect(() => {
-    const updateTime = () => {
-      const time = new Date()
-        .toLocaleString("en-US", {
-          month: "2-digit",
-          day: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-          hour12: false,
-        })
-        .replace(",", "")
-      setCurrentTime(time)
-    }
-    
-    updateTime()
-    const interval = setInterval(updateTime, 1000)
-    return () => clearInterval(interval)
-  }, [])
+  const getCurrentTime = () => {
+    return new Date()
+      .toLocaleString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+      .replace(",", "")
+  }
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center gap-2 sm:gap-4 border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 sm:px-4 lg:px-6">
+    <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-primary/20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6">
       <SidebarTrigger className="tactical-button" />
 
-      <div className="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm font-mono">
-        <span className="text-primary tracking-wider hidden sm:inline">COMMAND CENTER</span>
-        <span className="text-primary tracking-wider sm:hidden">DASHBOARD</span>
-        <span className="text-muted-foreground hidden sm:inline">/</span>
-        <span className="text-primary tracking-wider hidden sm:inline">OVERVIEW</span>
+      <div className="flex items-center gap-4 text-sm font-mono">
+        <span className="text-primary tracking-wider">TACTICAL COMMAND</span>
+        <span className="text-muted-foreground">/</span>
+        <span className="text-primary tracking-wider">OVERVIEW</span>
       </div>
 
-      <div className="ml-auto flex items-center gap-2 sm:gap-4">
-        <div className="hidden lg:flex items-center gap-4 text-xs font-mono text-muted-foreground">
-          <span>LAST UPDATE: {currentTime} UTC</span>
+      <div className="ml-auto flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4 text-xs font-mono text-muted-foreground">
+          <span>LAST UPDATE: {getCurrentTime()} UTC</span>
           <div className="flex items-center gap-2">
             <Activity className="h-3 w-3" />
             <span>ACTIVE</span>
           </div>
-        </div>
-        <div className="hidden sm:flex lg:hidden items-center gap-2 text-xs font-mono text-muted-foreground">
-          <span>{currentTime.split(' ')[1]}</span>
         </div>
 
         <DropdownMenu>

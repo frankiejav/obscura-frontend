@@ -17,14 +17,7 @@ const jetBrains = JetBrains_Mono({
 export const metadata = {
   title: "Obscura Labs - Secure Data Platform",
   description: "A secure data platform for Obscura Labs",
-  generator: 'v0.dev',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
-  themeColor: '#000000',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'black-translucent',
-    title: 'Obscura Labs'
-  }
+    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -34,7 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${jetBrains.variable} font-mono`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${jetBrains.variable} font-mono`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <AuthProvider>
             {children}
