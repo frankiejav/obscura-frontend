@@ -3,15 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "admin:create": "node scripts/create-admin.js",
-    "admin:setup": "chmod +x scripts/create-admin.sh && ./scripts/create-admin.sh",
     "build": "next build",
-    "db:logs": "docker-compose logs -f",
-    "db:reset": "docker-compose down -v && docker-compose up -d",
-    "db:setup": "node scripts/setup-elasticsearch.js",
-    "db:start": "docker-compose up -d",
-    "db:stop": "docker-compose down",
-    "db:verify": "node scripts/verify-setup.js",
+    "db:admin": "node scripts/create-admin-neon.js",
+    "db:reset": "node scripts/setup-neon.js && node scripts/create-admin-neon.js",
+    "db:setup": "node scripts/setup-neon.js",
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start"
@@ -20,6 +15,7 @@
     "@ai-sdk/openai": "^0.0.66",
     "@elastic/elasticsearch": "latest",
     "@hookform/resolvers": "^3.9.1",
+    "@neondatabase/serverless": "latest",
     "@radix-ui/react-accordion": "latest",
     "@radix-ui/react-alert-dialog": "latest",
     "@radix-ui/react-aspect-ratio": "latest",
@@ -54,6 +50,7 @@
     "cmdk": "latest",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "latest",
+    "fs": "latest",
     "graphql": "^16.9.0",
     "graphql-tag": "^2.12.6",
     "input-otp": "latest",
@@ -62,6 +59,7 @@
     "lucide-react": "^0.454.0",
     "next": "15.2.4",
     "next-themes": "latest",
+    "path": "latest",
     "pg": "latest",
     "pg-native": "latest",
     "react": "^19",
@@ -78,9 +76,9 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^22",
-    "@types/pg": "^8.11.10",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.17.0",
@@ -91,7 +89,7 @@
   },
   "pnpm": {
     "overrides": {
-      "bcrypt": "npm:bcryptjs@2.4.3"
+      "bcrypt": "npm:bcryptjs@^2.4.3"
     }
   }
 }
