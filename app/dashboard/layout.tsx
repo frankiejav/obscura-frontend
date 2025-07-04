@@ -4,8 +4,9 @@ import type React from "react"
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { DashboardHeader } from "@/components/dashboard/header"
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
+import { DashboardHeader } from "@/components/dashboard/header"
 
 export default function DashboardLayout({
   children,
@@ -25,10 +26,10 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-          <p className="mt-4 text-muted-foreground font-mono">AUTHENTICATING...</p>
+          <div className="tactical-grid w-16 h-16 mx-auto mb-4 animate-pulse border border-orange-500/30"></div>
+          <p className="text-orange-500 font-mono tracking-wider text-sm">AUTHENTICATING...</p>
         </div>
       </div>
     )
@@ -36,22 +37,26 @@ export default function DashboardLayout({
 
   if (!user) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-          <p className="mt-4 text-muted-foreground font-mono">REDIRECTING TO LOGIN...</p>
+          <div className="tactical-grid w-16 h-16 mx-auto mb-4 animate-pulse border border-orange-500/30"></div>
+          <p className="text-orange-500 font-mono tracking-wider text-sm">REDIRECTING TO LOGIN...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen flex-col md:flex-row md:overflow-hidden">
-      <DashboardSidebar user={user} />
-      <div className="flex flex-col flex-1">
-        <DashboardHeader user={user} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
-      </div>
+    <div className="min-h-screen bg-black tactical-grid">
+      <SidebarProvider>
+        <DashboardSidebar user={user} />
+        <SidebarInset>
+          <DashboardHeader user={user} />
+          <main className="flex-1 overflow-auto p-6 bg-black/50">
+            <div className="tactical-border p-6 bg-black/80">{children}</div>
+          </main>
+        </SidebarInset>
+      </SidebarProvider>
     </div>
   )
 }

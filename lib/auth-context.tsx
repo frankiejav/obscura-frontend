@@ -1,22 +1,22 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 
-type User = {
+interface User {
   id: string
   email: string
-  name: string
-  role: "admin" | "client"
+  role: string
+  clearance_level: number
 }
 
-type AuthContextType = {
+interface AuthContextType {
   user: User | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  signup: (data: { name: string; email: string; password: string }) => Promise<void>
-  logout: () => void
+  signup: (email: string, password: string, role?: string) => Promise<void>
+  logout: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -31,7 +31,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (isCheckingAuth) return
 
     setIsCheckingAuth(true)
-
     try {
       const token = localStorage.getItem("token")
       if (!token) {
@@ -45,6 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       })
 
@@ -79,16 +79,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       })
 
-      const data = await response.json()
-
       if (!response.ok) {
-        throw new Error(data.error || "Login failed")
+        const error = await response.json()
+        throw new Error(error.error || "Login failed")
       }
 
+      const data = await response.json()
       localStorage.setItem("token", data.token)
       setUser(data.user)
-
-      console.log("Login successful, redirecting to dashboard...")
       router.push("/dashboard")
     } catch (error) {
       console.error("Login error:", error)
@@ -96,26 +94,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signup = async (signupData: { name: string; email: string; password: string }) => {
+  const signup = async (email: string, password: string, role = "analyst") => {
     try {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(signupData),
+        body: JSON.stringify({ email, password, role }),
       })
 
-      const data = await response.json()
-
       if (!response.ok) {
-        throw new Error(data.error || "Signup failed")
+        const error = await response.json()
+        throw new Error(error.error || "Signup failed")
       }
 
+      const data = await response.json()
       localStorage.setItem("token", data.token)
       setUser(data.user)
-
-      console.log("Signup successful, redirecting to dashboard...")
       router.push("/dashboard")
     } catch (error) {
       console.error("Signup error:", error)
@@ -123,10 +119,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const logout = () => {
-    localStorage.removeItem("token")
-    setUser(null)
-    router.push("/")
+  const logout = async () => {
+    try {
+      localStorage.removeItem("token")
+      setUser(null)
+      router.push("/")
+    } catch (error) {
+      console.error("Logout error:", error)
+    }
   }
 
   return <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>{children}</AuthContext.Provider>
