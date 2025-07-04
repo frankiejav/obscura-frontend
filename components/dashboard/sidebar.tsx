@@ -153,3 +153,5 @@ export function DashboardSidebar({ user }: { user: User }) {
     </SidebarProvider>
   )
 }
+
+export { DashboardSidebar as Sidebar }

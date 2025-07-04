@@ -151,3 +151,5 @@ export function DashboardHeader({ user }: { user: DashboardUser }) {
     </header>
   )
 }
+
+export { DashboardHeader as Header }
