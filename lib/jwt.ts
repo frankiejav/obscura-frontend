@@ -21,3 +21,5 @@ export async function verifyJWT(token: string) {
     return null
   }
 }
+
+export const verifyToken = verifyJWT
