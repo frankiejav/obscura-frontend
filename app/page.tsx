@@ -15,7 +15,9 @@ export default function Home() {
 
   // Redirect to dashboard if already logged in
   useEffect(() => {
+    console.log("Home page - user:", user, "isLoading:", isLoading)
     if (!isLoading && user) {
+      console.log("User is authenticated, redirecting to dashboard...")
       router.push("/dashboard")
     }
   }, [user, isLoading, router])
@@ -34,7 +36,15 @@ export default function Home() {
 
   // Don't show login form if user is already authenticated
   if (user) {
-    return null // Will redirect to dashboard
+    console.log("User authenticated, should redirect...")
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background tactical-grid">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+          <p className="mt-4 text-muted-foreground font-mono">REDIRECTING TO DASHBOARD...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

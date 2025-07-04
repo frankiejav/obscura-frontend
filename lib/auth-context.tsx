@@ -115,6 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(data.user)
 
       // Redirect to dashboard after successful login
+      console.log("Redirecting to dashboard...")
       router.push("/dashboard")
     } catch (error) {
       console.error("Login error:", error)
