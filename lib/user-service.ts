@@ -1,5 +1,5 @@
-import bcrypt from "bcrypt"
-import { db } from "./database"
+import { Pool } from "pg"
+import * as bcrypt from "bcryptjs"
 
 export interface User {
   id: string
@@ -7,163 +7,58 @@ export interface User {
   name: string
   role: "admin" | "client"
   is_active: boolean
+  password_hash?: string
   created_at: Date
   updated_at: Date
   last_login?: Date
 }
 
-export interface CreateUserData {
-  email: string
+export interface CreateUserArgs {
   name: string
+  email: string
   password: string
   role?: "admin" | "client"
 }
 
+const pool = new Pool({
+  connectionString:
+    process.env.DATABASE_URL ?? "postgresql://obscura_user:obscura_password_dev@localhost:5432/obscura_labs",
+})
+
+async function hashPassword(password: string, rounds = 12) {
+  return bcrypt.hash(password, rounds)
+}
+
+async function comparePassword(plain: string, hash: string) {
+  return bcrypt.compare(plain, hash)
+}
+
 export const userService = {
-  // Create a new user
-  async createUser(userData: CreateUserData): Promise<User> {
-    const { email, name, password, role = "client" } = userData
-
-    // Hash password
-    const passwordHash = await bcrypt.hash(password, Number.parseInt(process.env.BCRYPT_ROUNDS || "12"))
-
-    const query = `
-      INSERT INTO users (email, name, password_hash, role)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id, email, name, role, is_active, created_at, updated_at
-    `
-
-    const result = await db.query(query, [email, name, passwordHash, role])
-    return result.rows[0]
-  },
-
-  // Find user by email
   async findByEmail(email: string): Promise<User | null> {
-    const query = `
-      SELECT id, email, name, role, is_active, created_at, updated_at, last_login
-      FROM users 
-      WHERE email = $1 AND is_active = true
-    `
-
-    const result = await db.query(query, [email])
-    return result.rows[0] || null
+    const { rows } = await pool.query<User>(`SELECT * FROM users WHERE email = $1 LIMIT 1`, [email])
+    return rows[0] ?? null
   },
 
-  // Find user by ID
-  async findById(id: string): Promise<User | null> {
-    const query = `
-      SELECT id, email, name, role, is_active, created_at, updated_at, last_login
-      FROM users 
-      WHERE id = $1 AND is_active = true
-    `
-
-    const result = await db.query(query, [id])
-    return result.rows[0] || null
+  async createUser({ name, email, password, role = "client" }: CreateUserArgs) {
+    const passwordHash = await hashPassword(password)
+    const { rows } = await pool.query<User>(
+      `INSERT INTO users (name, email, password_hash, role, is_active)
+       VALUES ($1,$2,$3,$4,true)
+       RETURNING id,name,email,role,created_at`,
+      [name, email, passwordHash, role],
+    )
+    return rows[0]
   },
 
-  // Verify user password
-  async verifyPassword(email: string, password: string): Promise<User | null> {
-    const query = `
-      SELECT id, email, name, role, is_active, password_hash, created_at, updated_at, last_login
-      FROM users 
-      WHERE email = $1 AND is_active = true
-    `
+  async verifyCredentials(email: string, password: string): Promise<User | null> {
+    const user = await this.findByEmail(email)
+    if (!user || !user.password_hash) return null
+    const ok = await comparePassword(password, user.password_hash)
+    if (!ok) return null
 
-    const result = await db.query(query, [email])
-    const user = result.rows[0]
-
-    if (!user) return null
-
-    const isValid = await bcrypt.compare(password, user.password_hash)
-    if (!isValid) return null
-
-    // Update last login
-    await this.updateLastLogin(user.id)
-
-    // Remove password_hash from returned user
-    const { password_hash, ...userWithoutPassword } = user
-    return userWithoutPassword
-  },
-
-  // Update last login timestamp
-  async updateLastLogin(userId: string): Promise<void> {
-    const query = `
-      UPDATE users 
-      SET last_login = CURRENT_TIMESTAMP 
-      WHERE id = $1
-    `
-
-    await db.query(query, [userId])
-  },
-
-  // Get all users (admin only)
-  async getAllUsers(): Promise<User[]> {
-    const query = `
-      SELECT id, email, name, role, is_active, created_at, updated_at, last_login
-      FROM users 
-      ORDER BY created_at DESC
-    `
-
-    const result = await db.query(query)
-    return result.rows
-  },
-
-  // Update user
-  async updateUser(id: string, updates: Partial<CreateUserData>): Promise<User | null> {
-    const fields = []
-    const values = []
-    let paramCount = 1
-
-    if (updates.name) {
-      fields.push(`name = $${paramCount}`)
-      values.push(updates.name)
-      paramCount++
-    }
-
-    if (updates.email) {
-      fields.push(`email = $${paramCount}`)
-      values.push(updates.email)
-      paramCount++
-    }
-
-    if (updates.role) {
-      fields.push(`role = $${paramCount}`)
-      values.push(updates.role)
-      paramCount++
-    }
-
-    if (updates.password) {
-      const passwordHash = await bcrypt.hash(updates.password, Number.parseInt(process.env.BCRYPT_ROUNDS || "12"))
-      fields.push(`password_hash = $${paramCount}`)
-      values.push(passwordHash)
-      paramCount++
-    }
-
-    if (fields.length === 0) return null
-
-    fields.push(`updated_at = CURRENT_TIMESTAMP`)
-    values.push(id)
-
-    const query = `
-      UPDATE users 
-      SET ${fields.join(", ")}
-      WHERE id = $${paramCount}
-      RETURNING id, email, name, role, is_active, created_at, updated_at, last_login
-    `
-
-    const result = await db.query(query, values)
-    return result.rows[0] || null
-  },
-
-  // Deactivate user (soft delete)
-  async deactivateUser(id: string): Promise<boolean> {
-    const query = `
-      UPDATE users 
-      SET is_active = false, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $1
-    `
-
-    const result = await db.query(query, [id])
-    return result.rowCount > 0
+    await pool.query("UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1", [user.id])
+    // strip hash before returning
+    const { password_hash, ...safe } = user
+    return safe as User
   },
 }

@@ -1,84 +1,44 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { userService } from "@/lib/user-service"
 import { signJWT } from "@/lib/jwt"
-import { logRequest } from "@/lib/audit-logger"
+import { auditLogger } from "@/lib/audit-logger"
 
-// Mock user database
-const users = [
-  {
-    id: "1",
-    email: "admin@example.com",
-    password: "admin123", // In production, use hashed passwords
-    name: "Admin User",
-    role: "admin",
-  },
-  {
-    id: "2",
-    email: "client@example.com",
-    password: "client123",
-    name: "Client User",
-    role: "client",
-  },
-]
-
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, password } = body
+    const { email, password } = await req.json()
 
-    console.log("Login attempt:", { email, password }) // Debug log
-
-    // Find user
-    const user = users.find((u) => u.email === email && u.password === password)
-    if (!user) {
-      console.log("User not found or password mismatch") // Debug log
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email and password required" }, { status: 400 })
     }
 
-    console.log("User found:", user) // Debug log
+    const user = await userService.verifyCredentials(email, password)
+    if (!user) {
+      await auditLogger.log({
+        userId: null,
+        action: "LOGIN_FAILED",
+        resource: "auth",
+        details: { email },
+        ipAddress: req.headers.get("x-forwarded-for") ?? "unknown",
+        userAgent: req.headers.get("user-agent") ?? "unknown",
+      })
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
+    }
 
-    // Create tokens
-    const token = await signJWT(
-      {
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      "15m", // 15 minutes
-    )
+    const access = await signJWT({ userId: user.id, role: user.role, email: user.email })
+    const refresh = await signJWT({ userId: user.id, type: "refresh" }, { expiresIn: "7d" })
 
-    const refreshToken = await signJWT(
-      {
-        sub: user.id,
-        type: "refresh",
-      },
-      "7d", // 7 days
-    )
-
-    // Log the login
-    await logRequest({
+    await auditLogger.log({
       userId: user.id,
-      action: "login",
-      details: {
-        ip: request.ip || "unknown",
-        userAgent: request.headers.get("user-agent") || "unknown",
-      },
+      action: "LOGIN_SUCCESS",
+      resource: "auth",
+      details: null,
+      ipAddress: req.headers.get("x-forwarded-for") ?? "unknown",
+      userAgent: req.headers.get("user-agent") ?? "unknown",
     })
 
-    console.log("Login successful, returning tokens") // Debug log
-
-    // Return response with tokens
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-      token,
-      refreshToken,
-    })
-  } catch (error) {
-    console.error("Login error:", error)
+    return NextResponse.json({ user, token: access, refreshToken: refresh })
+  } catch (err) {
+    console.error("login error", err)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
