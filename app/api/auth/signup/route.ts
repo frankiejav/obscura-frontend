@@ -9,19 +9,13 @@ export async function POST(req: NextRequest) {
   try {
     const { name, email, password } = await req.json()
 
+    // Validate input
     if (!name || !email || !password) {
-      return NextResponse.json({ error: "Name, email, and password required" }, { status: 400 })
+      return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 })
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(email)) {
-      return NextResponse.json({ error: "Invalid email format" }, { status: 400 })
-    }
-
-    // Validate password strength
     if (password.length < 8) {
-      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 })
+      return NextResponse.json({ error: "Password must be at least 8 characters long" }, { status: 400 })
     }
 
     // Check if user already exists
@@ -30,31 +24,44 @@ export async function POST(req: NextRequest) {
     `
 
     if (existingUsers.length > 0) {
-      return NextResponse.json({ error: "User already exists" }, { status: 409 })
+      // Log failed signup attempt
+      await sql`
+        INSERT INTO audit_logs (user_id, action, details, ip_address, user_agent)
+        VALUES (
+          NULL,
+          'SIGNUP_FAILED',
+          ${JSON.stringify({ email, reason: "email_already_exists" })},
+          ${req.headers.get("x-forwarded-for") ?? "unknown"},
+          ${req.headers.get("user-agent") ?? "unknown"}
+        )
+      `
+
+      return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 })
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 12)
+    const saltRounds = Number.parseInt(process.env.BCRYPT_ROUNDS || "12")
+    const passwordHash = await bcrypt.hash(password, saltRounds)
 
-    // Create user (always as client role)
+    // Create user (role is always 'client' for signups)
     const newUsers = await sql`
-      INSERT INTO users (name, email, password_hash, role, is_active)
-      VALUES (${name}, ${email}, ${passwordHash}, 'client', true)
-      RETURNING id, name, email, role, created_at
+      INSERT INTO users (name, email, password_hash, role)
+      VALUES (${name}, ${email}, ${passwordHash}, 'client')
+      RETURNING id, name, email, role, is_active, created_at
     `
 
-    const user = newUsers[0]
+    const newUser = newUsers[0]
 
     // Create JWT tokens
     const token = await signJWT({
-      userId: user.id,
-      email: user.email,
-      role: user.role,
+      userId: newUser.id,
+      email: newUser.email,
+      role: newUser.role,
     })
 
     const refreshToken = await signJWT(
       {
-        userId: user.id,
+        userId: newUser.id,
         type: "refresh",
       },
       { expiresIn: "7d" },
@@ -62,19 +69,18 @@ export async function POST(req: NextRequest) {
 
     // Log successful signup
     await sql`
-      INSERT INTO audit_logs (user_id, action, resource, details, ip_address, user_agent)
+      INSERT INTO audit_logs (user_id, action, details, ip_address, user_agent)
       VALUES (
-        ${user.id},
+        ${newUser.id},
         'SIGNUP_SUCCESS',
-        'auth',
-        '{}',
+        ${JSON.stringify({ email, name })},
         ${req.headers.get("x-forwarded-for") ?? "unknown"},
         ${req.headers.get("user-agent") ?? "unknown"}
       )
     `
 
     return NextResponse.json({
-      user,
+      user: newUser,
       token,
       refreshToken,
     })

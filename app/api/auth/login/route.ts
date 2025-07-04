@@ -24,6 +24,19 @@ export async function POST(req: NextRequest) {
     const user = users[0]
     if (!user || !user.is_active) {
       console.log("User not found or inactive:", email)
+
+      // Log failed login attempt
+      await sql`
+        INSERT INTO audit_logs (user_id, action, details, ip_address, user_agent)
+        VALUES (
+          NULL,
+          'LOGIN_FAILED',
+          ${JSON.stringify({ email, reason: "user_not_found" })},
+          ${req.headers.get("x-forwarded-for") ?? "unknown"},
+          ${req.headers.get("user-agent") ?? "unknown"}
+        )
+      `
+
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
@@ -31,6 +44,19 @@ export async function POST(req: NextRequest) {
     const isValidPassword = await bcrypt.compare(password, user.password_hash)
     if (!isValidPassword) {
       console.log("Invalid password for user:", email)
+
+      // Log failed login attempt
+      await sql`
+        INSERT INTO audit_logs (user_id, action, details, ip_address, user_agent)
+        VALUES (
+          ${user.id},
+          'LOGIN_FAILED',
+          ${JSON.stringify({ email, reason: "invalid_password" })},
+          ${req.headers.get("x-forwarded-for") ?? "unknown"},
+          ${req.headers.get("user-agent") ?? "unknown"}
+        )
+      `
+
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 })
     }
 
@@ -58,12 +84,11 @@ export async function POST(req: NextRequest) {
 
     // Log successful login
     await sql`
-      INSERT INTO audit_logs (user_id, action, resource, details, ip_address, user_agent)
+      INSERT INTO audit_logs (user_id, action, details, ip_address, user_agent)
       VALUES (
         ${user.id},
         'LOGIN_SUCCESS',
-        'auth',
-        '{}',
+        ${JSON.stringify({ email })},
         ${req.headers.get("x-forwarded-for") ?? "unknown"},
         ${req.headers.get("user-agent") ?? "unknown"}
       )

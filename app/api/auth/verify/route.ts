@@ -4,16 +4,16 @@ import { neon } from "@neondatabase/serverless"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization")
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "No token provided" }, { status: 401 })
+    const { token } = await req.json()
+
+    if (!token) {
+      return NextResponse.json({ error: "Token required" }, { status: 400 })
     }
 
-    const token = authHeader.substring(7)
+    // Verify JWT token
     const payload = await verifyJWT(token)
-
     if (!payload || !payload.userId) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
     }

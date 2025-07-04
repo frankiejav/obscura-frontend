@@ -12,8 +12,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Refresh token required" }, { status: 400 })
     }
 
+    // Verify refresh token
     const payload = await verifyJWT(refreshToken)
-    if (!payload || payload.type !== "refresh" || !payload.userId) {
+    if (!payload || !payload.userId || payload.type !== "refresh") {
       return NextResponse.json({ error: "Invalid refresh token" }, { status: 401 })
     }
 
@@ -30,25 +31,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found or inactive" }, { status: 401 })
     }
 
-    // Create new tokens
+    // Generate new access token
     const newToken = await signJWT({
       userId: user.id,
       email: user.email,
       role: user.role,
     })
 
-    const newRefreshToken = await signJWT(
-      {
-        userId: user.id,
-        type: "refresh",
-      },
-      { expiresIn: "7d" },
-    )
+    // Log token refresh
+    await sql`
+      INSERT INTO audit_logs (user_id, action, details, ip_address, user_agent)
+      VALUES (
+        ${user.id},
+        'TOKEN_REFRESH',
+        ${JSON.stringify({ email: user.email })},
+        ${req.headers.get("x-forwarded-for") ?? "unknown"},
+        ${req.headers.get("user-agent") ?? "unknown"}
+      )
+    `
 
     return NextResponse.json({
-      user,
       token: newToken,
-      refreshToken: newRefreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
     })
   } catch (error) {
     console.error("Token refresh error:", error)
