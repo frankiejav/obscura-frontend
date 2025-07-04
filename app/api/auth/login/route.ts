@@ -1,24 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { signJWT } from "@/lib/jwt"
 import { logRequest } from "@/lib/audit-logger"
-
-// Mock user database
-const users = [
-  {
-    id: "1",
-    email: "admin@example.com",
-    password: "admin123", // In production, use hashed passwords
-    name: "Admin User",
-    role: "admin",
-  },
-  {
-    id: "2",
-    email: "client@example.com",
-    password: "client123",
-    name: "Client User",
-    role: "client",
-  },
-]
+import { Client } from "pg"
+import bcrypt from "bcrypt"
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,19 +11,48 @@ export async function POST(request: NextRequest) {
 
     console.log("Login attempt:", { email, password }) // Debug log
 
-    // Find user
-    const user = users.find((u) => u.email === email && u.password === password)
-    if (!user) {
-      console.log("User not found or password mismatch") // Debug log
+    // Connect to PostgreSQL database
+    const client = new Client({
+      connectionString: process.env.DATABASE_URL,
+    })
+
+    await client.connect()
+
+    // Find user by email
+    const result = await client.query(
+      "SELECT id, email, name, password_hash, role FROM users WHERE email = $1 AND is_active = true",
+      [email]
+    )
+
+    if (result.rows.length === 0) {
+      console.log("User not found") // Debug log
+      await client.end()
       return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
     }
 
-    console.log("User found:", user) // Debug log
+    const user = result.rows[0]
+    console.log("User found:", { id: user.id, email: user.email, role: user.role }) // Debug log
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password_hash)
+    if (!isValidPassword) {
+      console.log("Password mismatch") // Debug log
+      await client.end()
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    }
+
+    console.log("Password verified successfully") // Debug log
+
+    // Update last login
+    await client.query(
+      "UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1",
+      [user.id]
+    )
 
     // Create tokens
     const token = await signJWT(
       {
-        sub: user.id,
+        sub: user.id.toString(),
         email: user.email,
         role: user.role,
       },
@@ -48,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     const refreshToken = await signJWT(
       {
-        sub: user.id,
+        sub: user.id.toString(),
         type: "refresh",
       },
       "7d", // 7 days
@@ -56,13 +69,15 @@ export async function POST(request: NextRequest) {
 
     // Log the login
     await logRequest({
-      userId: user.id,
+      userId: user.id.toString(),
       action: "login",
       details: {
         ip: request.ip || "unknown",
         userAgent: request.headers.get("user-agent") || "unknown",
       },
     })
+
+    await client.end()
 
     console.log("Login successful, returning tokens") // Debug log
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -29,36 +29,86 @@ type User = {
 
 export function UserManagement() {
   const { toast } = useToast()
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: "1",
-      name: "Admin User",
-      email: "admin@example.com",
-      role: "admin",
-      lastActive: "2023-07-01T12:00:00Z",
-    },
-    {
-      id: "2",
-      name: "Client User",
-      email: "client@example.com",
-      role: "client",
-      lastActive: "2023-07-02T10:30:00Z",
-    },
-    {
-      id: "3",
-      name: "John Doe",
-      email: "john@example.com",
-      role: "client",
-      lastActive: "2023-06-28T15:45:00Z",
-    },
-    {
-      id: "4",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      role: "client",
-      lastActive: "2023-06-30T09:15:00Z",
-    },
-  ])
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
+  const eventSourceRef = useRef<EventSource | null>(null)
+
+  useEffect(() => {
+    const connectToStream = () => {
+      try {
+        // Close existing connection if any
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close()
+        }
+
+        // Create new EventSource connection
+        const eventSource = new EventSource('/api/dashboard/stream')
+        eventSourceRef.current = eventSource
+
+        eventSource.onopen = () => {
+          console.log('User Management SSE connection established')
+        }
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data)
+            
+            if (data.type === 'analytics') {
+              // Extract user data from analytics
+              // We'll need to fetch users separately since analytics doesn't include full user list
+              fetchUsers()
+            }
+          } catch (parseError) {
+            console.error('Error parsing SSE data:', parseError)
+          }
+        }
+
+        eventSource.onerror = (error) => {
+          console.error('User Management SSE connection error:', error)
+          
+          // Attempt to reconnect after 5 seconds
+          setTimeout(() => {
+            connectToStream()
+          }, 5000)
+        }
+
+      } catch (error) {
+        console.error('Failed to establish SSE connection:', error)
+      }
+    }
+
+    const fetchUsers = async () => {
+      try {
+        const response = await fetch('/api/dashboard/users')
+        if (response.ok) {
+          const data = await response.json()
+          setUsers(data.users)
+        }
+      } catch (error) {
+        console.error('Failed to fetch users:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load users.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Initial fetch
+    fetchUsers()
+    
+    // Connect to real-time stream
+    connectToStream()
+
+    // Cleanup on unmount
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+      }
+    }
+  }, [toast])
 
   const [newUser, setNewUser] = useState({
     name: "",
@@ -138,9 +188,9 @@ export function UserManagement() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">User Management</h2>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight">User Management</h2>
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>

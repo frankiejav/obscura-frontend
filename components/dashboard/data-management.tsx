@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -21,45 +21,82 @@ type DataSource = {
 
 export function DataManagement() {
   const [activeTab, setActiveTab] = useState("overview")
-  const [selectedSource, setSelectedSource] = useState<string | null>("all") // Updated default value to "all"
+  const [selectedSource, setSelectedSource] = useState<string | null>("all")
+  const [dataSources, setDataSources] = useState<DataSource[]>([])
+  const [loading, setLoading] = useState(true)
+  const eventSourceRef = useRef<EventSource | null>(null)
 
-  const dataSources: DataSource[] = [
-    {
-      id: "1",
-      name: "Source 1",
-      recordCount: 1250000,
-      lastUpdated: "2023-07-01T12:00:00Z",
-      status: "active",
-    },
-    {
-      id: "2",
-      name: "Source 2",
-      recordCount: 850000,
-      lastUpdated: "2023-06-28T09:30:00Z",
-      status: "active",
-    },
-    {
-      id: "3",
-      name: "Source 3",
-      recordCount: 425000,
-      lastUpdated: "2023-06-30T15:45:00Z",
-      status: "processing",
-    },
-    {
-      id: "4",
-      name: "Source 4",
-      recordCount: 175000,
-      lastUpdated: "2023-06-25T10:15:00Z",
-      status: "active",
-    },
-    {
-      id: "5",
-      name: "Source 5",
-      recordCount: 75000,
-      lastUpdated: "2023-06-20T14:30:00Z",
-      status: "error",
-    },
-  ]
+  useEffect(() => {
+    const connectToStream = () => {
+      try {
+        // Close existing connection if any
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close()
+        }
+
+        // Create new EventSource connection
+        const eventSource = new EventSource('/api/dashboard/stream')
+        eventSourceRef.current = eventSource
+
+        eventSource.onopen = () => {
+          console.log('Data Management SSE connection established')
+        }
+
+        eventSource.onmessage = (event) => {
+          try {
+            const streamData = JSON.parse(event.data)
+            
+            if (streamData.type === 'analytics') {
+              // Extract data metrics from analytics
+              // We'll need to fetch full data separately since analytics doesn't include full data list
+              fetchDataSources()
+            }
+          } catch (parseError) {
+            console.error('Error parsing SSE data:', parseError)
+          }
+        }
+
+        eventSource.onerror = (error) => {
+          console.error('Data Management SSE connection error:', error)
+          
+          // Attempt to reconnect after 5 seconds
+          setTimeout(() => {
+            connectToStream()
+          }, 5000)
+        }
+
+      } catch (error) {
+        console.error('Failed to establish SSE connection:', error)
+      }
+    }
+
+    const fetchDataSources = async () => {
+      try {
+        const response = await fetch('/api/dashboard/data')
+        if (response.ok) {
+          const data = await response.json()
+          setDataSources(data.dataSources)
+        }
+      } catch (error) {
+        console.error('Failed to fetch data sources:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    // Initial fetch
+    fetchDataSources()
+    
+    // Connect to real-time stream
+    connectToStream()
+
+    // Cleanup on unmount
+    return () => {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close()
+      }
+    }
+  }, [])
 
   const sourceDistribution = dataSources.map((source) => ({
     name: source.name,
@@ -77,9 +114,9 @@ export function DataManagement() {
   ]
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold tracking-tight">Data Management</h2>
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Data Management</h2>
         <div className="flex items-center gap-2">
           <Select value={selectedSource || "all"} onValueChange={(value) => setSelectedSource(value || "all")}>
             <SelectTrigger className="w-[180px]">
@@ -108,7 +145,7 @@ export function DataManagement() {
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Records</CardTitle>
@@ -159,15 +196,15 @@ export function DataManagement() {
             </Card>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
             <Card>
               <CardHeader>
                 <CardTitle>Records by Source</CardTitle>
                 <CardDescription>Distribution of records across data sources</CardDescription>
               </CardHeader>
-              <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                              <CardContent className="h-64 sm:h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
                     <Pie
                       data={sourceDistribution}
                       cx="50%"
@@ -192,9 +229,9 @@ export function DataManagement() {
                 <CardTitle>Records Growth</CardTitle>
                 <CardDescription>Monthly record count growth</CardDescription>
               </CardHeader>
-              <CardContent className="h-80">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={recordsByMonth}>
+                              <CardContent className="h-64 sm:h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={recordsByMonth}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
