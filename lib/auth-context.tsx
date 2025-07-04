@@ -113,6 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("token", data.token)
       localStorage.setItem("refreshToken", data.refreshToken)
       setUser(data.user)
+
+      // Redirect to dashboard after successful login
+      router.push("/dashboard")
     } catch (error) {
       console.error("Login error:", error)
       throw error
@@ -148,6 +151,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem("token", data.token)
       localStorage.setItem("refreshToken", data.refreshToken)
       setUser(data.user)
+
+      // Redirect to dashboard after successful signup
+      router.push("/dashboard")
     } catch (error) {
       console.error("Signup error:", error)
       throw error

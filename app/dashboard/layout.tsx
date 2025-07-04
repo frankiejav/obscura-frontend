@@ -1,49 +1,48 @@
+"use client"
+
 import type React from "react"
-import { redirect } from "next/navigation"
-import { cookies } from "next/headers"
-import { DashboardSidebar } from "@/components/dashboard/sidebar"
+
+import { useAuth } from "@/lib/auth-context"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { DashboardHeader } from "@/components/dashboard/header"
+import { DashboardSidebar } from "@/components/dashboard/sidebar"
 
-async function getUser() {
-  const token = cookies().get("token")?.value
-
-  if (!token) {
-    return null
-  }
-
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verify`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
-    })
-
-    if (!res.ok) return null
-
-    return res.json()
-  } catch (error) {
-    return null
-  }
-}
-
-export default async function DashboardLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const userData = await getUser()
+  const { user, isLoading } = useAuth()
+  const router = useRouter()
 
-  if (!userData) {
-    redirect("/")
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/")
+    }
+  }, [user, isLoading, router])
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+          <p className="mt-4 text-muted-foreground font-mono">AUTHENTICATING...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null // Will redirect to login
   }
 
   return (
-    <div className="flex h-screen flex-col md:flex-row md:overflow-hidden">
-      <DashboardSidebar user={userData.user} />
-      <div className="flex flex-col flex-1">
-        <DashboardHeader user={userData.user} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
+    <div className="flex min-h-screen bg-background">
+      <DashboardSidebar />
+      <div className="flex-1 flex flex-col">
+        <DashboardHeader />
+        <main className="flex-1 p-6">{children}</main>
       </div>
     </div>
   )
