@@ -1,92 +1,57 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { verifyJWT, signJWT } from "@/lib/jwt"
+import { neon } from "@neondatabase/serverless"
 
-// Mock user database (same as in login route)
-const users = [
-  {
-    id: "1",
-    email: "admin@example.com",
-    password: "admin123",
-    name: "Admin User",
-    role: "admin",
-  },
-  {
-    id: "2",
-    email: "client@example.com",
-    password: "client123",
-    name: "Client User",
-    role: "client",
-  },
-]
+const sql = neon(process.env.DATABASE_URL!)
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    const body = await request.json()
-    const { refreshToken } = body
+    const { refreshToken } = await req.json()
 
     if (!refreshToken) {
-      return NextResponse.json({ error: "Refresh token is required" }, { status: 400 })
+      return NextResponse.json({ error: "Refresh token required" }, { status: 400 })
     }
 
-    // Verify the refresh token
     const payload = await verifyJWT(refreshToken)
-    if (!payload || payload.type !== "refresh") {
+    if (!payload || payload.type !== "refresh" || !payload.userId) {
       return NextResponse.json({ error: "Invalid refresh token" }, { status: 401 })
     }
 
-    // Find the user
-    const user = users.find((u) => u.id === payload.sub)
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 })
+    // Get user from database
+    const users = await sql`
+      SELECT id, email, name, role, is_active
+      FROM users 
+      WHERE id = ${payload.userId} 
+      LIMIT 1
+    `
+
+    const user = users[0]
+    if (!user || !user.is_active) {
+      return NextResponse.json({ error: "User not found or inactive" }, { status: 401 })
     }
 
     // Create new tokens
-    const newToken = await signJWT(
-      {
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-      },
-      "15m", // 15 minutes
-    )
+    const newToken = await signJWT({
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    })
 
     const newRefreshToken = await signJWT(
       {
-        sub: user.id,
+        userId: user.id,
         type: "refresh",
       },
-      "7d", // 7 days
+      { expiresIn: "7d" },
     )
 
-    // Set cookies
-    const response = NextResponse.json({
+    return NextResponse.json({
+      user,
       token: newToken,
       refreshToken: newRefreshToken,
     })
-
-    response.cookies.set({
-      name: "token",
-      value: newToken,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 15, // 15 minutes
-      path: "/",
-    })
-
-    response.cookies.set({
-      name: "refreshToken",
-      value: newRefreshToken,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: "/",
-    })
-
-    return response
   } catch (error) {
     console.error("Token refresh error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ error: "Invalid refresh token" }, { status: 401 })
   }
 }
