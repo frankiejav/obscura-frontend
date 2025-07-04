@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { createContext, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 
@@ -12,20 +11,12 @@ type User = {
   role: "admin" | "client"
 }
 
-type SignupData = {
-  name: string
-  email: string
-  password: string
-  // role removed - always defaults to client
-}
-
 type AuthContextType = {
   user: User | null
-  login: (email: string, password: string) => Promise<void>
-  signup: (data: SignupData) => Promise<void>
-  logout: () => void
-  refreshToken: () => Promise<void>
   isLoading: boolean
+  login: (email: string, password: string) => Promise<void>
+  signup: (data: { name: string; email: string; password: string }) => Promise<void>
+  logout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -33,64 +24,53 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(false)
   const router = useRouter()
 
-  // Check if user is logged in on initial load
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const token = localStorage.getItem("token")
-        if (!token) {
-          setIsLoading(false)
-          return
-        }
+  const checkAuth = async () => {
+    if (isCheckingAuth) return
 
-        // Verify token with the server
-        const response = await fetch("/api/auth/verify", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
+    setIsCheckingAuth(true)
 
-        if (response.ok) {
-          const userData = await response.json()
-          setUser(userData.user)
-        } else {
-          // Token is invalid, clear storage
-          localStorage.removeItem("token")
-          localStorage.removeItem("refreshToken")
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error)
-        localStorage.removeItem("token")
-        localStorage.removeItem("refreshToken")
-      } finally {
+    try {
+      const token = localStorage.getItem("token")
+      if (!token) {
+        setUser(null)
         setIsLoading(false)
+        setIsCheckingAuth(false)
+        return
       }
-    }
 
+      const response = await fetch("/api/auth/verify", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data.user)
+      } else {
+        localStorage.removeItem("token")
+        setUser(null)
+      }
+    } catch (error) {
+      console.error("Auth check failed:", error)
+      localStorage.removeItem("token")
+      setUser(null)
+    } finally {
+      setIsLoading(false)
+      setIsCheckingAuth(false)
+    }
+  }
+
+  useEffect(() => {
     checkAuth()
   }, [])
 
-  // Set up token refresh interval
-  useEffect(() => {
-    if (!user) return
-
-    const refreshInterval = setInterval(
-      () => {
-        refreshToken().catch(console.error)
-      },
-      15 * 60 * 1000,
-    ) // Refresh every 15 minutes
-
-    return () => clearInterval(refreshInterval)
-  }, [user])
-
   const login = async (email: string, password: string) => {
-    setIsLoading(true)
     try {
-      console.log("Attempting login with:", { email, password }) // Debug log
-
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -99,37 +79,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ email, password }),
       })
 
-      console.log("Login response status:", response.status) // Debug log
+      const data = await response.json()
 
       if (!response.ok) {
-        const errorData = await response.json()
-        console.error("Login failed:", errorData) // Debug log
-        throw new Error(errorData.error || "Login failed")
+        throw new Error(data.error || "Login failed")
       }
 
-      const data = await response.json()
-      console.log("Login successful, received data:", data) // Debug log
-
       localStorage.setItem("token", data.token)
-      localStorage.setItem("refreshToken", data.refreshToken)
       setUser(data.user)
 
-      // Redirect to dashboard after successful login
-      console.log("Redirecting to dashboard...")
+      console.log("Login successful, redirecting to dashboard...")
       router.push("/dashboard")
     } catch (error) {
       console.error("Login error:", error)
       throw error
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  const signup = async (signupData: SignupData) => {
-    setIsLoading(true)
+  const signup = async (signupData: { name: string; email: string; password: string }) => {
     try {
-      console.log("Attempting signup with:", signupData) // Debug log
-
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
@@ -138,63 +106,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify(signupData),
       })
 
-      console.log("Signup response status:", response.status) // Debug log
+      const data = await response.json()
 
       if (!response.ok) {
-        const errorData = await response.json()
-        console.error("Signup failed:", errorData) // Debug log
-        throw new Error(errorData.error || "Signup failed")
+        throw new Error(data.error || "Signup failed")
       }
 
-      const data = await response.json()
-      console.log("Signup successful, received data:", data) // Debug log
-
       localStorage.setItem("token", data.token)
-      localStorage.setItem("refreshToken", data.refreshToken)
       setUser(data.user)
 
-      // Redirect to dashboard after successful signup
+      console.log("Signup successful, redirecting to dashboard...")
       router.push("/dashboard")
     } catch (error) {
       console.error("Signup error:", error)
       throw error
-    } finally {
-      setIsLoading(false)
     }
-  }
-
-  const refreshToken = async () => {
-    const refreshToken = localStorage.getItem("refreshToken")
-    if (!refreshToken) throw new Error("No refresh token")
-
-    const response = await fetch("/api/auth/refresh", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ refreshToken }),
-    })
-
-    if (!response.ok) throw new Error("Token refresh failed")
-
-    const data = await response.json()
-    localStorage.setItem("token", data.token)
-    localStorage.setItem("refreshToken", data.refreshToken)
-    setUser(data.user)
   }
 
   const logout = () => {
     localStorage.removeItem("token")
-    localStorage.removeItem("refreshToken")
     setUser(null)
     router.push("/")
   }
 
-  return (
-    <AuthContext.Provider value={{ user, login, signup, logout, refreshToken, isLoading }}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={{ user, isLoading, login, signup, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

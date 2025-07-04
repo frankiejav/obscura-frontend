@@ -53,9 +53,9 @@ export function DashboardHeader({ user }: { user: DashboardUser }) {
       <SidebarTrigger className="tactical-button" />
 
       <div className="flex items-center gap-4 text-sm font-mono">
-        <span className="text-primary tracking-wider">TACTICAL COMMAND</span>
+        <span className="text-primary tracking-wider">PRIVATE INTELLIGENCE OPERATIONS</span>
         <span className="text-muted-foreground">/</span>
-        <span className="text-primary tracking-wider">OVERVIEW</span>
+        <span className="text-primary tracking-wider">DASHBOARD</span>
       </div>
 
       <div className="ml-auto flex items-center gap-4">

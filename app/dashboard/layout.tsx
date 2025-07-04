@@ -1,12 +1,11 @@
 "use client"
 
 import type React from "react"
-
 import { useAuth } from "@/lib/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { Header } from "@/components/dashboard/header"
-import { Sidebar } from "@/components/dashboard/sidebar"
+import { DashboardHeader } from "@/components/dashboard/header"
+import { DashboardSidebar } from "@/components/dashboard/sidebar"
 
 export default function DashboardLayout({
   children,
@@ -47,11 +46,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+    <div className="flex h-screen flex-col md:flex-row md:overflow-hidden">
+      <DashboardSidebar user={user} />
+      <div className="flex flex-col flex-1">
+        <DashboardHeader user={user} />
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   )
