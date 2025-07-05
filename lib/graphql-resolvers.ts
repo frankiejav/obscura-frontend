@@ -146,6 +146,8 @@ export const resolvers = {
           },
         }
         console.log('Returning mapped settings:', mappedSettings)
+        console.log('Settings type:', typeof mappedSettings)
+        console.log('Settings keys:', Object.keys(mappedSettings))
         return mappedSettings
       } catch (error) {
         console.error('Error fetching settings from database:', error)

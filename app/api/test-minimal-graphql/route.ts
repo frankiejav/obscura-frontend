@@ -25,7 +25,7 @@ const schema = buildSchema(`
 // Minimal resolver
 const resolvers = {
   Query: {
-    settings: async () => {
+    settings: () => {
       console.log('Minimal settings resolver called')
       return {
         general: {
