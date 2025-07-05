@@ -115,7 +115,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={48} height={48} className="w-12 h-12" />
           <div>
             <h2 className="text-white font-mono text-sm font-bold tracking-wider">OBSCURA LABS</h2>
-            <p className="text-gray-400 font-mono text-xs">CLASSIFIED SYSTEM</p>
+            <p className="text-gray-400 font-mono text-xs">PRIVATE SYSTEM</p>
           </div>
         </div>
       </SidebarHeader>

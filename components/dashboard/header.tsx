@@ -52,7 +52,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
             <Shield className="w-5 h-5 text-white" />
             <div>
               <h1 className="text-white font-mono text-lg font-bold tracking-wider">COMMAND CENTER</h1>
-              <p className="text-gray-400 font-mono text-xs">CLASSIFIED DATA ACCESS TERMINAL</p>
+              <p className="text-gray-400 font-mono text-xs">PRIVATE LEAKED DATA ACCESS TERMINAL</p>
             </div>
           </div>
         </div>

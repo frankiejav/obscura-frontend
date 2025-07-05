@@ -41,6 +41,7 @@ interface BreachResult {
   last_name?: string
   username?: string
   fields: string[]
+  data?: Record<string, string>
 }
 
 interface BreachSearchResult {
@@ -331,15 +332,11 @@ export default function SearchPage() {
             </div>
           </div>
 
-          {breachSearchEnabled && (
+          {breachSearchEnabled && breachResults?.quota && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Shield className="w-4 h-4" />
-              <span>Breach search API is enabled and will be searched automatically</span>
-              {breachResults?.quota && (
-                <Badge variant="outline">
-                  {breachResults.quota} queries remaining
-                </Badge>
-              )}
+              <Badge variant="outline">
+                {breachResults.quota} queries remaining
+              </Badge>
             </div>
           )}
         </CardContent>
@@ -454,51 +451,67 @@ export default function SearchPage() {
               <CardContent>
                 <div className="space-y-4">
                   {breachResults.result.map((breach, index) => (
-                    <Card key={index} className="p-4 border-orange-200 bg-orange-50">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
+                    <Card key={index} className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2 flex-1">
                           <div className="flex items-center gap-2">
-                            <Shield className="w-4 h-4 text-orange-600" />
+                            <Shield className="w-4 h-4" />
                             <h3 className="font-semibold">{breach.email}</h3>
                             <Badge variant="destructive">{breach.source.name}</Badge>
                           </div>
-                          {breach.source.breach_date && (
-                            <span className="text-sm text-gray-500">
-                              {breach.source.breach_date}
-                            </span>
-                          )}
-                        </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          {breach.first_name && (
-                            <div>
-                              <span className="font-medium">First Name:</span> {breach.first_name}
-                            </div>
-                          )}
-                          {breach.last_name && (
-                            <div>
-                              <span className="font-medium">Last Name:</span> {breach.last_name}
-                            </div>
-                          )}
-                          {breach.username && (
-                            <div>
-                              <span className="font-medium">Username:</span> {breach.username}
-                            </div>
-                          )}
-                          <div>
-                            <span className="font-medium">Fields:</span> {breach.fields.join(', ')}
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                            {breach.data ? (
+                              // Display full data when available
+                              Object.entries(breach.data).map(([key, value]) => (
+                                <div key={key}>
+                                  <span className="font-medium">{key}:</span> {value}
+                                </div>
+                              ))
+                            ) : (
+                              // Fallback to basic fields
+                              <>
+                                {breach.first_name && (
+                                  <div>
+                                    <span className="font-medium">First Name:</span> {breach.first_name}
+                                  </div>
+                                )}
+                                {breach.last_name && (
+                                  <div>
+                                    <span className="font-medium">Last Name:</span> {breach.last_name}
+                                  </div>
+                                )}
+                                {breach.username && (
+                                  <div>
+                                    <span className="font-medium">Username:</span> {breach.username}
+                                  </div>
+                                )}
+                                <div>
+                                  <span className="font-medium">Fields:</span> {breach.fields.join(', ')}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
+                          <div className="flex gap-2 text-xs">
+                            {breach.source.unverified > 0 && (
+                              <Badge variant="secondary">Unverified: {breach.source.unverified}</Badge>
+                            )}
+                            {breach.source.passwordless > 0 && (
+                              <Badge variant="secondary">Passwordless: {breach.source.passwordless}</Badge>
+                            )}
+                            {breach.source.compilation > 0 && (
+                              <Badge variant="secondary">Compilation: {breach.source.compilation}</Badge>
+                            )}
                           </div>
                         </div>
-
-                        <div className="flex gap-2 text-xs">
-                          {breach.source.unverified > 0 && (
-                            <Badge variant="secondary">Unverified: {breach.source.unverified}</Badge>
-                          )}
-                          {breach.source.passwordless > 0 && (
-                            <Badge variant="secondary">Passwordless: {breach.source.passwordless}</Badge>
-                          )}
-                          {breach.source.compilation > 0 && (
-                            <Badge variant="secondary">Compilation: {breach.source.compilation}</Badge>
+                        
+                        <div className="text-right text-sm text-gray-500">
+                          {breach.source.breach_date && (
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              {breach.source.breach_date}
+                            </div>
                           )}
                         </div>
                       </div>
