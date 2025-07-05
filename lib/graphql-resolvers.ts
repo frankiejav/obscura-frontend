@@ -52,6 +52,46 @@ function getDefaultSettings() {
       tokenExpiration: "7",
       logLevel: "info",
     },
+    leakCheck: {
+      enabled: false,
+      quota: 0,
+      lastSync: null,
+    },
+  }
+}
+
+// LeakCheck API helper functions
+async function callLeakCheckAPI(query: string, type?: string) {
+  // Use our internal API route to protect the API key
+  const response = await fetch('/api/leakcheck', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      query,
+      type,
+    }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.error || `LeakCheck API error: ${response.status}`)
+  }
+
+  return await response.json()
+}
+
+async function fetchLeakCheckDatabases() {
+  try {
+    const response = await fetch('https://leakcheck.io/databases-list?_=1751679364404')
+    if (!response.ok) {
+      throw new Error(`Failed to fetch databases: ${response.status}`)
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching LeakCheck databases:', error)
+    return { data: [] }
   }
 }
 
@@ -62,7 +102,10 @@ export const resolvers = {
     settings: async () => {
       try {
         // Try to get settings from Elasticsearch
-        const result = await client.get({
+        if (!esClient) {
+          return getDefaultSettings()
+        }
+        const result = await esClient.get({
           index: 'settings',
           id: 'default',
         })
@@ -70,6 +113,46 @@ export const resolvers = {
       } catch (error) {
         // If settings don't exist, return default settings
         return getDefaultSettings()
+      }
+    },
+
+    // LeakCheck queries
+    leakCheckSearch: async (parent: any, { query, type }: { query: string; type?: string }) => {
+      try {
+        // Get current settings to check if LeakCheck is enabled
+        const settings = await resolvers.Query.settings() as any
+        
+        if (!settings.leakCheck.enabled) {
+          throw new Error('LeakCheck API is not enabled')
+        }
+
+        const result = await callLeakCheckAPI(query, type)
+        
+        // Update quota in settings if available
+        if (result.quota !== undefined && esClient) {
+          await esClient.update({
+            index: 'settings',
+            id: 'default',
+            body: {
+              doc: {
+                leakCheck: {
+                  ...settings.leakCheck,
+                  quota: result.quota,
+                }
+              }
+            }
+          })
+        }
+
+        return result
+      } catch (error) {
+        console.error('LeakCheck search error:', error)
+        return {
+          success: false,
+          found: 0,
+          quota: 0,
+          result: [],
+        }
       }
     },
 
@@ -87,7 +170,7 @@ export const resolvers = {
 
     user: async (parent: any, { id }: { id: string }) => {
       try {
-        const result = await client.get({
+        const result = await esClient.get({
           index: 'obscura_personal_info',
           id,
         })
@@ -100,7 +183,7 @@ export const resolvers = {
 
     users: async (parent: any, { first = 10, after }: { first?: number; after?: string }) => {
       try {
-        const result = await client.search({
+        const result = await esClient.search({
           index: 'obscura_personal_info',
           body: {
             size: first,
@@ -118,7 +201,7 @@ export const resolvers = {
     // Data record queries
     dataRecord: async (parent: any, { id }: { id: string }) => {
       try {
-        const result = await client.get({
+        const result = await esClient.get({
           index: 'obscura_emails',
           id,
         })
@@ -141,7 +224,7 @@ export const resolvers = {
           query.bool.must.push({ term: { source } })
         }
 
-        const result = await client.search({
+        const result = await esClient.search({
           index: 'obscura_emails',
           body: {
             size: first,
@@ -252,7 +335,7 @@ export const resolvers = {
         }
 
         const from = (page - 1) * limit
-        const result = await client.search({
+        const result = await esClient.search({
           index: 'obscura_emails',
           body: {
             size: limit,
@@ -288,7 +371,7 @@ export const resolvers = {
     // Data source queries
     dataSources: async () => {
       try {
-        const result = await client.search({
+        const result = await esClient.search({
           index: 'obscura_records',
           body: {
             size: 100,
@@ -305,7 +388,7 @@ export const resolvers = {
 
     dataSource: async (parent: any, { id }: { id: string }) => {
       try {
-        const result = await client.get({
+        const result = await esClient.get({
           index: 'obscura_records',
           id,
         })
@@ -333,7 +416,7 @@ export const resolvers = {
           query.bool.must.push({ term: { isRead } })
         }
 
-        const result = await client.search({
+        const result = await esClient.search({
           index: 'notifications',
           body: {
             size: first,
@@ -377,7 +460,7 @@ export const resolvers = {
 
     unreadNotificationCount: async () => {
       try {
-        const result = await client.search({
+        const result = await esClient.search({
           index: 'notifications',
           body: {
             size: 0,
@@ -415,7 +498,7 @@ export const resolvers = {
           query.bool.must.push({ range: { timestamp: range } })
         }
 
-        const result = await client.search({
+        const result = await esClient.search({
           index: 'audit_logs',
           body: {
             size: first,
@@ -441,7 +524,7 @@ export const resolvers = {
     updateSettings: async (parent: any, { settings }: { settings: any }) => {
       try {
         await ensureIndex('settings')
-        await client.index({
+        await esClient.index({
           index: 'settings',
           id: 'default',
           body: settings,
@@ -491,7 +574,7 @@ export const resolvers = {
     createUser: async (parent: any, { name, email, password, role }: { name: string; email: string; password: string; role: string }) => {
       try {
         await ensureIndex('users')
-        const result = await client.index({
+        const result = await esClient.index({
           index: 'users',
           body: {
             name,
@@ -523,13 +606,13 @@ export const resolvers = {
         if (role) updateBody.role = role
         updateBody.lastActive = new Date()
 
-        await client.update({
+        await esClient.update({
           index: 'users',
           id,
           body: { doc: updateBody },
         })
 
-        const result = await client.get({
+        const result = await esClient.get({
           index: 'users',
           id,
         })
@@ -546,7 +629,7 @@ export const resolvers = {
 
     deleteUser: async (parent: any, { id }: { id: string }) => {
       try {
-        await client.delete({
+        await esClient.delete({
           index: 'users',
           id,
         })
@@ -561,7 +644,7 @@ export const resolvers = {
     createDataRecord: async (parent: any, { input }: { input: any }) => {
       try {
         await ensureIndex('data_records')
-        const result = await client.index({
+        const result = await esClient.index({
           index: 'data_records',
           body: {
             ...input,
@@ -581,13 +664,13 @@ export const resolvers = {
 
     updateDataRecord: async (parent: any, { id, input }: { id: string; input: any }) => {
       try {
-        await client.update({
+        await esClient.update({
           index: 'data_records',
           id,
           body: { doc: input },
         })
 
-        const result = await client.get({
+        const result = await esClient.get({
           index: 'data_records',
           id,
         })
@@ -604,7 +687,7 @@ export const resolvers = {
 
     deleteDataRecord: async (parent: any, { id }: { id: string }) => {
       try {
-        await client.delete({
+        await esClient.delete({
           index: 'data_records',
           id,
         })
@@ -625,7 +708,7 @@ export const resolvers = {
     }) => {
       try {
         await ensureIndex('notifications')
-        const result = await client.index({
+        const result = await esClient.index({
           index: 'notifications',
           body: {
             title,
@@ -655,13 +738,13 @@ export const resolvers = {
 
     markNotificationAsRead: async (parent: any, { id }: { id: string }) => {
       try {
-        await client.update({
+        await esClient.update({
           index: 'notifications',
           id,
           body: { doc: { isRead: true } },
         })
 
-        const result = await client.get({
+        const result = await esClient.get({
           index: 'notifications',
           id,
         })
@@ -678,7 +761,7 @@ export const resolvers = {
 
     markAllNotificationsAsRead: async () => {
       try {
-        await client.updateByQuery({
+        await esClient.updateByQuery({
           index: 'notifications',
           body: {
             query: { term: { isRead: false } },
@@ -694,7 +777,7 @@ export const resolvers = {
 
     deleteNotification: async (parent: any, { id }: { id: string }) => {
       try {
-        await client.delete({
+        await esClient.delete({
           index: 'notifications',
           id,
         })
@@ -708,7 +791,7 @@ export const resolvers = {
     // Data source mutations
     refreshDataSource: async (parent: any, { id }: { id: string }) => {
       try {
-        await client.update({
+        await esClient.update({
           index: 'data_sources',
           id,
           body: {
@@ -719,7 +802,7 @@ export const resolvers = {
           },
         })
 
-        const result = await client.get({
+        const result = await esClient.get({
           index: 'data_sources',
           id,
         })
@@ -731,6 +814,117 @@ export const resolvers = {
       } catch (error) {
         console.error('Error refreshing data source:', error)
         throw new Error('Failed to refresh data source')
+      }
+    },
+
+    // LeakCheck mutations
+    syncLeakCheckData: async () => {
+      try {
+        // Get current settings
+        const settings = await resolvers.Query.settings() as any
+        
+        if (!settings.leakCheck.enabled) {
+          throw new Error('LeakCheck API is not enabled')
+        }
+
+        // Fetch LeakCheck databases
+        const databasesResponse = await fetchLeakCheckDatabases()
+        
+        if (!databasesResponse.data || !Array.isArray(databasesResponse.data)) {
+          throw new Error('Failed to fetch LeakCheck databases')
+        }
+
+        // Calculate total records from LeakCheck databases
+        const leakCheckRecords = databasesResponse.data.reduce((sum: number, db: any) => {
+          return sum + (db.count || 0)
+        }, 0)
+
+        // Get total Elasticsearch records
+        let elasticsearchRecords = 0
+        try {
+          const esResult = await esClient.search({
+            index: 'obscura_emails',
+            body: {
+              size: 0,
+              query: { match_all: {} }
+            }
+          })
+          elasticsearchRecords = getTotalHits(esResult)
+        } catch (error) {
+          console.error('Error getting Elasticsearch record count:', error)
+        }
+
+        // Calculate total record count: (10,000,000,000+) + (sum of elasticsearch records)
+        const baseCount = 10000000000 // 10 billion base
+        const totalRecords = baseCount + elasticsearchRecords + leakCheckRecords
+
+        // Create individual data sources for each LeakCheck database
+        await ensureIndex('data_sources')
+        
+        // Create main LeakCheck data source with total count
+        await esClient.index({
+          index: 'data_sources',
+          id: 'leakcheck',
+          body: {
+            name: 'LeakCheck Database',
+            recordCount: totalRecords,
+            lastUpdated: new Date(),
+            status: 'ACTIVE',
+            source: 'leakcheck',
+            metadata: {
+              databases: databasesResponse.data.length,
+              leakCheckRecords: leakCheckRecords,
+              elasticsearchRecords: elasticsearchRecords,
+              baseCount: baseCount,
+              description: 'Comprehensive data breach database from LeakCheck.io'
+            }
+          },
+        })
+
+        // Create individual data sources for each database
+        for (const db of databasesResponse.data) {
+          if (db.name && db.count > 0) {
+            const dbId = `leakcheck_${db.id}`
+            await esClient.index({
+              index: 'data_sources',
+              id: dbId,
+              body: {
+                name: db.name,
+                recordCount: db.count,
+                lastUpdated: new Date(),
+                status: 'ACTIVE',
+                source: 'leakcheck',
+                metadata: {
+                  breach_date: db.breach_date,
+                  unverified: db.unverified,
+                  passwordless: db.passwordless,
+                  compilation: db.compilation,
+                  database_id: db.id,
+                  description: `Data breach from ${db.name}`
+                }
+              },
+            })
+          }
+        }
+
+        // Update settings with last sync time
+        await esClient.update({
+          index: 'settings',
+          id: 'default',
+          body: {
+            doc: {
+              leakCheck: {
+                ...settings.leakCheck,
+                lastSync: new Date(),
+              }
+            }
+          }
+        })
+
+        return true
+      } catch (error) {
+        console.error('Error syncing LeakCheck data:', error)
+        return false
       }
     },
   },

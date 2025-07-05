@@ -42,6 +42,11 @@ export function SettingsPage() {
       tokenExpiration: "7",
       logLevel: "info",
     },
+    leakCheck: {
+      enabled: false,
+      quota: 0,
+      lastSync: null,
+    },
   })
 
   useEffect(() => {
@@ -81,6 +86,11 @@ export function SettingsPage() {
                   rateLimit
                   tokenExpiration
                   logLevel
+                }
+                leakCheck {
+                  enabled
+                  quota
+                  lastSync
                 }
               }
             }
@@ -133,6 +143,11 @@ export function SettingsPage() {
                   tokenExpiration
                   logLevel
                 }
+                leakCheck {
+                  enabled
+                  quota
+                  lastSync
+                }
               }
             }
           `,
@@ -178,7 +193,7 @@ export function SettingsPage() {
   }
 
   const isAdmin = user?.role === "admin"
-  const availableTabs = isAdmin ? ["general", "security", "notifications", "api"] : ["general", "security", "notifications"]
+  const availableTabs = isAdmin ? ["general", "security", "notifications", "api", "leakcheck"] : ["general", "security", "notifications"]
 
   return (
     <div className="space-y-6">
@@ -188,11 +203,12 @@ export function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'}`}>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isAdmin && <TabsTrigger value="api">API</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="leakcheck">LeakCheck</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="general">
@@ -580,6 +596,110 @@ export function SettingsPage() {
                   ) : (
                     "Save Changes"
                   )}
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        )}
+
+        {isAdmin && (
+          <TabsContent value="leakcheck">
+            <Card>
+              <CardHeader>
+                <CardTitle>LeakCheck API Settings</CardTitle>
+                <CardDescription>Configure LeakCheck API integration for data breach searches.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label htmlFor="leakcheck-enabled">Enable LeakCheck API</Label>
+                    <p className="text-sm text-muted-foreground">Allow users to search for data breaches using LeakCheck API.</p>
+                  </div>
+                  <Switch
+                    id="leakcheck-enabled"
+                    checked={settings.leakCheck.enabled}
+                    onCheckedChange={(checked) =>
+                      setSettings({
+                        ...settings,
+                        leakCheck: {
+                          ...settings.leakCheck,
+                          enabled: checked,
+                        },
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>API Key Configuration</Label>
+                  <div className="text-sm text-muted-foreground p-3 bg-gray-50 rounded-md">
+                    <p>API key is configured via environment variable <code className="bg-gray-200 px-1 rounded">LEAKCHECK_API_KEY</code></p>
+                    <p className="mt-1">Get your API key from <a href="https://leakcheck.io" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">leakcheck.io</a></p>
+                  </div>
+                </div>
+                {settings.leakCheck.quota > 0 && (
+                  <div className="space-y-2">
+                    <Label>API Quota</Label>
+                    <div className="text-sm text-muted-foreground">
+                      Remaining queries: {settings.leakCheck.quota}
+                    </div>
+                  </div>
+                )}
+                {settings.leakCheck.lastSync && (
+                  <div className="space-y-2">
+                    <Label>Last Sync</Label>
+                    <div className="text-sm text-muted-foreground">
+                      {new Date(settings.leakCheck.lastSync).toLocaleString()}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button onClick={handleSaveSettings} disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/graphql', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          query: `
+                            mutation {
+                              syncLeakCheckData
+                            }
+                          `,
+                        }),
+                      })
+                      const data = await response.json()
+                      if (data.data?.syncLeakCheckData) {
+                        toast({
+                          title: "Sync successful",
+                          description: "LeakCheck data has been synchronized.",
+                        })
+                        fetchSettings()
+                      }
+                    } catch (error) {
+                      toast({
+                        title: "Sync failed",
+                        description: "Failed to sync LeakCheck data.",
+                        variant: "destructive",
+                      })
+                    }
+                  }}
+                  disabled={isLoading || !settings.leakCheck.enabled}
+                >
+                  Sync Data
                 </Button>
               </CardFooter>
             </Card>

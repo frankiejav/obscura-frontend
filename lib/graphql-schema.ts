@@ -31,11 +31,18 @@ export const schema = buildSchema(`
     logLevel: String!
   }
 
+  type LeakCheckSettings {
+    enabled: Boolean!
+    quota: Int!
+    lastSync: DateTime
+  }
+
   type Settings {
     general: GeneralSettings!
     security: SecuritySettings!
     notifications: NotificationSettings!
     api: ApiSettings!
+    leakCheck: LeakCheckSettings!
   }
 
   input GeneralSettingsInput {
@@ -64,11 +71,41 @@ export const schema = buildSchema(`
     logLevel: String!
   }
 
+  input LeakCheckSettingsInput {
+    enabled: Boolean!
+  }
+
   input SettingsInput {
     general: GeneralSettingsInput!
     security: SecuritySettingsInput!
     notifications: NotificationSettingsInput!
     api: ApiSettingsInput!
+    leakCheck: LeakCheckSettingsInput!
+  }
+
+  # LeakCheck types
+  type LeakCheckResult {
+    email: String!
+    source: LeakCheckSource!
+    first_name: String
+    last_name: String
+    username: String
+    fields: [String!]!
+  }
+
+  type LeakCheckSource {
+    name: String!
+    breach_date: String
+    unverified: Int!
+    passwordless: Int!
+    compilation: Int!
+  }
+
+  type LeakCheckSearchResult {
+    success: Boolean!
+    found: Int!
+    quota: Int!
+    result: [LeakCheckResult!]!
   }
 
   type User {
@@ -105,6 +142,7 @@ export const schema = buildSchema(`
     ADMIN_ALERT
     SYSTEM_ALERT
     SECURITY_ALERT
+    LEAKCHECK_ALERT
   }
 
   enum NotificationPriority {
@@ -246,6 +284,12 @@ export const schema = buildSchema(`
       limit: Int!
     ): SearchResult!
     
+    # LeakCheck queries
+    leakCheckSearch(
+      query: String!, 
+      type: String
+    ): LeakCheckSearchResult!
+    
     # Data sources
     dataSources: [DataSource!]!
     dataSource(id: ID!): DataSource
@@ -293,6 +337,9 @@ export const schema = buildSchema(`
     
     # Data source mutations (admin only)
     refreshDataSource(id: ID!): DataSource!
+    
+    # LeakCheck mutations (admin only)
+    syncLeakCheckData: Boolean!
   }
 
   type AuthPayload {

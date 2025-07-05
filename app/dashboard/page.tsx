@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Database, Users, Search, Activity, TrendingUp, Clock } from 'lucide-react'
+import { Database, Users, Search, Activity, TrendingUp, Clock, Shield } from 'lucide-react'
 import Link from 'next/link'
 
 interface DataSource {
@@ -34,6 +34,7 @@ export default function DashboardPage() {
     activeSources: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [leakCheckEnabled, setLeakCheckEnabled] = useState(false)
 
   useEffect(() => {
     fetchDashboardData()
@@ -42,6 +43,32 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     setLoading(true)
     try {
+      // Fetch settings to check LeakCheck status
+      const settingsResponse = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            query {
+              settings {
+                leakCheck {
+                  enabled
+                  quota
+                  lastSync
+                }
+              }
+            }
+          `,
+        }),
+      })
+
+      const settingsData = await settingsResponse.json()
+      if (settingsData.data?.settings?.leakCheck) {
+        setLeakCheckEnabled(settingsData.data.settings.leakCheck.enabled)
+      }
+
       // Fetch data sources
       const sourcesResponse = await fetch('/api/graphql', {
         method: 'POST',
@@ -204,6 +231,23 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* LeakCheck Status */}
+      {leakCheckEnabled && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-800">
+              <Shield className="w-5 h-5" />
+              LeakCheck API Active
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-green-700">
+              Data breach search functionality is enabled and available to users.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Data Sources */}
       <Card>
