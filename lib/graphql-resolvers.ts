@@ -101,60 +101,35 @@ export const resolvers = {
   Query: {
     // Settings queries
     settings: async () => {
-      console.log('Settings resolver called')
-      try {
-        // Try to get settings from database
-        const result = await db.query(
-          'SELECT value FROM settings WHERE key = $1',
-          ['default']
-        )
-        
-        console.log('Database result:', result.rows.length, 'rows')
-        
-        const raw = result.rows.length > 0 ? result.rows[0].value : getDefaultSettings();
-        const settings = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        const defaults = getDefaultSettings();
-        
-        // Explicitly map the fields to ensure the shape matches the GraphQL type
-        const mappedSettings = {
-          general: {
-            apiUrl: settings.general?.apiUrl || defaults.general.apiUrl,
-            defaultPageSize: settings.general?.defaultPageSize || defaults.general.defaultPageSize,
-            theme: settings.general?.theme || defaults.general.theme,
-          },
-          security: {
-            twoFactorAuth: settings.security?.twoFactorAuth || defaults.security.twoFactorAuth,
-            sessionTimeout: settings.security?.sessionTimeout || defaults.security.sessionTimeout,
-            ipWhitelist: settings.security?.ipWhitelist || defaults.security.ipWhitelist,
-            enforceStrongPasswords: settings.security?.enforceStrongPasswords || defaults.security.enforceStrongPasswords,
-          },
-          notifications: {
-            emailAlerts: settings.notifications?.emailAlerts || defaults.notifications.emailAlerts,
-            dailySummary: settings.notifications?.dailySummary || defaults.notifications.dailySummary,
-            securityAlerts: settings.notifications?.securityAlerts || defaults.notifications.securityAlerts,
-            dataUpdates: settings.notifications?.dataUpdates || defaults.notifications.dataUpdates,
-          },
-          api: {
-            rateLimit: settings.api?.rateLimit || defaults.api.rateLimit,
-            tokenExpiration: settings.api?.tokenExpiration || defaults.api.tokenExpiration,
-            logLevel: settings.api?.logLevel || defaults.api.logLevel,
-          },
-          leakCheck: {
-            enabled: settings.leakCheck?.enabled || defaults.leakCheck.enabled,
-            quota: parseInt(settings.leakCheck?.quota || defaults.leakCheck.quota) || 0,
-            lastSync: settings.leakCheck?.lastSync ? new Date(settings.leakCheck.lastSync) : null,
-          },
-        }
-        console.log('Returning mapped settings:', mappedSettings)
-        console.log('Settings type:', typeof mappedSettings)
-        console.log('Settings keys:', Object.keys(mappedSettings))
-        return mappedSettings
-      } catch (error) {
-        console.error('Error fetching settings from database:', error)
-        // If database error, return default settings
-        const defaultSettings = getDefaultSettings()
-        console.log('Returning default settings due to error:', defaultSettings)
-        return defaultSettings
+      console.log('Settings resolver called - returning hardcoded object')
+      return {
+        general: {
+          apiUrl: "test",
+          defaultPageSize: "20",
+          theme: "system",
+        },
+        security: {
+          twoFactorAuth: false,
+          sessionTimeout: "30",
+          ipWhitelist: "",
+          enforceStrongPasswords: true,
+        },
+        notifications: {
+          emailAlerts: true,
+          dailySummary: false,
+          securityAlerts: true,
+          dataUpdates: false,
+        },
+        api: {
+          rateLimit: "100",
+          tokenExpiration: "7",
+          logLevel: "info",
+        },
+        leakCheck: {
+          enabled: false,
+          quota: 0,
+          lastSync: null,
+        },
       }
     },
 
