@@ -1,6 +1,7 @@
 import { graphql } from 'graphql'
 import client from './elasticsearch'
 import { ensureIndex } from './elasticsearch'
+import { db } from './database'
 
 // Type-safe wrapper for Elasticsearch client
 const esClient = client as any
@@ -101,17 +102,21 @@ export const resolvers = {
     // Settings queries
     settings: async () => {
       try {
-        // Try to get settings from Elasticsearch
-        if (!esClient) {
-          return getDefaultSettings()
+        // Try to get settings from database
+        const result = await db.query(
+          'SELECT value FROM settings WHERE key = $1',
+          ['default']
+        )
+        
+        if (result.rows.length > 0) {
+          return result.rows[0].value
         }
-        const result = await esClient.get({
-          index: 'settings',
-          id: 'default',
-        })
-        return result._source || getDefaultSettings()
+        
+        // If no settings found, return default settings
+        return getDefaultSettings()
       } catch (error) {
-        // If settings don't exist, return default settings
+        console.error('Error fetching settings from database:', error)
+        // If database error, return default settings
         return getDefaultSettings()
       }
     },
@@ -129,19 +134,21 @@ export const resolvers = {
         const result = await callLeakCheckAPI(query, type)
         
         // Update quota in settings if available
-        if (result.quota !== undefined && esClient) {
-          await esClient.update({
-            index: 'settings',
-            id: 'default',
-            body: {
-              doc: {
-                leakCheck: {
-                  ...settings.leakCheck,
-                  quota: result.quota,
-                }
-              }
+        if (result.quota !== undefined) {
+          const updatedSettings = {
+            ...settings,
+            leakCheck: {
+              ...settings.leakCheck,
+              quota: result.quota,
             }
-          })
+          }
+          await db.query(
+            `INSERT INTO settings (key, value) 
+             VALUES ($1, $2) 
+             ON CONFLICT (key) 
+             DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+            ['default', updatedSettings]
+          )
         }
 
         return result
@@ -523,12 +530,14 @@ export const resolvers = {
     // Settings mutations
     updateSettings: async (parent: any, { settings }: { settings: any }) => {
       try {
-        await ensureIndex('settings')
-        await esClient.index({
-          index: 'settings',
-          id: 'default',
-          body: settings,
-        })
+        // Update settings in database
+        await db.query(
+          `INSERT INTO settings (key, value) 
+           VALUES ($1, $2) 
+           ON CONFLICT (key) 
+           DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+          ['default', settings]
+        )
         return settings
       } catch (error) {
         console.error('Error updating settings:', error)
@@ -908,18 +917,20 @@ export const resolvers = {
         }
 
         // Update settings with last sync time
-        await esClient.update({
-          index: 'settings',
-          id: 'default',
-          body: {
-            doc: {
-              leakCheck: {
-                ...settings.leakCheck,
-                lastSync: new Date(),
-              }
-            }
+        const updatedSettings = {
+          ...settings,
+          leakCheck: {
+            ...settings.leakCheck,
+            lastSync: new Date().toISOString(),
           }
-        })
+        }
+        await db.query(
+          `INSERT INTO settings (key, value) 
+           VALUES ($1, $2) 
+           ON CONFLICT (key) 
+           DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
+          ['default', updatedSettings]
+        )
 
         return true
       } catch (error) {
