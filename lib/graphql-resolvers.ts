@@ -120,7 +120,11 @@ export const resolvers = {
           security: settings.security || defaults.security,
           notifications: settings.notifications || defaults.notifications,
           api: settings.api || defaults.api,
-          leakCheck: settings.leakCheck || defaults.leakCheck,
+          leakCheck: {
+            enabled: settings.leakCheck?.enabled || defaults.leakCheck.enabled,
+            quota: settings.leakCheck?.quota || defaults.leakCheck.quota,
+            lastSync: settings.leakCheck?.lastSync ? new Date(settings.leakCheck.lastSync) : null,
+          },
         }
         console.log('Returning mapped settings:', mappedSettings)
         return mappedSettings
