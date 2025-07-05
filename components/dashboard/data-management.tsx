@@ -336,70 +336,73 @@ export function DataManagement() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Database Name</TableHead>
-                    <TableHead>Records</TableHead>
-                    <TableHead>Breach Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {getPaginatedData().map((item) => {
-                    if (breachData) {
-                      const database = item as BreachDatabase
-                      return (
-                        <TableRow key={database.id}>
-                          <TableCell className="font-medium">{database.name}</TableCell>
-                          <TableCell>{database.count.toLocaleString()}</TableCell>
-                          <TableCell>{database.breach_date || 'Unknown'}</TableCell>
-                          <TableCell>
-                            <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
-                              Breached
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="outline" size="sm">
-                              <Download className="mr-2 h-4 w-4" />
-                              View
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    } else {
-                      const source = item as DataSource
-                      return (
-                        <TableRow key={source.id}>
-                          <TableCell className="font-medium">{source.name}</TableCell>
-                          <TableCell>{source.recordCount.toLocaleString()}</TableCell>
-                          <TableCell>{new Date(source.lastUpdated).toLocaleString()}</TableCell>
-                          <TableCell>
-                            <span
-                              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                source.status === "active"
-                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                  : source.status === "processing"
-                                    ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                                    : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                              }`}
-                            >
-                              {source.status}
-                            </span>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button variant="outline" size="sm">
-                              <Download className="mr-2 h-4 w-4" />
-                              Export
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    }
-                  })}
-                </TableBody>
-              </Table>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[35%] min-w-[200px]">Database Name</TableHead>
+                      <TableHead className="w-[20%] min-w-[100px]">Records</TableHead>
+                      <TableHead className="w-[25%] min-w-[120px]">Breach Date</TableHead>
+                      <TableHead className="w-[20%] min-w-[100px]">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getPaginatedData().map((item) => {
+                      if (breachData) {
+                        const database = item as BreachDatabase
+                        return (
+                          <TableRow key={database.id}>
+                            <TableCell className="font-medium max-w-0 truncate">
+                              <div className="truncate" title={database.name}>
+                                {database.name}
+                              </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{database.count.toLocaleString()}</TableCell>
+                            <TableCell className="whitespace-nowrap">{database.breach_date || 'Unknown'}</TableCell>
+                            <TableCell>
+                              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                Breached
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      } else {
+                        const source = item as DataSource
+                        return (
+                          <TableRow key={source.id}>
+                            <TableCell className="font-medium max-w-0 truncate">
+                              <div className="truncate" title={source.name}>
+                                {source.name}
+                              </div>
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{source.recordCount.toLocaleString()}</TableCell>
+                            <TableCell className="whitespace-nowrap">{new Date(source.lastUpdated).toLocaleString()}</TableCell>
+                            <TableCell>
+                              <span
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                  source.status === "active"
+                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                    : source.status === "processing"
+                                      ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                                }`}
+                              >
+                                {source.status}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button variant="outline" size="sm" className="h-8 px-2">
+                                <Download className="mr-1 h-3 w-3" />
+                                Export
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      }
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
               
               {/* Pagination */}
               {getTotalPages() > 1 && (
