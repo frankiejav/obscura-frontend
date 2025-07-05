@@ -111,8 +111,9 @@ export const resolvers = {
         
         console.log('Database result:', result.rows.length, 'rows')
         
-        const settings = result.rows.length > 0 ? result.rows[0].value : getDefaultSettings()
-        const defaults = getDefaultSettings()
+        const raw = result.rows.length > 0 ? result.rows[0].value : getDefaultSettings();
+        const settings = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        const defaults = getDefaultSettings();
         // Explicitly map the fields to ensure the shape matches the GraphQL type
         const mappedSettings = {
           general: settings.general || defaults.general,
