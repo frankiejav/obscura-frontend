@@ -50,11 +50,9 @@ if (elasticsearchUrl) {
         username: process.env.ELASTICSEARCH_USERNAME || 'elastic',
         password: process.env.ELASTICSEARCH_PASSWORD || '',
       },
-      ...(isHttps && {
-        tls: {
-          rejectUnauthorized: false, // For development - set to true in production
-        },
-      })
+      tls: {
+        rejectUnauthorized: false, // For self-signed certificates
+      }
     })
   } catch (error) {
     console.error('Invalid Elasticsearch URL:', elasticsearchUrl)
