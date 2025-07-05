@@ -66,7 +66,7 @@ export function SignupForm() {
             <Input
               id="name"
               type="text"
-              placeholder="Agent Name"
+              placeholder="Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="font-mono bg-background/50 border-border/50 focus:border-primary"
@@ -81,7 +81,7 @@ export function SignupForm() {
             <Input
               id="email"
               type="email"
-              placeholder="agent@obscuralabs.io"
+              placeholder="user@obscuralabs.io"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="font-mono bg-background/50 border-border/50 focus:border-primary"
