@@ -34,26 +34,31 @@ const navigationItems = [
     title: "Overview",
     url: "/dashboard",
     icon: Home,
+    roles: ["admin", "client"],
   },
   {
     title: "Search",
     url: "/dashboard/search",
     icon: Search,
+    roles: ["admin", "client"],
   },
   {
     title: "Data Management",
     url: "/dashboard/data",
     icon: Database,
+    roles: ["admin", "client"],
   },
   {
     title: "User Management",
     url: "/dashboard/users",
     icon: Users,
+    roles: ["admin"],
   },
   {
     title: "Settings",
     url: "/dashboard/settings",
     icon: Settings,
+    roles: ["admin", "client"],
   },
 ]
 
@@ -98,6 +103,11 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     }
   }
 
+  // Filter navigation items based on user role
+  const filteredNavigationItems = navigationItems.filter(item => 
+    item.roles.includes(user.role)
+  )
+
   return (
     <Sidebar className="border-r border-white/20 bg-black/90">
       <SidebarHeader className="border-b border-white/20 p-4">
@@ -117,7 +127,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
+              {filteredNavigationItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

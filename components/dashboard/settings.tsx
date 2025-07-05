@@ -11,7 +11,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2 } from "lucide-react"
 
-export function SettingsPage() {
+interface SettingsPageProps {
+  user?: {
+    id: string
+    email: string
+    role: string
+  }
+}
+
+export function SettingsPage({ user }: SettingsPageProps) {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -175,6 +183,9 @@ export function SettingsPage() {
     )
   }
 
+  const isAdmin = user?.role === "admin"
+  const availableTabs = isAdmin ? ["general", "security", "notifications", "api"] : ["general", "security", "notifications"]
+
   return (
     <div className="space-y-6">
       <div>
@@ -183,11 +194,11 @@ export function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          <TabsTrigger value="api">API</TabsTrigger>
+          {isAdmin && <TabsTrigger value="api">API</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="general">
@@ -481,103 +492,105 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="api">
-          <Card>
-            <CardHeader>
-              <CardTitle>API Settings</CardTitle>
-              <CardDescription>Configure API access and rate limits.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="rate-limit">Rate Limit (requests per minute)</Label>
-                <Select
-                  value={settings.api.rateLimit}
-                  onValueChange={(value) =>
-                    setSettings({
-                      ...settings,
-                      api: {
-                        ...settings.api,
-                        rateLimit: value,
-                      },
-                    })
-                  }
-                >
-                  <SelectTrigger id="rate-limit">
-                    <SelectValue placeholder="Select rate limit" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="200">200</SelectItem>
-                    <SelectItem value="500">500</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="token-expiration">Token Expiration (days)</Label>
-                <Select
-                  value={settings.api.tokenExpiration}
-                  onValueChange={(value) =>
-                    setSettings({
-                      ...settings,
-                      api: {
-                        ...settings.api,
-                        tokenExpiration: value,
-                      },
-                    })
-                  }
-                >
-                  <SelectTrigger id="token-expiration">
-                    <SelectValue placeholder="Select expiration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 day</SelectItem>
-                    <SelectItem value="7">7 days</SelectItem>
-                    <SelectItem value="30">30 days</SelectItem>
-                    <SelectItem value="90">90 days</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="log-level">Log Level</Label>
-                <Select
-                  value={settings.api.logLevel}
-                  onValueChange={(value) =>
-                    setSettings({
-                      ...settings,
-                      api: {
-                        ...settings.api,
-                        logLevel: value,
-                      },
-                    })
-                  }
-                >
-                  <SelectTrigger id="log-level">
-                    <SelectValue placeholder="Select log level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="error">Error</SelectItem>
-                    <SelectItem value="warn">Warning</SelectItem>
-                    <SelectItem value="info">Info</SelectItem>
-                    <SelectItem value="debug">Debug</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handleSaveSettings} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
+        {isAdmin && (
+          <TabsContent value="api">
+            <Card>
+              <CardHeader>
+                <CardTitle>API Settings</CardTitle>
+                <CardDescription>Configure API access and rate limits.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="rate-limit">Rate Limit (requests per minute)</Label>
+                  <Select
+                    value={settings.api.rateLimit}
+                    onValueChange={(value) =>
+                      setSettings({
+                        ...settings,
+                        api: {
+                          ...settings.api,
+                          rateLimit: value,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger id="rate-limit">
+                      <SelectValue placeholder="Select rate limit" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                      <SelectItem value="200">200</SelectItem>
+                      <SelectItem value="500">500</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="token-expiration">Token Expiration (days)</Label>
+                  <Select
+                    value={settings.api.tokenExpiration}
+                    onValueChange={(value) =>
+                      setSettings({
+                        ...settings,
+                        api: {
+                          ...settings.api,
+                          tokenExpiration: value,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger id="token-expiration">
+                      <SelectValue placeholder="Select expiration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 day</SelectItem>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                      <SelectItem value="90">90 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="log-level">Log Level</Label>
+                  <Select
+                    value={settings.api.logLevel}
+                    onValueChange={(value) =>
+                      setSettings({
+                        ...settings,
+                        api: {
+                          ...settings.api,
+                          logLevel: value,
+                        },
+                      })
+                    }
+                  >
+                    <SelectTrigger id="log-level">
+                      <SelectValue placeholder="Select log level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="error">Error</SelectItem>
+                      <SelectItem value="warn">Warning</SelectItem>
+                      <SelectItem value="info">Info</SelectItem>
+                      <SelectItem value="debug">Debug</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button onClick={handleSaveSettings} disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   )
