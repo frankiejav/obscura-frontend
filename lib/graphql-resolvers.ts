@@ -28,39 +28,6 @@ function getTotalHits(result: any): number {
   return 0;
 }
 
-// Helper to get default settings
-function getDefaultSettings() {
-  return {
-    general: {
-      apiUrl: "",
-      defaultPageSize: "20",
-      theme: "system",
-    },
-    security: {
-      twoFactorAuth: false,
-      sessionTimeout: "30",
-      ipWhitelist: "",
-      enforceStrongPasswords: true,
-    },
-    notifications: {
-      emailAlerts: true,
-      dailySummary: false,
-      securityAlerts: true,
-      dataUpdates: false,
-    },
-    api: {
-      rateLimit: "100",
-      tokenExpiration: "7",
-      logLevel: "info",
-    },
-    leakCheck: {
-      enabled: false,
-      quota: 0,
-      lastSync: null,
-    },
-  }
-}
-
 // LeakCheck API helper functions
 async function callLeakCheckAPI(query: string, type?: string) {
   // Use our internal API route to protect the API key
@@ -99,79 +66,25 @@ async function fetchLeakCheckDatabases() {
 // Root resolvers
 export const resolvers = {
   Query: {
-    // Settings queries
-    settings: async () => {
-      console.log('Settings resolver called - returning hardcoded object')
-      return {
-        general: {
-          apiUrl: "test",
-          defaultPageSize: "20",
-          theme: "system",
-        },
-        security: {
-          twoFactorAuth: false,
-          sessionTimeout: "30",
-          ipWhitelist: "",
-          enforceStrongPasswords: true,
-        },
-        notifications: {
-          emailAlerts: true,
-          dailySummary: false,
-          securityAlerts: true,
-          dataUpdates: false,
-        },
-        api: {
-          rateLimit: "100",
-          tokenExpiration: "7",
-          logLevel: "info",
-        },
-        leakCheck: {
-          enabled: false,
-          quota: 0,
-          lastSync: null,
-        },
-      }
-    },
-
     // LeakCheck queries
     leakCheckSearch: async (parent: any, { query, type }: { query: string; type?: string }) => {
       try {
-        // Get current settings to check if LeakCheck is enabled
-        const settings = await resolvers.Query.settings() as any
-        
-        if (!settings.leakCheck.enabled) {
-          throw new Error('LeakCheck API is not enabled')
+        // Use ENV or stub for LeakCheck enabled/quota
+        const leakCheckEnabled = !!process.env.LEAKCHECK_API_KEY;
+        if (!leakCheckEnabled) {
+          throw new Error('LeakCheck API is not enabled');
         }
-
-        const result = await callLeakCheckAPI(query, type)
-        
-        // Update quota in settings if available
-        if (result.quota !== undefined) {
-          const updatedSettings = {
-            ...settings,
-            leakCheck: {
-              ...settings.leakCheck,
-              quota: result.quota,
-            }
-          }
-          await db.query(
-            `INSERT INTO settings (key, value) 
-             VALUES ($1, $2) 
-             ON CONFLICT (key) 
-             DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
-            ['default', updatedSettings]
-          )
-        }
-
-        return result
+        const result = await callLeakCheckAPI(query, type);
+        // Just return result, skip quota update logic
+        return result;
       } catch (error) {
-        console.error('LeakCheck search error:', error)
+        console.error('LeakCheck search error:', error);
         return {
           success: false,
           found: 0,
           quota: 0,
           result: [],
-        }
+        };
       }
     },
 
@@ -539,24 +452,6 @@ export const resolvers = {
   },
 
   Mutation: {
-    // Settings mutations
-    updateSettings: async (parent: any, { settings }: { settings: any }) => {
-      try {
-        // Update settings in database
-        await db.query(
-          `INSERT INTO settings (key, value) 
-           VALUES ($1, $2) 
-           ON CONFLICT (key) 
-           DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
-          ['default', settings]
-        )
-        return settings
-      } catch (error) {
-        console.error('Error updating settings:', error)
-        throw new Error('Failed to update settings')
-      }
-    },
-
     // Auth mutations
     login: async (parent: any, { email, password }: { email: string; password: string }) => {
       // Mock authentication - in real app, verify against database
@@ -841,13 +736,10 @@ export const resolvers = {
     // LeakCheck mutations
     syncLeakCheckData: async () => {
       try {
-        // Get current settings
-        const settings = await resolvers.Query.settings() as any
-        
-        if (!settings.leakCheck.enabled) {
-          throw new Error('LeakCheck API is not enabled')
+        const leakCheckEnabled = !!process.env.LEAKCHECK_API_KEY;
+        if (!leakCheckEnabled) {
+          throw new Error('LeakCheck API is not enabled');
         }
-
         // Fetch LeakCheck databases
         const databasesResponse = await fetchLeakCheckDatabases()
         
@@ -927,22 +819,6 @@ export const resolvers = {
             })
           }
         }
-
-        // Update settings with last sync time
-        const updatedSettings = {
-          ...settings,
-          leakCheck: {
-            ...settings.leakCheck,
-            lastSync: new Date().toISOString(),
-          }
-        }
-        await db.query(
-          `INSERT INTO settings (key, value) 
-           VALUES ($1, $2) 
-           ON CONFLICT (key) 
-           DO UPDATE SET value = $2, updated_at = CURRENT_TIMESTAMP`,
-          ['default', updatedSettings]
-        )
 
         return true
       } catch (error) {

@@ -4,85 +4,6 @@ export const schema = buildSchema(`
   scalar DateTime
   scalar JSON
 
-  # Settings types
-  type GeneralSettings {
-    apiUrl: String!
-    defaultPageSize: String!
-    theme: String!
-  }
-
-  type SecuritySettings {
-    twoFactorAuth: Boolean!
-    sessionTimeout: String!
-    ipWhitelist: String!
-    enforceStrongPasswords: Boolean!
-  }
-
-  type NotificationSettings {
-    emailAlerts: Boolean!
-    dailySummary: Boolean!
-    securityAlerts: Boolean!
-    dataUpdates: Boolean!
-  }
-
-  type ApiSettings {
-    rateLimit: String!
-    tokenExpiration: String!
-    logLevel: String!
-  }
-
-  type LeakCheckSettings {
-    enabled: Boolean!
-    quota: Int!
-    lastSync: DateTime
-  }
-
-  type Settings {
-    general: GeneralSettings!
-    security: SecuritySettings!
-    notifications: NotificationSettings!
-    api: ApiSettings!
-    leakCheck: LeakCheckSettings!
-  }
-
-  input GeneralSettingsInput {
-    apiUrl: String!
-    defaultPageSize: String!
-    theme: String!
-  }
-
-  input SecuritySettingsInput {
-    twoFactorAuth: Boolean!
-    sessionTimeout: String!
-    ipWhitelist: String!
-    enforceStrongPasswords: Boolean!
-  }
-
-  input NotificationSettingsInput {
-    emailAlerts: Boolean!
-    dailySummary: Boolean!
-    securityAlerts: Boolean!
-    dataUpdates: Boolean!
-  }
-
-  input ApiSettingsInput {
-    rateLimit: String!
-    tokenExpiration: String!
-    logLevel: String!
-  }
-
-  input LeakCheckSettingsInput {
-    enabled: Boolean!
-  }
-
-  input SettingsInput {
-    general: GeneralSettingsInput!
-    security: SecuritySettingsInput!
-    notifications: NotificationSettingsInput!
-    api: ApiSettingsInput!
-    leakCheck: LeakCheckSettingsInput!
-  }
-
   # LeakCheck types
   type LeakCheckResult {
     email: String!
@@ -252,14 +173,10 @@ export const schema = buildSchema(`
   }
 
   type Query {
-    # Settings queries
-    settings: Settings!
-    
     # User queries
     me: User!
     user(id: ID!): User
     users(first: Int, after: String): [User!]!
-    
     # Notification queries
     notifications(
       first: Int, 
@@ -267,7 +184,6 @@ export const schema = buildSchema(`
       isRead: Boolean
     ): NotificationConnection!
     unreadNotificationCount: Int!
-    
     # Data queries
     dataRecord(id: ID!): DataRecord
     dataRecords(
@@ -275,7 +191,6 @@ export const schema = buildSchema(`
       after: String, 
       source: String
     ): DataRecordConnection!
-    
     # Search
     search(
       term: String!, 
@@ -283,17 +198,14 @@ export const schema = buildSchema(`
       page: Int!, 
       limit: Int!
     ): SearchResult!
-    
     # LeakCheck queries
     leakCheckSearch(
       query: String!, 
       type: String
     ): LeakCheckSearchResult!
-    
     # Data sources
     dataSources: [DataSource!]!
     dataSource(id: ID!): DataSource
-    
     # Audit logs
     auditLogs(
       userId: ID, 
@@ -306,18 +218,13 @@ export const schema = buildSchema(`
   }
 
   type Mutation {
-    # Settings mutations
-    updateSettings(settings: SettingsInput!): Settings!
-    
     # Auth mutations
     login(email: String!, password: String!): AuthPayload!
     refreshToken(token: String!): AuthPayload!
-    
     # User mutations
     createUser(name: String!, email: String!, password: String!, role: UserRole!): User!
     updateUser(id: ID!, name: String, email: String, role: UserRole): User!
     deleteUser(id: ID!): Boolean!
-    
     # Notification mutations
     createNotification(
       title: String!
@@ -329,15 +236,12 @@ export const schema = buildSchema(`
     markNotificationAsRead(id: ID!): Notification!
     markAllNotificationsAsRead: Boolean!
     deleteNotification(id: ID!): Boolean!
-    
     # Data mutations (admin only)
     createDataRecord(input: DataRecordInput!): DataRecord!
     updateDataRecord(id: ID!, input: DataRecordInput!): DataRecord!
     deleteDataRecord(id: ID!): Boolean!
-    
     # Data source mutations (admin only)
     refreshDataSource(id: ID!): DataSource!
-    
     # LeakCheck mutations (admin only)
     syncLeakCheckData: Boolean!
   }

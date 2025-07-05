@@ -20,36 +20,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'LeakCheck API key not configured in environment variables' }, { status: 500 })
     }
 
-    // Check if LeakCheck is enabled via settings
-    const settingsResponse = await fetch(`${request.nextUrl.origin}/api/graphql`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        query: `
-          query {
-            settings {
-              leakCheck {
-                enabled
-              }
-            }
-          }
-        `,
-      }),
-    })
-
-    if (!settingsResponse.ok) {
-      return NextResponse.json({ error: 'Failed to fetch settings' }, { status: 500 })
-    }
-
-    const settingsData = await settingsResponse.json()
-    const leakCheckSettings = settingsData.data?.settings?.leakCheck
-
-    if (!leakCheckSettings?.enabled) {
-      return NextResponse.json({ error: 'LeakCheck API is not enabled' }, { status: 403 })
-    }
-
     // Call LeakCheck API
     const url = new URL('https://leakcheck.io/api/v2/query/' + encodeURIComponent(query))
     if (type && type !== 'auto') {
