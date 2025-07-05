@@ -2,28 +2,67 @@
 
 import { useState, useEffect } from "react"
 import { useAuth } from "@/lib/auth-context"
-import { useRouter } from "next/navigation"
 import { LoginForm } from "@/components/login-form"
 import { SignupForm } from "@/components/signup-form"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import { useRouter } from "next/navigation"
 
-export default function Home() {
+export default function LoginPage() {
   const [isSignup, setIsSignup] = useState(false)
   const { user, isLoading } = useAuth()
   const router = useRouter()
+  const [systemStatus, setSystemStatus] = useState<'online' | 'offline' | 'loading'>('loading')
+  const [uptime, setUptime] = useState(0)
+  const [startTime] = useState(Date.now())
 
+  // Redirect to dashboard if already logged in
   useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        router.replace("/dashboard")
-      } else {
-        router.replace("/login")
-      }
+    if (!isLoading && user) {
+      router.push("/dashboard")
     }
   }, [user, isLoading, router])
 
-  // Show loading while checking auth
+  // SYSTEM ONLINE check
+  useEffect(() => {
+    let isMounted = true
+    const checkSystemStatus = async () => {
+      try {
+        const response = await fetch("/api/system/status")
+        if (response.ok) {
+          const data = await response.json()
+          if (isMounted) setSystemStatus(data.status)
+        } else {
+          if (isMounted) setSystemStatus("offline")
+        }
+      } catch {
+        if (isMounted) setSystemStatus("offline")
+      }
+    }
+    checkSystemStatus()
+    const interval = setInterval(checkSystemStatus, 30000)
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [])
+
+  // Real-time uptime
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setUptime(Math.floor((Date.now() - startTime) / 1000))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [startTime])
+
+  // Format uptime as HH:MM:SS
+  const formatUptime = (seconds: number) => {
+    const h = String(Math.floor(seconds / 3600)).padStart(2, '0')
+    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')
+    const s = String(seconds % 60).padStart(2, '0')
+    return `${h}:${m}:${s}`
+  }
+
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background tactical-grid">
@@ -35,9 +74,7 @@ export default function Home() {
     )
   }
 
-  // Don't show login form if user is already authenticated
   if (user) {
-    console.log("User authenticated, should redirect...")
     return (
       <div className="flex min-h-screen items-center justify-center bg-background tactical-grid">
         <div className="text-center">
@@ -58,10 +95,10 @@ export default function Home() {
               PRIVATE INTELLIGENCE OPERATIONS DASHBOARD FOR THREAT MONITORING AND DIGITAL IDENTITY SECURITY
             </p>
             <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground">
-              <div className="status-indicator status-active"></div>
-              <span>SYSTEM ONLINE</span>
+              <div className={`status-indicator ${systemStatus === 'online' ? 'status-active' : 'status-inactive'}`}></div>
+              <span>SYSTEM {systemStatus === 'loading' ? 'CHECKING...' : systemStatus.toUpperCase()}</span>
               <span className="mx-2">|</span>
-              <span>UPTIME: 72:14:33</span>
+              <span>UPTIME: {formatUptime(uptime)}</span>
             </div>
           </div>
         </div>
@@ -82,4 +119,4 @@ export default function Home() {
       </div>
     </div>
   )
-}
+} 
