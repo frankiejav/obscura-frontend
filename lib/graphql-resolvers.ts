@@ -101,6 +101,7 @@ export const resolvers = {
   Query: {
     // Settings queries
     settings: async () => {
+      console.log('Settings resolver called')
       try {
         // Try to get settings from database
         const result = await db.query(
@@ -108,16 +109,24 @@ export const resolvers = {
           ['default']
         )
         
+        console.log('Database result:', result.rows.length, 'rows')
+        
         if (result.rows.length > 0) {
-          return result.rows[0].value
+          const settings = result.rows[0].value
+          console.log('Returning settings from database:', settings)
+          return settings
         }
         
         // If no settings found, return default settings
-        return getDefaultSettings()
+        const defaultSettings = getDefaultSettings()
+        console.log('Returning default settings:', defaultSettings)
+        return defaultSettings
       } catch (error) {
         console.error('Error fetching settings from database:', error)
         // If database error, return default settings
-        return getDefaultSettings()
+        const defaultSettings = getDefaultSettings()
+        console.log('Returning default settings due to error:', defaultSettings)
+        return defaultSettings
       }
     },
 
