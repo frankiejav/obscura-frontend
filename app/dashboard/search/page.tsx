@@ -455,9 +455,9 @@ export default function SearchPage() {
                       <div className="flex items-start justify-between">
                         <div className="space-y-2 flex-1">
                           <div className="flex items-center gap-2">
-                            <Shield className="w-4 h-4" />
+                            {getSearchTypeIcon(searchType)}
                             <h3 className="font-semibold">{breach.email}</h3>
-                            <Badge variant="destructive">{breach.source.name}</Badge>
+                            <Badge variant="secondary">{breach.source.name}</Badge>
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
@@ -490,18 +490,6 @@ export default function SearchPage() {
                                   <span className="font-medium">Fields:</span> {breach.fields.join(', ')}
                                 </div>
                               </>
-                            )}
-                          </div>
-
-                          <div className="flex gap-2 text-xs">
-                            {breach.source.unverified > 0 && (
-                              <Badge variant="secondary">Unverified: {breach.source.unverified}</Badge>
-                            )}
-                            {breach.source.passwordless > 0 && (
-                              <Badge variant="secondary">Passwordless: {breach.source.passwordless}</Badge>
-                            )}
-                            {breach.source.compilation > 0 && (
-                              <Badge variant="secondary">Compilation: {breach.source.compilation}</Badge>
                             )}
                           </div>
                         </div>
