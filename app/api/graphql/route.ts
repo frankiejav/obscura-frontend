@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { graphql } from "graphql"
 import { schema } from "@/lib/graphql-schema"
-import { resolvers } from "@/lib/graphql-resolvers"
+import { resolvers, customScalars } from "@/lib/graphql-resolvers"
 import { verifyJWT } from "@/lib/jwt"
 import { rateLimit } from "@/lib/rate-limit"
 import { logRequest } from "@/lib/audit-logger"
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     const result = await graphql({
       schema,
       source: query,
-      rootValue: resolvers,
+      rootValue: { ...resolvers, ...customScalars },
       variableValues: variables,
       operationName,
       contextValue: { user },

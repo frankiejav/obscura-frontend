@@ -7,7 +7,7 @@ import { db } from './database'
 const esClient = client as any
 
 // Custom scalar resolvers
-const customScalars = {
+export const customScalars = {
   DateTime: {
     serialize: (value: any) => value instanceof Date ? value.toISOString() : value,
     parseValue: (value: any) => new Date(value),
