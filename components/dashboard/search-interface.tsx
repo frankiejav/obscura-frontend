@@ -84,24 +84,7 @@ export function SearchInterface() {
     }
   }
 
-  // Mock data for demonstration
-  const mockSearch = () => {
-    setIsLoading(true)
-    setTimeout(() => {
-      const mockResults: SearchResult[] = Array.from({ length: 10 }, (_, i) => ({
-        id: `result-${i + 1}`,
-        name: searchType === "all" || searchType === "name" ? `User ${i + 1}` : undefined,
-        email: searchType === "all" || searchType === "email" ? `user${i + 1}@example.com` : undefined,
-        ip: searchType === "all" || searchType === "ip" ? `192.168.1.${i + 1}` : undefined,
-        domain: searchType === "all" || searchType === "domain" ? `example${i + 1}.com` : undefined,
-        source: `Source ${Math.floor(Math.random() * 5) + 1}`,
-        timestamp: new Date().toISOString(),
-      }))
-      setResults(mockResults)
-      setTotalPages(5)
-      setIsLoading(false)
-    }, 1000)
-  }
+
 
   return (
     <div className="space-y-6">
@@ -112,10 +95,7 @@ export function SearchInterface() {
         </CardHeader>
         <CardContent>
           <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              mockSearch()
-            }}
+            onSubmit={handleSearch}
             className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0"
           >
             <div className="flex-1">

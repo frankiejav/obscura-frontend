@@ -52,8 +52,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json()
         setUser(data.user)
       } else {
+        // Handle 401 and other auth errors
         localStorage.removeItem("token")
         setUser(null)
+        if (response.status === 401) {
+          // Redirect to login if token is invalid
+          router.push("/login")
+        }
       }
     } catch (error) {
       console.error("Auth check failed:", error)

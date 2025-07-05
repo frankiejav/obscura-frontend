@@ -1,9 +1,12 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { graphql } from "graphql"
+import { schema } from "@/lib/graphql-schema"
+import { resolvers } from "@/lib/graphql-resolvers"
 import { verifyJWT } from "@/lib/jwt"
 import { rateLimit } from "@/lib/rate-limit"
 import { logRequest } from "@/lib/audit-logger"
+import { checkConnection } from "@/lib/elasticsearch"
 
-// This is a mock implementation of a GraphQL API route
 export async function POST(request: NextRequest) {
   try {
     // Rate limiting
@@ -12,47 +15,83 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    // Authentication check
-    const authHeader = request.headers.get("authorization")
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 })
+    // Check Elasticsearch connection
+    const isConnected = await checkConnection()
+    if (!isConnected) {
+      return NextResponse.json({ error: "Database connection failed" }, { status: 503 })
     }
 
-    const token = authHeader.split(" ")[1]
-    const payload = await verifyJWT(token)
-    if (!payload) {
-      return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 })
+    // Authentication check (optional for some queries)
+    let user = null
+    const authHeader = request.headers.get("authorization")
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1]
+      const payload = await verifyJWT(token)
+      if (payload) {
+        user = {
+          id: payload.sub,
+          email: payload.email,
+          role: payload.role,
+        }
+      }
     }
 
     // Log the request for audit purposes
-    await logRequest({
-      userId: payload.sub,
-      action: "graphql_query",
-      details: {
-        ip: request.ip || "unknown",
-        userAgent: request.headers.get("user-agent") || "unknown",
-      },
-    })
+    if (user) {
+      await logRequest({
+        userId: user.id,
+        action: "graphql_query",
+        details: {
+          ip: request.ip || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown",
+        },
+      })
+    }
 
     // Parse the GraphQL request
     const body = await request.json()
-    const { query, variables } = body
+    const { query, variables, operationName } = body
 
     // Input validation
     if (!query) {
       return NextResponse.json({ error: "Query is required" }, { status: 400 })
     }
 
-    // In a real implementation, this would be handled by a GraphQL server
-    // For this example, we'll return mock data
+    // Execute GraphQL query
+    const result = await graphql({
+      schema,
+      source: query,
+      rootValue: resolvers,
+      variableValues: variables,
+      operationName,
+      contextValue: { user },
+    })
+
+    // Check for GraphQL errors
+    if (result.errors && result.errors.length > 0) {
+      console.error("GraphQL errors:", result.errors)
+      return NextResponse.json({
+        errors: result.errors.map(error => ({
+          message: error.message,
+          locations: error.locations,
+          path: error.path,
+        })),
+      }, { status: 400 })
+    }
+
     return NextResponse.json({
-      data: {
-        // Mock response data would go here
-        // This would be replaced with actual GraphQL execution
-      },
+      data: result.data,
     })
   } catch (error) {
     console.error("GraphQL API error:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
+}
+
+// Handle GET requests for GraphQL Playground
+export async function GET(request: NextRequest) {
+  return NextResponse.json({
+    message: "GraphQL API is running. Use POST to send queries.",
+    playground: "/api/graphql/playground",
+  })
 }

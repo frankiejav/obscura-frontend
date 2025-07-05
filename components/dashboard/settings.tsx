@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -14,11 +14,12 @@ import { Loader2 } from "lucide-react"
 export function SettingsPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("general")
 
   const [settings, setSettings] = useState({
     general: {
-      apiUrl: "https://api.obscuralabs.com/v1",
+      apiUrl: "",
       defaultPageSize: "20",
       theme: "system",
     },
@@ -41,16 +42,137 @@ export function SettingsPage() {
     },
   })
 
-  const handleSaveSettings = () => {
-    setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      toast({
-        title: "Settings saved",
-        description: "Your settings have been saved successfully.",
+  useEffect(() => {
+    fetchSettings()
+  }, [])
+
+  const fetchSettings = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            query {
+              settings {
+                general {
+                  apiUrl
+                  defaultPageSize
+                  theme
+                }
+                security {
+                  twoFactorAuth
+                  sessionTimeout
+                  ipWhitelist
+                  enforceStrongPasswords
+                }
+                notifications {
+                  emailAlerts
+                  dailySummary
+                  securityAlerts
+                  dataUpdates
+                }
+                api {
+                  rateLimit
+                  tokenExpiration
+                  logLevel
+                }
+              }
+            }
+          `,
+        }),
       })
-    }, 1000)
+
+      const data = await response.json()
+      if (data.data?.settings) {
+        setSettings(data.data.settings)
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSaveSettings = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            mutation UpdateSettings($settings: SettingsInput!) {
+              updateSettings(settings: $settings) {
+                general {
+                  apiUrl
+                  defaultPageSize
+                  theme
+                }
+                security {
+                  twoFactorAuth
+                  sessionTimeout
+                  ipWhitelist
+                  enforceStrongPasswords
+                }
+                notifications {
+                  emailAlerts
+                  dailySummary
+                  securityAlerts
+                  dataUpdates
+                }
+                api {
+                  rateLimit
+                  tokenExpiration
+                  logLevel
+                }
+              }
+            }
+          `,
+          variables: {
+            settings,
+          },
+        }),
+      })
+
+      const data = await response.json()
+      if (data.data?.updateSettings) {
+        setSettings(data.data.updateSettings)
+        toast({
+          title: "Settings saved",
+          description: "Your settings have been saved successfully.",
+        })
+      } else {
+        throw new Error(data.errors?.[0]?.message || 'Failed to save settings')
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error)
+      toast({
+        title: "Error",
+        description: "Failed to save settings",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading settings...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

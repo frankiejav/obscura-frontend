@@ -39,7 +39,7 @@ export function SignupForm() {
     }
 
     try {
-      await signup({ name, email, password })
+      await signup(email, password, "client")
       // Navigation is handled in the auth context
     } catch (err) {
       setError(err instanceof Error ? err.message : "Signup failed")

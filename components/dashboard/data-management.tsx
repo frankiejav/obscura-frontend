@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,62 +19,140 @@ type DataSource = {
   status: "active" | "processing" | "error"
 }
 
+type MonthlyRecord = {
+  name: string
+  count: number
+}
+
 export function DataManagement() {
   const [activeTab, setActiveTab] = useState("overview")
-  const [selectedSource, setSelectedSource] = useState<string | null>("all") // Updated default value to "all"
+  const [selectedSource, setSelectedSource] = useState<string | null>("all")
+  const [dataSources, setDataSources] = useState<DataSource[]>([])
+  const [monthlyRecords, setMonthlyRecords] = useState<MonthlyRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  const dataSources: DataSource[] = [
-    {
-      id: "1",
-      name: "Source 1",
-      recordCount: 1250000,
-      lastUpdated: "2023-07-01T12:00:00Z",
-      status: "active",
-    },
-    {
-      id: "2",
-      name: "Source 2",
-      recordCount: 850000,
-      lastUpdated: "2023-06-28T09:30:00Z",
-      status: "active",
-    },
-    {
-      id: "3",
-      name: "Source 3",
-      recordCount: 425000,
-      lastUpdated: "2023-06-30T15:45:00Z",
-      status: "processing",
-    },
-    {
-      id: "4",
-      name: "Source 4",
-      recordCount: 175000,
-      lastUpdated: "2023-06-25T10:15:00Z",
-      status: "active",
-    },
-    {
-      id: "5",
-      name: "Source 5",
-      recordCount: 75000,
-      lastUpdated: "2023-06-20T14:30:00Z",
-      status: "error",
-    },
-  ]
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    fetchDataSources()
+    fetchMonthlyRecords()
+
+    const interval = setInterval(() => {
+      fetchDataSources()
+      fetchMonthlyRecords()
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const fetchDataSources = async () => {
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            query {
+              dataSources {
+                id
+                name
+                recordCount
+                lastUpdated
+                status
+              }
+            }
+          `,
+        }),
+      })
+
+      const data = await response.json()
+      if (data.data?.dataSources) {
+        setDataSources(data.data.dataSources)
+      }
+    } catch (error) {
+      console.error('Error fetching data sources:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchMonthlyRecords = async () => {
+    try {
+      const response = await fetch('/api/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: `
+            query {
+              monthlyRecords: dataRecords(first: 1000) {
+                edges {
+                  node {
+                    timestamp
+                    source
+                  }
+                }
+              }
+            }
+          `,
+        }),
+      })
+
+      const data = await response.json()
+      if (data.data?.monthlyRecords?.edges) {
+        const records = data.data.monthlyRecords.edges.map((edge: any) => edge.node)
+        
+        // Group records by month
+        const monthlyData = records.reduce((acc: any, record: any) => {
+          const date = new Date(record.timestamp)
+          const monthKey = date.toLocaleString('default', { month: 'short' })
+          
+          if (!acc[monthKey]) {
+            acc[monthKey] = 0
+          }
+          acc[monthKey]++
+          return acc
+        }, {})
+
+        // Convert to chart format
+        const chartData = Object.entries(monthlyData).map(([name, count]) => ({
+          name,
+          count: count as number
+        }))
+
+        setMonthlyRecords(chartData)
+      }
+    } catch (error) {
+      console.error('Error fetching monthly records:', error)
+    }
+  }
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await Promise.all([fetchDataSources(), fetchMonthlyRecords()])
+    setRefreshing(false)
+  }
 
   const sourceDistribution = dataSources.map((source) => ({
     name: source.name,
     value: source.recordCount,
   }))
 
-  const recordsByMonth = [
-    { name: "Jan", count: 120000 },
-    { name: "Feb", count: 180000 },
-    { name: "Mar", count: 250000 },
-    { name: "Apr", count: 310000 },
-    { name: "May", count: 420000 },
-    { name: "Jun", count: 580000 },
-    { name: "Jul", count: 650000 },
-  ]
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading data sources...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -94,8 +172,13 @@ export function DataManagement() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="icon">
-            <RefreshCw className="h-4 w-4" />
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={handleRefresh}
+            disabled={refreshing}
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             <span className="sr-only">Refresh</span>
           </Button>
         </div>
@@ -176,7 +259,7 @@ export function DataManagement() {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                     >
                       {sourceDistribution.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -194,7 +277,7 @@ export function DataManagement() {
               </CardHeader>
               <CardContent className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={recordsByMonth}>
+                  <BarChart data={monthlyRecords}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />

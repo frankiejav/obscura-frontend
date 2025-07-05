@@ -1,6 +1,6 @@
 "use client"
 
-import { Bell, User, Shield, Activity } from "lucide-react"
+import { User, Shield, Activity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -12,6 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { NotificationsPanel } from "./notifications-panel"
+import { AdminNotificationForm } from "./admin-notification-form"
+import { useNotifications } from "@/hooks/use-notifications"
+import { useEffect, useState } from "react"
 
 interface DashboardHeaderProps {
   user: {
@@ -23,15 +27,31 @@ interface DashboardHeaderProps {
 }
 
 export function DashboardHeader({ user }: DashboardHeaderProps) {
+  const shouldShowClearance = user.role === "ADMIN" || user.role === "Client"
+  const { createNotification } = useNotifications(user.id)
+  const [isSecureConnection, setIsSecureConnection] = useState(true)
+
+  useEffect(() => {
+    // Check if the connection is secure (HTTPS)
+    const checkSecureConnection = () => {
+      if (typeof window !== 'undefined') {
+        const isSecure = window.location.protocol === 'https:'
+        setIsSecureConnection(isSecure)
+      }
+    }
+
+    checkSecureConnection()
+  }, [])
+
   return (
-    <header className="sticky top-0 z-40 border-b border-orange-500/20 bg-black/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-white/20 bg-black/90 backdrop-blur">
       <div className="flex h-16 items-center justify-between px-6">
         <div className="flex items-center gap-4">
-          <SidebarTrigger className="text-orange-500 hover:bg-orange-500/10" />
+          <SidebarTrigger className="text-white hover:bg-white/10" />
           <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-orange-500" />
+            <Shield className="w-5 h-5 text-white" />
             <div>
-              <h1 className="text-orange-500 font-mono text-lg font-bold tracking-wider">TACTICAL OPERATIONS CENTER</h1>
+              <h1 className="text-white font-mono text-lg font-bold tracking-wider">COMMAND CENTER</h1>
               <p className="text-gray-400 font-mono text-xs">CLASSIFIED DATA ACCESS TERMINAL</p>
             </div>
           </div>
@@ -39,40 +59,50 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-xs font-mono">
-            <Activity className="w-3 h-3 text-green-500" />
-            <span className="text-green-500">SECURE CONNECTION</span>
+            <Activity className={`w-3 h-3 ${isSecureConnection ? 'text-green-500' : 'text-red-500'}`} />
+            <span className={isSecureConnection ? 'text-green-500' : 'text-red-500'}>
+              {isSecureConnection ? 'SECURE CONNECTION' : 'INSECURE CONNECTION'}
+            </span>
           </div>
 
-          <Badge variant="outline" className="border-orange-500/30 text-orange-500 font-mono text-xs">
-            CLEARANCE: L{user.clearance_level}
-          </Badge>
+          {shouldShowClearance && (
+            <Badge variant="outline" className="border-white/30 text-white font-mono text-xs">
+              CLEARANCE: L{user.clearance_level}
+            </Badge>
+          )}
 
-          <Button variant="ghost" size="icon" className="relative text-orange-500 hover:bg-orange-500/10">
-            <Bell className="w-4 h-4" />
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-          </Button>
+          <NotificationsPanel user={user} />
+          
+          {user.role === "ADMIN" && (
+            <AdminNotificationForm 
+              user={user} 
+              onSubmit={createNotification} 
+            />
+          )}
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-orange-500 hover:bg-orange-500/10">
+              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
                 <User className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-black/90 border-orange-500/20 text-white">
-              <DropdownMenuLabel className="font-mono text-xs text-orange-500">AGENT PROFILE</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-orange-500/20" />
-              <DropdownMenuItem className="font-mono text-xs hover:bg-orange-500/10">
+            <DropdownMenuContent align="end" className="w-56 bg-black/95 border-white/20 text-white">
+              <DropdownMenuLabel className="font-mono text-xs text-white">USER PROFILE</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-white/20" />
+              <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
                 <User className="w-3 h-3 mr-2" />
                 {user.email}
               </DropdownMenuItem>
-              <DropdownMenuItem className="font-mono text-xs hover:bg-orange-500/10">
+              <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
                 <Shield className="w-3 h-3 mr-2" />
                 Role: {user.role.toUpperCase()}
               </DropdownMenuItem>
-              <DropdownMenuItem className="font-mono text-xs hover:bg-orange-500/10">
-                <Activity className="w-3 h-3 mr-2" />
-                Clearance: Level {user.clearance_level}
-              </DropdownMenuItem>
+              {shouldShowClearance && (
+                <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
+                  <Activity className="w-3 h-3 mr-2" />
+                  Clearance: {user.clearance_level}
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

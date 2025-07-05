@@ -3,6 +3,73 @@
 scalar DateTime
 scalar JSON
 
+# Settings types
+type GeneralSettings {
+  apiUrl: String!
+  defaultPageSize: String!
+  theme: String!
+}
+
+type SecuritySettings {
+  twoFactorAuth: Boolean!
+  sessionTimeout: String!
+  ipWhitelist: String!
+  enforceStrongPasswords: Boolean!
+}
+
+type NotificationSettings {
+  emailAlerts: Boolean!
+  dailySummary: Boolean!
+  securityAlerts: Boolean!
+  dataUpdates: Boolean!
+}
+
+type ApiSettings {
+  rateLimit: String!
+  tokenExpiration: String!
+  logLevel: String!
+}
+
+type Settings {
+  general: GeneralSettings!
+  security: SecuritySettings!
+  notifications: NotificationSettings!
+  api: ApiSettings!
+}
+
+input GeneralSettingsInput {
+  apiUrl: String!
+  defaultPageSize: String!
+  theme: String!
+}
+
+input SecuritySettingsInput {
+  twoFactorAuth: Boolean!
+  sessionTimeout: String!
+  ipWhitelist: String!
+  enforceStrongPasswords: Boolean!
+}
+
+input NotificationSettingsInput {
+  emailAlerts: Boolean!
+  dailySummary: Boolean!
+  securityAlerts: Boolean!
+  dataUpdates: Boolean!
+}
+
+input ApiSettingsInput {
+  rateLimit: String!
+  tokenExpiration: String!
+  logLevel: String!
+}
+
+input SettingsInput {
+  general: GeneralSettingsInput!
+  security: SecuritySettingsInput!
+  notifications: NotificationSettingsInput!
+  api: ApiSettingsInput!
+}
+
 # Main types
 type User {
   id: ID!
@@ -10,11 +77,42 @@ type User {
   email: String!
   role: UserRole!
   lastActive: DateTime
+  clearance_level: Int
 }
 
 enum UserRole {
   ADMIN
   CLIENT
+}
+
+type Notification {
+  id: ID!
+  title: String!
+  message: String!
+  type: NotificationType!
+  priority: NotificationPriority!
+  isRead: Boolean!
+  createdAt: DateTime!
+  createdBy: User
+  targetUserId: ID
+  metadata: JSON
+}
+
+enum NotificationType {
+  ACCOUNT_CHANGE
+  PASSWORD_CHANGE
+  EMAIL_CHANGE
+  NEW_RECORD
+  ADMIN_ALERT
+  SYSTEM_ALERT
+  SECURITY_ALERT
+}
+
+enum NotificationPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
 }
 
 type DataRecord {
@@ -109,10 +207,21 @@ input DataRecordInput {
 
 # Queries
 type Query {
+  # Settings queries
+  settings: Settings!
+  
   # User queries
   me: User!
   user(id: ID!): User
   users(first: Int, after: String): [User!]!
+  
+  # Notification queries
+  notifications(
+    first: Int, 
+    after: String, 
+    isRead: Boolean
+  ): NotificationConnection!
+  unreadNotificationCount: Int!
   
   # Data queries
   dataRecord(id: ID!): DataRecord
@@ -145,8 +254,22 @@ type Query {
   ): [AuditLog!]!
 }
 
+type NotificationConnection {
+  edges: [NotificationEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type NotificationEdge {
+  node: Notification!
+  cursor: String!
+}
+
 # Mutations
 type Mutation {
+  # Settings mutations
+  updateSettings(settings: SettingsInput!): Settings!
+  
   # Auth mutations
   login(email: String!, password: String!): AuthPayload!
   refreshToken(token: String!): AuthPayload!
@@ -155,6 +278,18 @@ type Mutation {
   createUser(name: String!, email: String!, password: String!, role: UserRole!): User!
   updateUser(id: ID!, name: String, email: String, role: UserRole): User!
   deleteUser(id: ID!): Boolean!
+  
+  # Notification mutations
+  createNotification(
+    title: String!
+    message: String!
+    type: NotificationType!
+    priority: NotificationPriority!
+    targetUserId: ID
+  ): Notification!
+  markNotificationAsRead(id: ID!): Notification!
+  markAllNotificationsAsRead: Boolean!
+  deleteNotification(id: ID!): Boolean!
   
   # Data mutations (admin only)
   createDataRecord(input: DataRecordInput!): DataRecord!

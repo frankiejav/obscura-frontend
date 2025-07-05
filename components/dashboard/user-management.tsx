@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { apiCallWithData } from "@/lib/api-utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -29,36 +30,8 @@ type User = {
 
 export function UserManagement() {
   const { toast } = useToast()
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: "1",
-      name: "Admin User",
-      email: "admin@example.com",
-      role: "admin",
-      lastActive: "2023-07-01T12:00:00Z",
-    },
-    {
-      id: "2",
-      name: "Client User",
-      email: "client@example.com",
-      role: "client",
-      lastActive: "2023-07-02T10:30:00Z",
-    },
-    {
-      id: "3",
-      name: "John Doe",
-      email: "john@example.com",
-      role: "client",
-      lastActive: "2023-06-28T15:45:00Z",
-    },
-    {
-      id: "4",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      role: "client",
-      lastActive: "2023-06-30T09:15:00Z",
-    },
-  ])
+  const [users, setUsers] = useState<User[]>([])
+  const [loading, setLoading] = useState(true)
 
   const [newUser, setNewUser] = useState({
     name: "",
@@ -73,7 +46,42 @@ export function UserManagement() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<User | null>(null)
 
-  const handleAddUser = () => {
+  // Fetch users on component mount
+  useEffect(() => {
+    fetchUsers()
+  }, [])
+
+  const fetchUsers = async () => {
+    setLoading(true)
+    try {
+      const data = await apiCallWithData<{ users: any[] }>('/api/users', {
+        method: 'GET',
+      })
+      
+      if (data.users) {
+        // Transform the data to match the expected format
+        const transformedUsers = data.users.map((user: any) => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          lastActive: user.last_login || user.created_at,
+        }))
+        setUsers(transformedUsers)
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to fetch users",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleAddUser = async () => {
     if (!newUser.name || !newUser.email || !newUser.password) {
       toast({
         title: "Missing fields",
@@ -83,58 +91,126 @@ export function UserManagement() {
       return
     }
 
-    const id = (users.length + 1).toString()
-    const now = new Date().toISOString()
+    try {
+      const data = await apiCallWithData<{ user: any }>('/api/users', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: newUser.name,
+          email: newUser.email,
+          password: newUser.password,
+          role: newUser.role,
+        }),
+      })
+      if (data.user) {
+        // Transform the user data to match expected format
+        const newUserData = {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role,
+          lastActive: data.user.last_login || data.user.created_at,
+        }
+        
+        setUsers([...users, newUserData])
+        setNewUser({
+          name: "",
+          email: "",
+          role: "client",
+          password: "",
+        })
+        setIsAddDialogOpen(false)
 
-    setUsers([
-      ...users,
-      {
-        id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-        lastActive: now,
-      },
-    ])
-
-    setNewUser({
-      name: "",
-      email: "",
-      role: "client",
-      password: "",
-    })
-
-    setIsAddDialogOpen(false)
-
-    toast({
-      title: "User added",
-      description: `${newUser.name} has been added successfully.`,
-    })
+        toast({
+          title: "User added",
+          description: `${newUser.name} has been added successfully.`,
+        })
+      }
+    } catch (error) {
+      console.error('Error creating user:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create user",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleEditUser = () => {
+  const handleEditUser = async () => {
     if (!editingUser) return
 
-    setUsers(users.map((user) => (user.id === editingUser.id ? { ...editingUser } : user)))
+    try {
+      const data = await apiCallWithData<{ user: any }>(`/api/users/${editingUser.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: editingUser.name,
+          email: editingUser.email,
+          role: editingUser.role,
+        }),
+      })
+      if (data.user) {
+        // Transform the user data to match expected format
+        const updatedUserData = {
+          id: data.user.id,
+          name: data.user.name,
+          email: data.user.email,
+          role: data.user.role,
+          lastActive: data.user.last_login || data.user.created_at,
+        }
+        
+        setUsers(users.map((user) => (user.id === editingUser.id ? updatedUserData : user)))
+        setIsEditDialogOpen(false)
 
-    setIsEditDialogOpen(false)
-
-    toast({
-      title: "User updated",
-      description: `${editingUser.name} has been updated successfully.`,
-    })
+        toast({
+          title: "User updated",
+          description: `${editingUser.name} has been updated successfully.`,
+        })
+      }
+    } catch (error) {
+      console.error('Error updating user:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update user",
+        variant: "destructive",
+      })
+    }
   }
 
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async () => {
     if (!userToDelete) return
 
-    setUsers(users.filter((user) => user.id !== userToDelete.id))
-    setIsDeleteDialogOpen(false)
+    try {
+      await apiCallWithData(`/api/users/${userToDelete.id}`, {
+        method: 'DELETE',
+      })
 
-    toast({
-      title: "User deleted",
-      description: `${userToDelete.name} has been deleted successfully.`,
-    })
+      setUsers(users.filter((user) => user.id !== userToDelete.id))
+      setIsDeleteDialogOpen(false)
+
+      toast({
+        title: "User deleted",
+        description: `${userToDelete.name} has been deleted successfully.`,
+      })
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete user",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading users...</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

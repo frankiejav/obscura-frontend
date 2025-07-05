@@ -26,10 +26,20 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="tactical-grid w-16 h-16 mx-auto mb-4 animate-pulse border border-orange-500/30"></div>
-          <p className="text-orange-500 font-mono tracking-wider text-sm">AUTHENTICATING...</p>
+      <div className="min-h-screen bg-black tactical-grid flex items-center justify-center">
+        <div className="tactical-card p-8 max-w-md">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <div className="status-indicator status-processing"></div>
+              <p className="text-primary font-mono tracking-wider text-sm">AUTHENTICATING...</p>
+            </div>
+            <p className="text-muted-foreground font-mono text-xs">
+              VERIFYING CREDENTIALS
+            </p>
+          </div>
         </div>
       </div>
     )
@@ -37,10 +47,20 @@ export default function DashboardLayout({
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="tactical-grid w-16 h-16 mx-auto mb-4 animate-pulse border border-orange-500/30"></div>
-          <p className="text-orange-500 font-mono tracking-wider text-sm">REDIRECTING TO LOGIN...</p>
+      <div className="min-h-screen bg-black tactical-grid flex items-center justify-center">
+        <div className="tactical-card p-8 max-w-md">
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+            <div className="flex items-center justify-center gap-2">
+              <div className="status-indicator status-processing"></div>
+              <p className="text-primary font-mono tracking-wider text-sm">REDIRECTING TO LOGIN...</p>
+            </div>
+            <p className="text-muted-foreground font-mono text-xs">
+              INITIALIZING SECURE ACCESS
+            </p>
+          </div>
         </div>
       </div>
     )
