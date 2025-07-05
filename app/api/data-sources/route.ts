@@ -17,36 +17,27 @@ export async function GET() {
       }])
     }
 
-    // Get record counts from different indices
+    // Get record counts from different indices using simple count queries
     const [emailsResult, personalInfoResult, recordsResult] = await Promise.all([
       esClient.search({
         index: 'obscura_emails',
         body: {
           size: 0,
-          aggs: {
-            total_records: { value_count: { field: '_id' } },
-            sources: { terms: { field: 'source', size: 100 } }
-          }
+          query: { match_all: {} }
         } as any,
       }),
       esClient.search({
         index: 'obscura_personal_info',
         body: {
           size: 0,
-          aggs: {
-            total_records: { value_count: { field: '_id' } },
-            sources: { terms: { field: 'source', size: 100 } }
-          }
+          query: { match_all: {} }
         } as any,
       }),
       esClient.search({
         index: 'obscura_records',
         body: {
           size: 0,
-          aggs: {
-            total_records: { value_count: { field: '_id' } },
-            sources: { terms: { field: 'source', size: 100 } }
-          }
+          query: { match_all: {} }
         } as any,
       })
     ])
@@ -55,7 +46,7 @@ export async function GET() {
     const dataSources = []
     
     // Add email data source
-    const emailCount = emailsResult.aggregations?.total_records?.value || 0
+    const emailCount = emailsResult.hits?.total?.value || 0
     if (emailCount > 0) {
       dataSources.push({
         id: 'emails',
@@ -67,7 +58,7 @@ export async function GET() {
     }
 
     // Add personal info data source
-    const personalInfoCount = personalInfoResult.aggregations?.total_records?.value || 0
+    const personalInfoCount = personalInfoResult.hits?.total?.value || 0
     if (personalInfoCount > 0) {
       dataSources.push({
         id: 'personal_info',
@@ -79,7 +70,7 @@ export async function GET() {
     }
 
     // Add general records data source
-    const recordsCount = recordsResult.aggregations?.total_records?.value || 0
+    const recordsCount = recordsResult.hits?.total?.value || 0
     if (recordsCount > 0) {
       dataSources.push({
         id: 'records',
