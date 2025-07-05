@@ -9,18 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/lib/auth-context"
 import { Loader2 } from "lucide-react"
 
-interface SettingsPageProps {
-  user?: {
-    id: string
-    email: string
-    role: string
-  }
-}
-
-export function SettingsPage({ user }: SettingsPageProps) {
+export function SettingsPage() {
   const { toast } = useToast()
+  const { user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState("general")
