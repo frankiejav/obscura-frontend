@@ -49,77 +49,35 @@ export function DashboardOverview() {
     setLoading(true)
     try {
       // Fetch data sources
-      const sourcesResponse = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query {
-              dataSources {
-                id
-                name
-                recordCount
-                lastUpdated
-                status
-              }
-            }
-          `,
-        }),
-      })
-
-      const sourcesData = await sourcesResponse.json()
-      if (sourcesData.data?.dataSources) {
-        setDataSources(sourcesData.data.dataSources)
-        const totalRecords = sourcesData.data.dataSources.reduce(
+      const sourcesResponse = await fetch('/api/data-sources')
+      if (sourcesResponse.ok) {
+        const dataSources = await sourcesResponse.json()
+        setDataSources(dataSources)
+        const totalRecords = dataSources.reduce(
           (sum: number, ds: DataSource) => sum + ds.recordCount,
           0
         )
-        const activeSources = sourcesData.data.dataSources.filter(
+        const activeSources = dataSources.filter(
           (ds: DataSource) => ds.status === 'ACTIVE'
         ).length
 
         setStats({
           totalRecords,
-          totalSources: sourcesData.data.dataSources.length,
+          totalSources: dataSources.length,
           activeSources,
           recentRecords: 0, // Will be updated below
         })
       }
 
       // Fetch recent records
-      const recentResponse = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query {
-              dataRecords(first: 10) {
-                edges {
-                  node {
-                    id
-                    name
-                    email
-                    ip
-                    domain
-                    source
-                    timestamp
-                  }
-                }
-              }
-            }
-          `,
-        }),
-      })
-
-      const recentData = await recentResponse.json()
-      if (recentData.data?.dataRecords?.edges) {
-        const records = recentData.data.dataRecords.edges.map((edge: any) => edge.node)
-        setRecentRecords(records)
-        setStats(prev => ({ ...prev, recentRecords: records.length }))
+      const recentResponse = await fetch('/api/data-records?first=10')
+      if (recentResponse.ok) {
+        const data = await recentResponse.json()
+        if (data.edges) {
+          const records = data.edges.map((edge: any) => edge.node)
+          setRecentRecords(records)
+          setStats(prev => ({ ...prev, recentRecords: records.length }))
+        }
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error)

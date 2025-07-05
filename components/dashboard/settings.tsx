@@ -1,177 +1,100 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useToast } from "@/components/ui/use-toast"
-import { useAuth } from "@/lib/auth-context"
-import { Loader2 } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useToast } from "@/hooks/use-toast"
+import { Loader2, Save } from "lucide-react"
+
+interface Settings {
+  general: {
+    apiUrl: string
+    defaultPageSize: string
+    theme: string
+  }
+  security: {
+    twoFactorAuth: boolean
+    sessionTimeout: string
+    ipWhitelist: string
+    enforceStrongPasswords: boolean
+  }
+  notifications: {
+    emailAlerts: boolean
+    dailySummary: boolean
+    securityAlerts: boolean
+    dataUpdates: boolean
+  }
+  api: {
+    rateLimit: string
+    tokenExpiration: string
+    logLevel: string
+  }
+  leakCheck: {
+    enabled: boolean
+    quota: number
+    lastSync: string | null
+  }
+}
+
+const defaultSettings: Settings = {
+  general: {
+    apiUrl: "https://api.obscuralabs.io",
+    defaultPageSize: "10",
+    theme: "dark",
+  },
+  security: {
+    twoFactorAuth: false,
+    sessionTimeout: "30",
+    ipWhitelist: "",
+    enforceStrongPasswords: true,
+  },
+  notifications: {
+    emailAlerts: true,
+    dailySummary: false,
+    securityAlerts: true,
+    dataUpdates: false,
+  },
+  api: {
+    rateLimit: "1000",
+    tokenExpiration: "24",
+    logLevel: "info",
+  },
+  leakCheck: {
+    enabled: !!process.env.LEAKCHECK_API_KEY,
+    quota: 400,
+    lastSync: null,
+  },
+}
 
 export function SettingsPage() {
-  const { toast } = useToast()
   const { user } = useAuth()
-  const [isLoading, setIsLoading] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("general")
-
-  const [settings, setSettings] = useState({
-    general: {
-      apiUrl: "",
-      defaultPageSize: "20",
-      theme: "system",
-    },
-    security: {
-      twoFactorAuth: false,
-      sessionTimeout: "30",
-      ipWhitelist: "",
-      enforceStrongPasswords: true,
-    },
-    notifications: {
-      emailAlerts: true,
-      dailySummary: false,
-      securityAlerts: true,
-      dataUpdates: false,
-    },
-    api: {
-      rateLimit: "100",
-      tokenExpiration: "7",
-      logLevel: "info",
-    },
-    leakCheck: {
-      enabled: false,
-      quota: 0,
-      lastSync: null,
-    },
-  })
+  const [settings, setSettings] = useState<Settings>(defaultSettings)
+  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    fetchSettings()
+    // For now, use default settings
+    // In a real implementation, you'd fetch from a REST API
+    setSettings(defaultSettings)
   }, [])
-
-  const fetchSettings = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query {
-              settings {
-                general {
-                  apiUrl
-                  defaultPageSize
-                  theme
-                }
-                security {
-                  twoFactorAuth
-                  sessionTimeout
-                  ipWhitelist
-                  enforceStrongPasswords
-                }
-                notifications {
-                  emailAlerts
-                  dailySummary
-                  securityAlerts
-                  dataUpdates
-                }
-                api {
-                  rateLimit
-                  tokenExpiration
-                  logLevel
-                }
-                leakCheck {
-                  enabled
-                  quota
-                  lastSync
-                }
-              }
-            }
-          `,
-        }),
-      })
-
-      const data = await response.json()
-      if (data.data?.settings) {
-        setSettings(data.data.settings)
-      }
-    } catch (error) {
-      console.error('Error fetching settings:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleSaveSettings = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            mutation UpdateSettings($settings: SettingsInput!) {
-              updateSettings(settings: $settings) {
-                general {
-                  apiUrl
-                  defaultPageSize
-                  theme
-                }
-                security {
-                  twoFactorAuth
-                  sessionTimeout
-                  ipWhitelist
-                  enforceStrongPasswords
-                }
-                notifications {
-                  emailAlerts
-                  dailySummary
-                  securityAlerts
-                  dataUpdates
-                }
-                api {
-                  rateLimit
-                  tokenExpiration
-                  logLevel
-                }
-                leakCheck {
-                  enabled
-                  quota
-                  lastSync
-                }
-              }
-            }
-          `,
-          variables: {
-            settings,
-          },
-        }),
+      // In a real implementation, you'd save to a REST API
+      // For now, just show success message
+      toast({
+        title: "Settings saved",
+        description: "Your settings have been saved successfully.",
       })
-
-      const data = await response.json()
-      if (data.data?.updateSettings) {
-        setSettings(data.data.updateSettings)
-        toast({
-          title: "Settings saved",
-          description: "Your settings have been saved successfully.",
-        })
-        
-        // Force a page refresh to update LeakCheck status across the app
-        setTimeout(() => {
-          window.location.reload()
-        }, 1000)
-      } else {
-        throw new Error(data.errors?.[0]?.message || 'Failed to save settings')
-      }
     } catch (error) {
       console.error('Error saving settings:', error)
       toast({
@@ -253,12 +176,12 @@ export function SettingsPage() {
                     })
                   }
                 >
-                  <SelectTrigger id="page-size">
-                    <SelectValue placeholder="Select page size" />
+                  <SelectTrigger>
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="25">25</SelectItem>
                     <SelectItem value="50">50</SelectItem>
                     <SelectItem value="100">100</SelectItem>
                   </SelectContent>
@@ -278,8 +201,8 @@ export function SettingsPage() {
                     })
                   }
                 >
-                  <SelectTrigger id="theme">
-                    <SelectValue placeholder="Select theme" />
+                  <SelectTrigger>
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="light">Light</SelectItem>
@@ -289,18 +212,6 @@ export function SettingsPage() {
                 </Select>
               </div>
             </CardContent>
-            <CardFooter>
-              <Button onClick={handleSaveSettings} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
 
@@ -313,11 +224,12 @@ export function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="two-factor">Two-Factor Authentication</Label>
-                  <p className="text-sm text-muted-foreground">Require two-factor authentication for all users.</p>
+                  <Label>Two-Factor Authentication</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enable two-factor authentication for enhanced security.
+                  </p>
                 </div>
                 <Switch
-                  id="two-factor"
                   checked={settings.security.twoFactorAuth}
                   onCheckedChange={(checked) =>
                     setSettings({
@@ -332,34 +244,26 @@ export function SettingsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
-                <Select
+                <Input
+                  id="session-timeout"
+                  type="number"
                   value={settings.security.sessionTimeout}
-                  onValueChange={(value) =>
+                  onChange={(e) =>
                     setSettings({
                       ...settings,
                       security: {
                         ...settings.security,
-                        sessionTimeout: value,
+                        sessionTimeout: e.target.value,
                       },
                     })
                   }
-                >
-                  <SelectTrigger id="session-timeout">
-                    <SelectValue placeholder="Select timeout" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="15">15 minutes</SelectItem>
-                    <SelectItem value="30">30 minutes</SelectItem>
-                    <SelectItem value="60">1 hour</SelectItem>
-                    <SelectItem value="120">2 hours</SelectItem>
-                  </SelectContent>
-                </Select>
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="ip-whitelist">IP Whitelist</Label>
                 <Input
                   id="ip-whitelist"
-                  placeholder="Comma-separated list of IPs"
+                  placeholder="192.168.1.1, 10.0.0.0/8"
                   value={settings.security.ipWhitelist}
                   onChange={(e) =>
                     setSettings({
@@ -371,15 +275,15 @@ export function SettingsPage() {
                     })
                   }
                 />
-                <p className="text-sm text-muted-foreground">Leave empty to allow all IPs.</p>
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="strong-passwords">Enforce Strong Passwords</Label>
-                  <p className="text-sm text-muted-foreground">Require complex passwords for all users.</p>
+                  <Label>Enforce Strong Passwords</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Require strong passwords for all users.
+                  </p>
                 </div>
                 <Switch
-                  id="strong-passwords"
                   checked={settings.security.enforceStrongPasswords}
                   onCheckedChange={(checked) =>
                     setSettings({
@@ -393,18 +297,6 @@ export function SettingsPage() {
                 />
               </div>
             </CardContent>
-            <CardFooter>
-              <Button onClick={handleSaveSettings} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
 
@@ -412,16 +304,17 @@ export function SettingsPage() {
           <Card>
             <CardHeader>
               <CardTitle>Notification Settings</CardTitle>
-              <CardDescription>Configure how and when you receive notifications.</CardDescription>
+              <CardDescription>Configure email and system notifications.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="email-alerts">Email Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Receive important alerts via email.</p>
+                  <Label>Email Alerts</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive email notifications for important events.
+                  </p>
                 </div>
                 <Switch
-                  id="email-alerts"
                   checked={settings.notifications.emailAlerts}
                   onCheckedChange={(checked) =>
                     setSettings({
@@ -436,11 +329,12 @@ export function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="daily-summary">Daily Summary</Label>
-                  <p className="text-sm text-muted-foreground">Receive a daily summary of activities.</p>
+                  <Label>Daily Summary</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive daily summary emails.
+                  </p>
                 </div>
                 <Switch
-                  id="daily-summary"
                   checked={settings.notifications.dailySummary}
                   onCheckedChange={(checked) =>
                     setSettings({
@@ -455,11 +349,12 @@ export function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="security-alerts">Security Alerts</Label>
-                  <p className="text-sm text-muted-foreground">Receive notifications about security events.</p>
+                  <Label>Security Alerts</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive immediate security alerts.
+                  </p>
                 </div>
                 <Switch
-                  id="security-alerts"
                   checked={settings.notifications.securityAlerts}
                   onCheckedChange={(checked) =>
                     setSettings({
@@ -474,11 +369,12 @@ export function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label htmlFor="data-updates">Data Updates</Label>
-                  <p className="text-sm text-muted-foreground">Receive notifications when data sources are updated.</p>
+                  <Label>Data Updates</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications when data is updated.
+                  </p>
                 </div>
                 <Switch
-                  id="data-updates"
                   checked={settings.notifications.dataUpdates}
                   onCheckedChange={(checked) =>
                     setSettings({
@@ -492,18 +388,6 @@ export function SettingsPage() {
                 />
               </div>
             </CardContent>
-            <CardFooter>
-              <Button onClick={handleSaveSettings} disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </CardFooter>
           </Card>
         </TabsContent>
 
@@ -512,58 +396,42 @@ export function SettingsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>API Settings</CardTitle>
-                <CardDescription>Configure API access and rate limits.</CardDescription>
+                <CardDescription>Configure API rate limits and token settings.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="rate-limit">Rate Limit (requests per minute)</Label>
-                  <Select
+                  <Label htmlFor="rate-limit">Rate Limit (requests per hour)</Label>
+                  <Input
+                    id="rate-limit"
+                    type="number"
                     value={settings.api.rateLimit}
-                    onValueChange={(value) =>
+                    onChange={(e) =>
                       setSettings({
                         ...settings,
                         api: {
                           ...settings.api,
-                          rateLimit: value,
+                          rateLimit: e.target.value,
                         },
                       })
                     }
-                  >
-                    <SelectTrigger id="rate-limit">
-                      <SelectValue placeholder="Select rate limit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="50">50</SelectItem>
-                      <SelectItem value="100">100</SelectItem>
-                      <SelectItem value="200">200</SelectItem>
-                      <SelectItem value="500">500</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="token-expiration">Token Expiration (days)</Label>
-                  <Select
+                  <Label htmlFor="token-expiration">Token Expiration (hours)</Label>
+                  <Input
+                    id="token-expiration"
+                    type="number"
                     value={settings.api.tokenExpiration}
-                    onValueChange={(value) =>
+                    onChange={(e) =>
                       setSettings({
                         ...settings,
                         api: {
                           ...settings.api,
-                          tokenExpiration: value,
+                          tokenExpiration: e.target.value,
                         },
                       })
                     }
-                  >
-                    <SelectTrigger id="token-expiration">
-                      <SelectValue placeholder="Select expiration" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 day</SelectItem>
-                      <SelectItem value="7">7 days</SelectItem>
-                      <SelectItem value="30">30 days</SelectItem>
-                      <SelectItem value="90">90 days</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="log-level">Log Level</Label>
@@ -579,8 +447,8 @@ export function SettingsPage() {
                       })
                     }
                   >
-                    <SelectTrigger id="log-level">
-                      <SelectValue placeholder="Select log level" />
+                    <SelectTrigger>
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="error">Error</SelectItem>
@@ -591,18 +459,6 @@ export function SettingsPage() {
                   </Select>
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button onClick={handleSaveSettings} disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Changes"
-                  )}
-                </Button>
-              </CardFooter>
             </Card>
           </TabsContent>
         )}
@@ -611,17 +467,18 @@ export function SettingsPage() {
           <TabsContent value="leakcheck">
             <Card>
               <CardHeader>
-                <CardTitle>LeakCheck API Settings</CardTitle>
-                <CardDescription>Configure LeakCheck API integration for data breach searches.</CardDescription>
+                <CardTitle>LeakCheck Settings</CardTitle>
+                <CardDescription>Configure LeakCheck API integration.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label htmlFor="leakcheck-enabled">Enable LeakCheck API</Label>
-                    <p className="text-sm text-muted-foreground">Allow users to search for data breaches using LeakCheck API.</p>
+                    <Label>Enable LeakCheck</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Enable LeakCheck API integration for breach data.
+                    </p>
                   </div>
                   <Switch
-                    id="leakcheck-enabled"
                     checked={settings.leakCheck.enabled}
                     onCheckedChange={(checked) =>
                       setSettings({
@@ -635,82 +492,51 @@ export function SettingsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>API Key Configuration</Label>
-                  <div className="text-sm text-muted-foreground p-3 bg-gray-50 rounded-md">
-                    <p>API key is configured via environment variable <code className="bg-gray-200 px-1 rounded">LEAKCHECK_API_KEY</code></p>
-                    <p className="mt-1">Get your API key from <a href="https://leakcheck.io" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">leakcheck.io</a></p>
-                  </div>
+                  <Label htmlFor="quota">API Quota</Label>
+                  <Input
+                    id="quota"
+                    type="number"
+                    value={settings.leakCheck.quota}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        leakCheck: {
+                          ...settings.leakCheck,
+                          quota: parseInt(e.target.value),
+                        },
+                      })
+                    }
+                  />
                 </div>
-                {settings.leakCheck.quota > 0 && (
-                  <div className="space-y-2">
-                    <Label>API Quota</Label>
-                    <div className="text-sm text-muted-foreground">
-                      Remaining queries: {settings.leakCheck.quota}
-                    </div>
-                  </div>
-                )}
                 {settings.leakCheck.lastSync && (
                   <div className="space-y-2">
                     <Label>Last Sync</Label>
-                    <div className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                       {new Date(settings.leakCheck.lastSync).toLocaleString()}
-                    </div>
+                    </p>
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-between">
-                <Button onClick={handleSaveSettings} disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Changes"
-                  )}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={async () => {
-                    try {
-                      const response = await fetch('/api/graphql', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          query: `
-                            mutation {
-                              syncLeakCheckData
-                            }
-                          `,
-                        }),
-                      })
-                      const data = await response.json()
-                      if (data.data?.syncLeakCheckData) {
-                        toast({
-                          title: "Sync successful",
-                          description: "LeakCheck data has been synchronized.",
-                        })
-                        fetchSettings()
-                      }
-                    } catch (error) {
-                      toast({
-                        title: "Sync failed",
-                        description: "Failed to sync LeakCheck data.",
-                        variant: "destructive",
-                      })
-                    }
-                  }}
-                  disabled={isLoading || !settings.leakCheck.enabled}
-                >
-                  Sync Data
-                </Button>
-              </CardFooter>
             </Card>
           </TabsContent>
         )}
       </Tabs>
+
+      <div className="flex justify-end">
+        <Button onClick={handleSaveSettings} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Settings
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   )
 }

@@ -144,103 +144,54 @@ export default function SearchPage() {
     }
   }
 
-  const performSearch = async () => {
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!searchTerm.trim()) return
+
     setLoading(true)
     setLeakCheckLoading(true)
-    
+    setResults(null)
+    setLeakCheckResults(null)
+
     try {
-      // Perform internal search
-      const internalResponse = await fetch('/api/graphql', {
+      // Search internal data
+      const response = await fetch('/api/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          query: `
-            query Search($term: String!, $type: String!, $page: Int!, $limit: Int!, $source: String, $fromDate: String, $toDate: String) {
-              search(term: $term, type: $type, page: $page, limit: $limit, source: $source, fromDate: $fromDate, toDate: $toDate) {
-                results {
-                  id
-                  name
-                  email
-                  ip
-                  domain
-                  source
-                  timestamp
-                  additionalData
-                }
-                pagination {
-                  total
-                  pages
-                  current
-                }
-              }
-            }
-          `,
-          variables: {
-            term: searchTerm,
-            type: searchType,
-            page: currentPage,
-            limit: 20,
-            source: source === 'all' ? undefined : source || undefined,
-            fromDate: fromDate || undefined,
-            toDate: toDate || undefined,
-          },
+          term: searchTerm,
+          type: searchType,
+          page: currentPage,
+          limit: 10,
         }),
       })
 
-      const internalData = await internalResponse.json()
-      if (internalData.data?.search) {
-        setResults(internalData.data.search)
+      if (response.ok) {
+        const data = await response.json()
+        setResults(data)
       }
 
-      // Perform LeakCheck search if enabled
-      if (leakCheckEnabled && searchTerm.trim()) {
-        const leakCheckResponse = await fetch('/api/graphql', {
+      // Search LeakCheck if enabled
+      if (leakCheckEnabled) {
+        const leakCheckResponse = await fetch('/api/leakcheck', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            query: `
-              query LeakCheckSearch($query: String!, $type: String) {
-                leakCheckSearch(query: $query, type: $type) {
-                  success
-                  found
-                  quota
-                  result {
-                    email
-                    source {
-                      name
-                      breach_date
-                      unverified
-                      passwordless
-                      compilation
-                    }
-                    first_name
-                    last_name
-                    username
-                    fields
-                  }
-                }
-              }
-            `,
-            variables: {
-              query: searchTerm,
-              type: leakCheckType,
-            },
+            query: searchTerm,
           }),
         })
 
-        const leakCheckData = await leakCheckResponse.json()
-        if (leakCheckData.data?.leakCheckSearch) {
-          setLeakCheckResults(leakCheckData.data.leakCheckSearch)
+        if (leakCheckResponse.ok) {
+          const data = await leakCheckResponse.json()
+          setLeakCheckResults(data)
         }
-      } else {
-        setLeakCheckResults(null)
       }
     } catch (error) {
-      console.error('Error performing search:', error)
+      console.error('Search failed:', error)
       setLeakCheckResults({
         success: false,
         found: 0,
@@ -253,14 +204,34 @@ export default function SearchPage() {
     }
   }
 
-  const handleSearch = () => {
-    setCurrentPage(1)
-    performSearch()
-  }
-
   const handlePageChange = (page: number) => {
     setCurrentPage(page)
-    performSearch()
+    // Trigger search with current parameters
+    if (searchTerm.trim()) {
+      // Re-run search with new page
+      setLoading(true)
+      fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          term: searchTerm,
+          type: searchType,
+          page: page,
+          limit: 10,
+        }),
+      })
+      .then(response => response.json())
+      .then(data => setResults(data))
+      .catch(error => console.error('Search failed:', error))
+      .finally(() => setLoading(false))
+    }
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleSearch(e as any)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -311,7 +282,7 @@ export default function SearchPage() {
                 placeholder="Enter search term..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onKeyPress={handleKeyPress}
               />
             </div>
 

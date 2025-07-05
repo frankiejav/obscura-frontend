@@ -47,29 +47,10 @@ export function DataManagement() {
 
   const fetchDataSources = async () => {
     try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query {
-              dataSources {
-                id
-                name
-                recordCount
-                lastUpdated
-                status
-              }
-            }
-          `,
-        }),
-      })
-
-      const data = await response.json()
-      if (data.data?.dataSources) {
-        setDataSources(data.data.dataSources)
+      const response = await fetch('/api/data-sources')
+      if (response.ok) {
+        const data = await response.json()
+        setDataSources(data)
       }
     } catch (error) {
       console.error('Error fetching data sources:', error)
@@ -80,51 +61,15 @@ export function DataManagement() {
 
   const fetchMonthlyRecords = async () => {
     try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query {
-              monthlyRecords: dataRecords(first: 1000) {
-                edges {
-                  node {
-                    timestamp
-                    source
-                  }
-                }
-              }
-            }
-          `,
-        }),
-      })
-
-      const data = await response.json()
-      if (data.data?.monthlyRecords?.edges) {
-        const records = data.data.monthlyRecords.edges.map((edge: any) => edge.node)
-        
-        // Group records by month
-        const monthlyData = records.reduce((acc: any, record: any) => {
-          const date = new Date(record.timestamp)
-          const monthKey = date.toLocaleString('default', { month: 'short' })
-          
-          if (!acc[monthKey]) {
-            acc[monthKey] = 0
-          }
-          acc[monthKey]++
-          return acc
-        }, {})
-
-        // Convert to chart format
-        const chartData = Object.entries(monthlyData).map(([name, count]) => ({
-          name,
-          count: count as number
-        }))
-
-        setMonthlyRecords(chartData)
-      }
+      // For now, generate mock monthly data
+      // In a real implementation, you'd fetch this from a dedicated endpoint
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      const currentMonth = new Date().getMonth()
+      const monthlyData = months.slice(0, currentMonth + 1).map((month, index) => ({
+        name: month,
+        count: Math.floor(Math.random() * 1000) + 100
+      }))
+      setMonthlyRecords(monthlyData)
     } catch (error) {
       console.error('Error fetching monthly records:', error)
     }

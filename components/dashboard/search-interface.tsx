@@ -19,7 +19,6 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Loader2, Search } from "lucide-react"
-import { executeGraphQLQuery } from "@/lib/graphql-client"
 
 type SearchResult = {
   id: string
@@ -46,36 +45,24 @@ export function SearchInterface() {
 
     setIsLoading(true)
     try {
-      const query = `
-        query SearchData($term: String!, $type: String!, $page: Int!, $limit: Int!) {
-          search(term: $term, type: $type, page: $page, limit: $limit) {
-            results {
-              id
-              name
-              email
-              ip
-              domain
-              source
-              timestamp
-            }
-            pagination {
-              total
-              pages
-              current
-            }
-          }
-        }
-      `
-
-      const response = await executeGraphQLQuery(query, {
-        term: searchTerm,
-        type: searchType,
-        page: page,
-        limit: 10,
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          term: searchTerm,
+          type: searchType,
+          page: page,
+          limit: 10,
+        }),
       })
 
-      setResults(response.data.search.results)
-      setTotalPages(response.data.search.pagination.pages)
+      if (response.ok) {
+        const data = await response.json()
+        setResults(data.results)
+        setTotalPages(data.pagination.pages)
+      }
     } catch (error) {
       console.error("Search failed:", error)
       setResults([])
@@ -83,8 +70,6 @@ export function SearchInterface() {
       setIsLoading(false)
     }
   }
-
-
 
   return (
     <div className="space-y-6">
@@ -186,7 +171,8 @@ export function SearchInterface() {
                       e.preventDefault()
                       if (page > 1) {
                         setPage(page - 1)
-                        mockSearch()
+                        // Re-run search with new page
+                        handleSearch(e as any)
                       }
                     }}
                     aria-disabled={page === 1}
@@ -199,7 +185,8 @@ export function SearchInterface() {
                       onClick={(e) => {
                         e.preventDefault()
                         setPage(i + 1)
-                        mockSearch()
+                        // Re-run search with new page
+                        handleSearch(e as any)
                       }}
                       isActive={page === i + 1}
                     >
@@ -219,7 +206,8 @@ export function SearchInterface() {
                       e.preventDefault()
                       if (page < totalPages) {
                         setPage(page + 1)
-                        mockSearch()
+                        // Re-run search with new page
+                        handleSearch(e as any)
                       }
                     }}
                     aria-disabled={page === totalPages}
