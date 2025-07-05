@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { db } from '@/lib/database'
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,6 +12,22 @@ export async function POST(request: NextRequest) {
 
     if (query.length < 3) {
       return NextResponse.json({ error: 'Query must be at least 3 characters long' }, { status: 400 })
+    }
+
+    // Check if LeakCheck is enabled in settings
+    try {
+      const settingsResult = await db.query('SELECT leak_check FROM settings WHERE id = 1')
+      if (settingsResult.rows.length > 0) {
+        const leakCheckSettings = settingsResult.rows[0].leak_check
+        if (leakCheckSettings && !leakCheckSettings.enabled) {
+          return NextResponse.json({ 
+            error: 'LeakCheck is disabled in settings' 
+          }, { status: 403 })
+        }
+      }
+    } catch (error) {
+      console.error('Error checking LeakCheck settings:', error)
+      // Continue with API key check if settings check fails
     }
 
     // Get API key from environment variables

@@ -84,29 +84,10 @@ export default function SearchPage() {
 
   const fetchSources = async () => {
     try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query {
-              dataSources {
-                id
-                name
-                recordCount
-                lastUpdated
-                status
-              }
-            }
-          `,
-        }),
-      })
-
-      const data = await response.json()
-      if (data.data?.dataSources) {
-        const sourceNames = data.data.dataSources.map((ds: any) => ds.name)
+      const response = await fetch('/api/data-sources')
+      if (response.ok) {
+        const data = await response.json()
+        const sourceNames = data.map((ds: any) => ds.name)
         setSources(sourceNames)
       }
     } catch (error) {
@@ -116,28 +97,12 @@ export default function SearchPage() {
 
   const checkLeakCheckStatus = async () => {
     try {
-      const response = await fetch('/api/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: `
-            query {
-              settings {
-                leakCheck {
-                  enabled
-                  quota
-                }
-              }
-            }
-          `,
-        }),
-      })
-
-      const data = await response.json()
-      if (data.data?.settings?.leakCheck) {
-        setLeakCheckEnabled(data.data.settings.leakCheck.enabled)
+      const response = await fetch('/api/settings')
+      if (response.ok) {
+        const data = await response.json()
+        if (data.leakCheck) {
+          setLeakCheckEnabled(data.leakCheck.enabled)
+        }
       }
     } catch (error) {
       console.error('Error checking LeakCheck status:', error)

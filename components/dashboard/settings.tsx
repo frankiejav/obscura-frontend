@@ -81,20 +81,50 @@ export function SettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    // For now, use default settings
-    // In a real implementation, you'd fetch from a REST API
-    setSettings(defaultSettings)
+    fetchSettings()
   }, [])
+
+  const fetchSettings = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/settings')
+      if (response.ok) {
+        const data = await response.json()
+        setSettings(data)
+      } else {
+        // Use default settings if API fails
+        setSettings(defaultSettings)
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error)
+      // Use default settings on error
+      setSettings(defaultSettings)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSaveSettings = async () => {
     setIsLoading(true)
     try {
-      // In a real implementation, you'd save to a REST API
-      // For now, just show success message
-      toast({
-        title: "Settings saved",
-        description: "Your settings have been saved successfully.",
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
       })
+
+      if (response.ok) {
+        const savedSettings = await response.json()
+        setSettings(savedSettings)
+        toast({
+          title: "Settings saved",
+          description: "Your settings have been saved successfully.",
+        })
+      } else {
+        throw new Error('Failed to save settings')
+      }
     } catch (error) {
       console.error('Error saving settings:', error)
       toast({
