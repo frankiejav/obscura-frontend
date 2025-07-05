@@ -337,13 +337,13 @@ export function DataManagement() {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="text-sm">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[35%] min-w-[200px]">Database Name</TableHead>
-                      <TableHead className="w-[20%] min-w-[100px]">Records</TableHead>
-                      <TableHead className="w-[25%] min-w-[120px]">Breach Date</TableHead>
-                      <TableHead className="w-[20%] min-w-[100px]">Status</TableHead>
+                      <TableHead className="w-[40%] min-w-[180px] py-2 px-2">Database Name</TableHead>
+                      <TableHead className="w-[20%] min-w-[80px] py-2 px-2">Records</TableHead>
+                      <TableHead className="w-[25%] min-w-[100px] py-2 px-2">Breach Date</TableHead>
+                      <TableHead className="w-[15%] min-w-[80px] py-2 px-2">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -352,15 +352,15 @@ export function DataManagement() {
                         const database = item as BreachDatabase
                         return (
                           <TableRow key={database.id}>
-                            <TableCell className="font-medium max-w-0 truncate">
-                              <div className="truncate" title={database.name}>
+                            <TableCell className="font-medium max-w-0 truncate py-2 px-2">
+                              <div className="truncate text-xs" title={database.name}>
                                 {database.name}
                               </div>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap">{database.count.toLocaleString()}</TableCell>
-                            <TableCell className="whitespace-nowrap">{database.breach_date || 'Unknown'}</TableCell>
-                            <TableCell>
-                              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                            <TableCell className="whitespace-nowrap py-2 px-2 text-xs">{database.count.toLocaleString()}</TableCell>
+                            <TableCell className="whitespace-nowrap py-2 px-2 text-xs">{database.breach_date || 'Unknown'}</TableCell>
+                            <TableCell className="py-2 px-2">
+                              <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
                                 Breached
                               </span>
                             </TableCell>
@@ -370,16 +370,16 @@ export function DataManagement() {
                         const source = item as DataSource
                         return (
                           <TableRow key={source.id}>
-                            <TableCell className="font-medium max-w-0 truncate">
-                              <div className="truncate" title={source.name}>
+                            <TableCell className="font-medium max-w-0 truncate py-2 px-2">
+                              <div className="truncate text-xs" title={source.name}>
                                 {source.name}
                               </div>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap">{source.recordCount.toLocaleString()}</TableCell>
-                            <TableCell className="whitespace-nowrap">{new Date(source.lastUpdated).toLocaleString()}</TableCell>
-                            <TableCell>
+                            <TableCell className="whitespace-nowrap py-2 px-2 text-xs">{source.recordCount.toLocaleString()}</TableCell>
+                            <TableCell className="whitespace-nowrap py-2 px-2 text-xs">{new Date(source.lastUpdated).toLocaleString()}</TableCell>
+                            <TableCell className="py-2 px-2">
                               <span
-                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                                className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium ${
                                   source.status === "active"
                                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
                                     : source.status === "processing"
@@ -390,8 +390,8 @@ export function DataManagement() {
                                 {source.status}
                               </span>
                             </TableCell>
-                            <TableCell className="text-right">
-                              <Button variant="outline" size="sm" className="h-8 px-2">
+                            <TableCell className="text-right py-2 px-2">
+                              <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
                                 <Download className="mr-1 h-3 w-3" />
                                 Export
                               </Button>
