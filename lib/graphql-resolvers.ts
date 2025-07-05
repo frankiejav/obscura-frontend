@@ -114,12 +114,31 @@ export const resolvers = {
         const raw = result.rows.length > 0 ? result.rows[0].value : getDefaultSettings();
         const settings = typeof raw === 'string' ? JSON.parse(raw) : raw;
         const defaults = getDefaultSettings();
+        
         // Explicitly map the fields to ensure the shape matches the GraphQL type
         const mappedSettings = {
-          general: settings.general || defaults.general,
-          security: settings.security || defaults.security,
-          notifications: settings.notifications || defaults.notifications,
-          api: settings.api || defaults.api,
+          general: {
+            apiUrl: settings.general?.apiUrl || defaults.general.apiUrl,
+            defaultPageSize: settings.general?.defaultPageSize || defaults.general.defaultPageSize,
+            theme: settings.general?.theme || defaults.general.theme,
+          },
+          security: {
+            twoFactorAuth: settings.security?.twoFactorAuth || defaults.security.twoFactorAuth,
+            sessionTimeout: settings.security?.sessionTimeout || defaults.security.sessionTimeout,
+            ipWhitelist: settings.security?.ipWhitelist || defaults.security.ipWhitelist,
+            enforceStrongPasswords: settings.security?.enforceStrongPasswords || defaults.security.enforceStrongPasswords,
+          },
+          notifications: {
+            emailAlerts: settings.notifications?.emailAlerts || defaults.notifications.emailAlerts,
+            dailySummary: settings.notifications?.dailySummary || defaults.notifications.dailySummary,
+            securityAlerts: settings.notifications?.securityAlerts || defaults.notifications.securityAlerts,
+            dataUpdates: settings.notifications?.dataUpdates || defaults.notifications.dataUpdates,
+          },
+          api: {
+            rateLimit: settings.api?.rateLimit || defaults.api.rateLimit,
+            tokenExpiration: settings.api?.tokenExpiration || defaults.api.tokenExpiration,
+            logLevel: settings.api?.logLevel || defaults.api.logLevel,
+          },
           leakCheck: {
             enabled: settings.leakCheck?.enabled || defaults.leakCheck.enabled,
             quota: settings.leakCheck?.quota || defaults.leakCheck.quota,
