@@ -111,16 +111,18 @@ export const resolvers = {
         
         console.log('Database result:', result.rows.length, 'rows')
         
-        if (result.rows.length > 0) {
-          const settings = result.rows[0].value
-          console.log('Returning settings from database:', settings)
-          return settings
+        const settings = result.rows.length > 0 ? result.rows[0].value : getDefaultSettings()
+        const defaults = getDefaultSettings()
+        // Explicitly map the fields to ensure the shape matches the GraphQL type
+        const mappedSettings = {
+          general: settings.general || defaults.general,
+          security: settings.security || defaults.security,
+          notifications: settings.notifications || defaults.notifications,
+          api: settings.api || defaults.api,
+          leakCheck: settings.leakCheck || defaults.leakCheck,
         }
-        
-        // If no settings found, return default settings
-        const defaultSettings = getDefaultSettings()
-        console.log('Returning default settings:', defaultSettings)
-        return defaultSettings
+        console.log('Returning mapped settings:', mappedSettings)
+        return mappedSettings
       } catch (error) {
         console.error('Error fetching settings from database:', error)
         // If database error, return default settings
