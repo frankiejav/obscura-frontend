@@ -24,9 +24,13 @@ const buildElasticsearchUrl = () => {
   
   // Handle IPv6 addresses properly
   let formattedHost = host
-  if (host.includes(':') && !host.startsWith('[') && !host.includes('.')) {
+  // Remove any existing brackets first
+  if (formattedHost.startsWith('[') && formattedHost.endsWith(']')) {
+    formattedHost = formattedHost.slice(1, -1)
+  }
+  if (formattedHost.includes(':') && !formattedHost.includes('.')) {
     // This is likely an IPv6 address, wrap it in brackets
-    formattedHost = `[${host}]`
+    formattedHost = `[${formattedHost}]`
   }
   
   return `${protocol}://${formattedHost}:${port}`
