@@ -1,32 +1,26 @@
 import { useState, useEffect } from 'react'
 import { Notification, CreateNotificationInput } from '@/lib/types/notifications'
 
-// Mock GraphQL client - replace with actual GraphQL client
-const mockGraphQLClient = {
-  query: async (query: string, variables?: any) => {
+// Mock REST client - replace with actual REST API calls
+const mockRestClient = {
+  get: async (endpoint: string) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 100))
     
-    // Mock responses based on query
-    if (query.includes('notifications')) {
+    // Mock responses based on endpoint
+    if (endpoint.includes('notifications')) {
       return {
         data: {
-          notifications: {
-            edges: [],
-            pageInfo: {
-              hasNextPage: false,
-              hasPreviousPage: false
-            },
-            totalCount: 0
-          }
+          notifications: [],
+          totalCount: 0
         }
       }
     }
     
-    if (query.includes('unreadNotificationCount')) {
+    if (endpoint.includes('unread-count')) {
       return {
         data: {
-          unreadNotificationCount: 0
+          count: 0
         }
       }
     }
@@ -34,41 +28,37 @@ const mockGraphQLClient = {
     return { data: null }
   },
   
-  mutate: async (mutation: string, variables?: any) => {
+  post: async (endpoint: string, data?: any) => {
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 200))
     
-    // Mock responses based on mutation
-    if (mutation.includes('markNotificationAsRead')) {
+    // Mock responses based on endpoint
+    if (endpoint.includes('mark-read')) {
       return {
         data: {
-          markNotificationAsRead: {
-            id: variables.id,
-            isRead: true
-          }
-        }
+          id: data.id,
+          isRead: true
+        } as Partial<Notification>
       }
     }
     
-    if (mutation.includes('createNotification')) {
+    if (endpoint.includes('create')) {
       return {
         data: {
-          createNotification: {
-            id: Date.now().toString(),
-            title: variables.title,
-            message: variables.message,
-            type: variables.type,
-            priority: variables.priority,
-            isRead: false,
-            createdAt: new Date().toISOString(),
-            createdBy: {
-              id: 'current-user',
-              name: 'Current User',
-              email: 'user@obscura.com',
-              role: 'ADMIN'
-            }
+          id: Date.now().toString(),
+          title: data.title,
+          message: data.message,
+          type: data.type,
+          priority: data.priority,
+          isRead: false,
+          createdAt: new Date().toISOString(),
+          createdBy: {
+            id: 'current-user',
+            name: 'Current User',
+            email: 'user@obscura.com',
+            role: 'ADMIN'
           }
-        }
+        } as Notification
       }
     }
     
@@ -87,40 +77,8 @@ export function useNotifications(userId?: string) {
     setError(null)
     
     try {
-      const query = `
-        query GetNotifications($first: Int, $isRead: Boolean) {
-          notifications(first: $first, isRead: $isRead) {
-            edges {
-              node {
-                id
-                title
-                message
-                type
-                priority
-                isRead
-                createdAt
-                createdBy {
-                  id
-                  name
-                  email
-                  role
-                }
-                targetUserId
-                metadata
-              }
-            }
-            pageInfo {
-              hasNextPage
-              hasPreviousPage
-            }
-            totalCount
-          }
-        }
-      `
-      
-      const response = await mockGraphQLClient.query(query, { first: 50 })
-      const notificationEdges = response.data?.notifications?.edges || []
-      const notificationsList = notificationEdges.map((edge: any) => edge.node)
+      const response = await mockRestClient.get('/api/notifications?limit=50')
+      const notificationsList = response.data?.notifications || []
       
       setNotifications(notificationsList)
     } catch (err) {
@@ -132,14 +90,8 @@ export function useNotifications(userId?: string) {
 
   const fetchUnreadCount = async () => {
     try {
-      const query = `
-        query GetUnreadCount {
-          unreadNotificationCount
-        }
-      `
-      
-      const response = await mockGraphQLClient.query(query)
-      setUnreadCount(response.data?.unreadNotificationCount || 0)
+      const response = await mockRestClient.get('/api/notifications/unread-count')
+      setUnreadCount(response.data?.count || 0)
     } catch (err) {
       console.error('Failed to fetch unread count:', err)
     }
@@ -147,16 +99,8 @@ export function useNotifications(userId?: string) {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      const mutation = `
-        mutation MarkNotificationAsRead($id: ID!) {
-          markNotificationAsRead(id: $id) {
-            id
-            isRead
-          }
-        }
-      `
-      
-      await mockGraphQLClient.mutate(mutation, { id: notificationId })
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 200))
       
       // Update local state
       setNotifications(prev => 
@@ -174,13 +118,7 @@ export function useNotifications(userId?: string) {
 
   const markAllAsRead = async () => {
     try {
-      const mutation = `
-        mutation MarkAllNotificationsAsRead {
-          markAllNotificationsAsRead
-        }
-      `
-      
-      await mockGraphQLClient.mutate(mutation)
+      await mockRestClient.post('/api/notifications/mark-all-read')
       
       // Update local state
       setNotifications(prev => 
@@ -195,39 +133,14 @@ export function useNotifications(userId?: string) {
 
   const createNotification = async (notificationData: CreateNotificationInput) => {
     try {
-      const mutation = `
-        mutation CreateNotification($title: String!, $message: String!, $type: NotificationType!, $priority: NotificationPriority!, $targetUserId: ID) {
-          createNotification(
-            title: $title
-            message: $message
-            type: $type
-            priority: $priority
-            targetUserId: $targetUserId
-          ) {
-            id
-            title
-            message
-            type
-            priority
-            isRead
-            createdAt
-            createdBy {
-              id
-              name
-              email
-              role
-            }
-          }
-        }
-      `
+      const response = await mockRestClient.post('/api/notifications/create', notificationData)
+      const newNotification = response.data
       
-      const response = await mockGraphQLClient.mutate(mutation, notificationData)
-      const newNotification = response.data?.createNotification
+      // Add to local state
+      setNotifications(prev => [newNotification, ...prev])
       
-      if (newNotification) {
-        setNotifications(prev => [newNotification, ...prev])
-        await fetchUnreadCount()
-      }
+      // Update unread count
+      setUnreadCount(prev => prev + 1)
       
       return newNotification
     } catch (err) {
@@ -238,23 +151,21 @@ export function useNotifications(userId?: string) {
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      const mutation = `
-        mutation DeleteNotification($id: ID!) {
-          deleteNotification(id: $id)
-        }
-      `
+      await mockRestClient.post('/api/notifications/delete', { id: notificationId })
       
-      await mockGraphQLClient.mutate(mutation, { id: notificationId })
-      
-      // Update local state
+      // Remove from local state
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
-      await fetchUnreadCount()
+      
+      // Update unread count if notification was unread
+      const deletedNotification = notifications.find(n => n.id === notificationId)
+      if (deletedNotification && !deletedNotification.isRead) {
+        setUnreadCount(prev => Math.max(0, prev - 1))
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete notification')
     }
   }
 
-  // Fetch notifications on mount
   useEffect(() => {
     fetchNotifications()
     fetchUnreadCount()
@@ -266,10 +177,10 @@ export function useNotifications(userId?: string) {
     loading,
     error,
     fetchNotifications,
+    fetchUnreadCount,
     markAsRead,
     markAllAsRead,
     createNotification,
     deleteNotification,
-    fetchUnreadCount
   }
 } 
