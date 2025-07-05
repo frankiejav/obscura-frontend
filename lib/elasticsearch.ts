@@ -4,7 +4,12 @@ import { Client } from '@elastic/elasticsearch'
 const buildElasticsearchUrl = () => {
   // Check if we have a complete URL in environment
   if (process.env.ELASTICSEARCH_URL) {
-    return process.env.ELASTICSEARCH_URL
+    // If the URL contains localhost, ignore it and use individual components
+    if (process.env.ELASTICSEARCH_URL.includes('localhost')) {
+      console.log('Ignoring localhost URL, using individual components')
+    } else {
+      return process.env.ELASTICSEARCH_URL
+    }
   }
   
   // Build URL from individual components
@@ -70,6 +75,11 @@ export async function checkConnection() {
   try {
     console.log('Attempting to connect to Elasticsearch...')
     console.log('URL:', elasticsearchUrl)
+    console.log('Environment variables:')
+    console.log('- ELASTICSEARCH_URL:', process.env.ELASTICSEARCH_URL)
+    console.log('- ELASTICSEARCH_HOST:', process.env.ELASTICSEARCH_HOST)
+    console.log('- ELASTICSEARCH_PORT:', process.env.ELASTICSEARCH_PORT)
+    console.log('- ELASTICSEARCH_PROTOCOL:', process.env.ELASTICSEARCH_PROTOCOL)
     console.log('Auth:', {
       username: process.env.ELASTICSEARCH_USERNAME || 'elastic',
       password: process.env.ELASTICSEARCH_PASSWORD ? '[REDACTED]' : '[EMPTY]'
