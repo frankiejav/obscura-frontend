@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     if (isConnected === false) {
       // Only return error if we have Elasticsearch configured but it's not working
       if (process.env.ELASTICSEARCH_HOST || process.env.ELASTICSEARCH_URL) {
-        return NextResponse.json({ error: "Database connection failed" }, { status: 503 })
+        console.log('Elasticsearch connection failed, but continuing for settings queries')
       }
       // If no Elasticsearch is configured, continue without it
       console.log('Elasticsearch not configured - continuing without database features')
