@@ -46,6 +46,7 @@ export function DataManagement() {
     totalDatabases: number
     recentDatabases: BreachDatabase[]
     topDatabases: BreachDatabase[]
+    allDatabases: BreachDatabase[]
   } | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(10)
@@ -126,7 +127,7 @@ export function DataManagement() {
   // Pagination logic
   const getPaginatedData = () => {
     if (breachData) {
-      const filteredData = breachData.topDatabases.filter(
+      const filteredData = breachData.allDatabases.filter(
         (db) => selectedSource === "all" || db.id.toString() === selectedSource
       )
       const startIndex = (currentPage - 1) * itemsPerPage
@@ -144,7 +145,7 @@ export function DataManagement() {
 
   const getTotalPages = () => {
     if (breachData) {
-      const filteredData = breachData.topDatabases.filter(
+      const filteredData = breachData.allDatabases.filter(
         (db) => selectedSource === "all" || db.id.toString() === selectedSource
       )
       return Math.ceil(filteredData.length / itemsPerPage)
@@ -185,7 +186,7 @@ export function DataManagement() {
             <SelectContent>
               <SelectItem value="all">{breachData ? "All Databases" : "All Sources"}</SelectItem>
               {breachData 
-                ? breachData.topDatabases.map((db) => (
+                ? breachData.allDatabases.map((db) => (
                     <SelectItem key={db.id} value={db.id.toString()}>
                       {db.name}
                     </SelectItem>

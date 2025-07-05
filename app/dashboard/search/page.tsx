@@ -395,7 +395,7 @@ export default function SearchPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-3">
                             {getSearchTypeIcon(searchType)}
-                            <h3 className="font-semibold truncate">
+                            <h3 className="font-semibold break-words">
                               {record.name || record.email || record.ip || 'Unknown'}
                             </h3>
                             <Badge variant="secondary" className="flex-shrink-0">{record.source}</Badge>
@@ -405,25 +405,25 @@ export default function SearchPage() {
                             {record.name && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Name</span>
-                                <span className="truncate">{record.name}</span>
+                                <span className="break-words">{record.name}</span>
                               </div>
                             )}
                             {record.email && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Email</span>
-                                <span className="truncate">{record.email}</span>
+                                <span className="break-words">{record.email}</span>
                               </div>
                             )}
                             {record.ip && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">IP Address</span>
-                                <span className="truncate">{record.ip}</span>
+                                <span className="break-words">{record.ip}</span>
                               </div>
                             )}
                             {record.domain && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Domain</span>
-                                <span className="truncate">{record.domain}</span>
+                                <span className="break-words">{record.domain}</span>
                               </div>
                             )}
                           </div>
@@ -516,7 +516,7 @@ export default function SearchPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-3">
                             {getSearchTypeIcon(searchType)}
-                            <h3 className="font-semibold truncate">{breach.email}</h3>
+                            <h3 className="font-semibold break-words">{breach.email}</h3>
                             <Badge variant="secondary" className="flex-shrink-0">{breach.source.name}</Badge>
                           </div>
                           
@@ -524,108 +524,108 @@ export default function SearchPage() {
                             {breach.first_name && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">First Name</span>
-                                <span className="truncate">{breach.first_name}</span>
+                                <span className="break-words">{breach.first_name}</span>
                               </div>
                             )}
                             {breach.last_name && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Last Name</span>
-                                <span className="truncate">{breach.last_name}</span>
+                                <span className="break-words">{breach.last_name}</span>
                               </div>
                             )}
                             {breach.username && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Username</span>
-                                <span className="truncate">{breach.username}</span>
+                                <span className="break-words">{breach.username}</span>
                               </div>
                             )}
                             {breach.password && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Password</span>
-                                <span className="truncate">{breach.password}</span>
+                                <span className="break-words">{breach.password}</span>
                               </div>
                             )}
                             {breach.name && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Name</span>
-                                <span className="truncate">{breach.name}</span>
+                                <span className="break-words">{breach.name}</span>
                               </div>
                             )}
                             {breach.dob && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Date of Birth</span>
-                                <span className="truncate">{breach.dob}</span>
+                                <span className="break-words">{breach.dob}</span>
                               </div>
                             )}
                             {breach.address && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Address</span>
-                                <span className="truncate">{breach.address}</span>
+                                <span className="break-words">{breach.address}</span>
                               </div>
                             )}
                             {breach.city && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">City</span>
-                                <span className="truncate">{breach.city}</span>
+                                <span className="break-words">{breach.city}</span>
                               </div>
                             )}
                             {breach.state && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">State</span>
-                                <span className="truncate">{breach.state}</span>
+                                <span className="break-words">{breach.state}</span>
                               </div>
                             )}
                             {breach.zip && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">ZIP</span>
-                                <span className="truncate">{breach.zip}</span>
+                                <span className="break-words">{breach.zip}</span>
                               </div>
                             )}
                             {breach.country && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Country</span>
-                                <span className="truncate">{breach.country}</span>
+                                <span className="break-words">{breach.country}</span>
                               </div>
                             )}
                             {breach.phone && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Phone</span>
-                                <span className="truncate">{breach.phone}</span>
+                                <span className="break-words">{breach.phone}</span>
                               </div>
                             )}
                             {breach.ssn && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">SSN</span>
-                                <span className="truncate">{breach.ssn}</span>
+                                <span className="break-words">{breach.ssn}</span>
                               </div>
                             )}
                             {breach.gender && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Gender</span>
-                                <span className="truncate">{breach.gender}</span>
+                                <span className="break-words">{breach.gender}</span>
                               </div>
                             )}
                             {breach.ip && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">IP</span>
-                                <span className="truncate">{breach.ip}</span>
+                                <span className="break-words">{breach.ip}</span>
                               </div>
                             )}
                             {breach.domain && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Domain</span>
-                                <span className="truncate">{breach.domain}</span>
+                                <span className="break-words">{breach.domain}</span>
                               </div>
                             )}
                             {breach.origin && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Origin</span>
-                                <span className="truncate">{breach.origin}</span>
+                                <span className="break-words">{breach.origin}</span>
                               </div>
                             )}
                             <div className="flex flex-col">
                               <span className="font-medium text-xs text-muted-foreground">Available Fields</span>
-                              <span className="truncate">{breach.fields.join(', ')}</span>
+                              <span className="break-words">{breach.fields.join(', ')}</span>
                             </div>
                           </div>
                         </div>
