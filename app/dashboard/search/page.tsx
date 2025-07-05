@@ -41,7 +41,6 @@ interface BreachResult {
   last_name?: string
   username?: string
   fields: string[]
-  data?: Record<string, string>
 }
 
 interface BreachSearchResult {
@@ -461,36 +460,24 @@ export default function SearchPage() {
                           </div>
                           
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                            {breach.data ? (
-                              // Display full data when available
-                              Object.entries(breach.data).map(([key, value]) => (
-                                <div key={key}>
-                                  <span className="font-medium">{key}:</span> {value}
-                                </div>
-                              ))
-                            ) : (
-                              // Fallback to basic fields
-                              <>
-                                {breach.first_name && (
-                                  <div>
-                                    <span className="font-medium">First Name:</span> {breach.first_name}
-                                  </div>
-                                )}
-                                {breach.last_name && (
-                                  <div>
-                                    <span className="font-medium">Last Name:</span> {breach.last_name}
-                                  </div>
-                                )}
-                                {breach.username && (
-                                  <div>
-                                    <span className="font-medium">Username:</span> {breach.username}
-                                  </div>
-                                )}
-                                <div>
-                                  <span className="font-medium">Fields:</span> {breach.fields.join(', ')}
-                                </div>
-                              </>
+                            {breach.first_name && (
+                              <div>
+                                <span className="font-medium">First Name:</span> {breach.first_name}
+                              </div>
                             )}
+                            {breach.last_name && (
+                              <div>
+                                <span className="font-medium">Last Name:</span> {breach.last_name}
+                              </div>
+                            )}
+                            {breach.username && (
+                              <div>
+                                <span className="font-medium">Username:</span> {breach.username}
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-medium">Available Fields:</span> {breach.fields.join(', ')}
+                            </div>
                           </div>
                         </div>
                         
