@@ -54,8 +54,16 @@ if (elasticsearchUrl) {
         username: process.env.ELASTICSEARCH_USERNAME || 'elastic',
         password: process.env.ELASTICSEARCH_PASSWORD || '',
       },
-      tls: {
+      tls: isHttps ? {
         rejectUnauthorized: false, // For self-signed certificates
+        ca: undefined, // Allow self-signed certificates
+      } : undefined,
+      requestTimeout: 30000,
+      maxRetries: 3,
+      // Specify API version to match Elasticsearch server version
+      headers: {
+        'Accept': 'application/vnd.elasticsearch+json; compatible-with=8',
+        'Content-Type': 'application/vnd.elasticsearch+json; compatible-with=8'
       }
     })
   } catch (error) {

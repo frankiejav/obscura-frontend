@@ -9,11 +9,12 @@
     "db:setup": "node scripts/setup-neon.js",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "test:elasticsearch": "node scripts/test-elasticsearch.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.66",
-    "@elastic/elasticsearch": "latest",
+    "@elastic/elasticsearch": "^8.11.0",
     "@hookform/resolvers": "^3.9.1",
     "@neondatabase/serverless": "latest",
     "@radix-ui/react-accordion": "latest",
