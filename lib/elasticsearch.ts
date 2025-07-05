@@ -60,11 +60,6 @@ if (elasticsearchUrl) {
       } : undefined,
       requestTimeout: 30000,
       maxRetries: 3,
-      // Specify API version to match Elasticsearch server version
-      headers: {
-        'Accept': 'application/vnd.elasticsearch+json; compatible-with=8',
-        'Content-Type': 'application/vnd.elasticsearch+json; compatible-with=8'
-      }
     })
   } catch (error) {
     console.error('Invalid Elasticsearch URL:', elasticsearchUrl)
