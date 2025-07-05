@@ -40,6 +40,19 @@ interface BreachResult {
   first_name?: string
   last_name?: string
   username?: string
+  password?: string
+  name?: string
+  dob?: string
+  address?: string
+  zip?: string
+  phone?: string
+  ssn?: string
+  city?: string
+  state?: string
+  country?: string
+  gender?: string
+  ip?: string
+  domain?: string
   fields: string[]
 }
 
@@ -473,6 +486,71 @@ export default function SearchPage() {
                             {breach.username && (
                               <div>
                                 <span className="font-medium">Username:</span> {breach.username}
+                              </div>
+                            )}
+                            {breach.password && (
+                              <div>
+                                <span className="font-medium">Password:</span> {breach.password}
+                              </div>
+                            )}
+                            {breach.name && (
+                              <div>
+                                <span className="font-medium">Name:</span> {breach.name}
+                              </div>
+                            )}
+                            {breach.dob && (
+                              <div>
+                                <span className="font-medium">Date of Birth:</span> {breach.dob}
+                              </div>
+                            )}
+                            {breach.address && (
+                              <div>
+                                <span className="font-medium">Address:</span> {breach.address}
+                              </div>
+                            )}
+                            {breach.city && (
+                              <div>
+                                <span className="font-medium">City:</span> {breach.city}
+                              </div>
+                            )}
+                            {breach.state && (
+                              <div>
+                                <span className="font-medium">State:</span> {breach.state}
+                              </div>
+                            )}
+                            {breach.zip && (
+                              <div>
+                                <span className="font-medium">ZIP:</span> {breach.zip}
+                              </div>
+                            )}
+                            {breach.country && (
+                              <div>
+                                <span className="font-medium">Country:</span> {breach.country}
+                              </div>
+                            )}
+                            {breach.phone && (
+                              <div>
+                                <span className="font-medium">Phone:</span> {breach.phone}
+                              </div>
+                            )}
+                            {breach.ssn && (
+                              <div>
+                                <span className="font-medium">SSN:</span> {breach.ssn}
+                              </div>
+                            )}
+                            {breach.gender && (
+                              <div>
+                                <span className="font-medium">Gender:</span> {breach.gender}
+                              </div>
+                            )}
+                            {breach.ip && (
+                              <div>
+                                <span className="font-medium">IP:</span> {breach.ip}
+                              </div>
+                            )}
+                            {breach.domain && (
+                              <div>
+                                <span className="font-medium">Domain:</span> {breach.domain}
                               </div>
                             )}
                             <div>
