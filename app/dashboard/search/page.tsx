@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle } from 'lucide-react'
+import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface DataRecord {
   id: string
@@ -80,6 +80,10 @@ export default function SearchPage() {
   const [breachResults, setBreachResults] = useState<BreachSearchResult | null>(null)
   const [breachLoading, setBreachLoading] = useState(false)
   const [breachSearchEnabled, setBreachSearchEnabled] = useState(false)
+  
+  // Pagination state for breach results
+  const [breachCurrentPage, setBreachCurrentPage] = useState(1)
+  const [breachResultsPerPage] = useState(10)
 
   // Fetch available sources and check breach search status
   useEffect(() => {
@@ -131,6 +135,8 @@ export default function SearchPage() {
     setBreachLoading(true)
     setResults(null)
     setBreachResults(null)
+    setCurrentPage(1)
+    setBreachCurrentPage(1)
 
     try {
       // Search internal data
@@ -206,6 +212,10 @@ export default function SearchPage() {
     }
   }
 
+  const handleBreachPageChange = (page: number) => {
+    setBreachCurrentPage(page)
+  }
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault()
@@ -234,6 +244,15 @@ export default function SearchPage() {
     }
   }
 
+  // Calculate paginated breach results
+  const getPaginatedBreachResults = () => {
+    if (!breachResults?.result) return []
+    const startIndex = (breachCurrentPage - 1) * breachResultsPerPage
+    const endIndex = startIndex + breachResultsPerPage
+    return breachResults.result.slice(startIndex, endIndex)
+  }
+
+  const totalBreachPages = breachResults ? Math.ceil(breachResults.result.length / breachResultsPerPage) : 0
   const totalResults = (results?.pagination.total || 0) + (breachResults?.found || 0)
 
   return (
@@ -286,10 +305,10 @@ export default function SearchPage() {
               <label className="text-sm font-medium">Data Source</label>
               <Select value={source} onValueChange={setSource}>
                 <SelectTrigger>
-                  <SelectValue placeholder="All sources" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All sources</SelectItem>
+                  <SelectItem value="all">All Sources</SelectItem>
                   {sources.map((sourceName) => (
                     <SelectItem key={sourceName} value={sourceName}>
                       {sourceName}
@@ -299,23 +318,21 @@ export default function SearchPage() {
               </Select>
             </div>
 
-            {breachSearchEnabled && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Breach Search Type</label>
-                <Select value={breachSearchType} onValueChange={setBreachSearchType}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="auto">Auto Detect</SelectItem>
-                    <SelectItem value="email">Email</SelectItem>
-                    <SelectItem value="username">Username</SelectItem>
-                    <SelectItem value="phone">Phone</SelectItem>
-                    <SelectItem value="hash">Hash</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Breach Search Type</label>
+              <Select value={breachSearchType} onValueChange={setBreachSearchType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto-detect</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="username">Username</SelectItem>
+                  <SelectItem value="phone">Phone</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -373,51 +390,55 @@ export default function SearchPage() {
               <CardContent>
                 <div className="space-y-4">
                   {results.results.map((record) => (
-                    <Card key={record.id} className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2 flex-1">
-                          <div className="flex items-center gap-2">
+                    <Card key={record.id} className="p-4 hover:shadow-md transition-shadow">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-3">
                             {getSearchTypeIcon(searchType)}
-                            <h3 className="font-semibold">
+                            <h3 className="font-semibold truncate">
                               {record.name || record.email || record.ip || 'Unknown'}
                             </h3>
-                            <Badge variant="secondary">{record.source}</Badge>
+                            <Badge variant="secondary" className="flex-shrink-0">{record.source}</Badge>
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 text-sm">
                             {record.name && (
-                              <div>
-                                <span className="font-medium">Name:</span> {record.name}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Name</span>
+                                <span className="truncate">{record.name}</span>
                               </div>
                             )}
                             {record.email && (
-                              <div>
-                                <span className="font-medium">Email:</span> {record.email}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Email</span>
+                                <span className="truncate">{record.email}</span>
                               </div>
                             )}
                             {record.ip && (
-                              <div>
-                                <span className="font-medium">IP:</span> {record.ip}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">IP Address</span>
+                                <span className="truncate">{record.ip}</span>
                               </div>
                             )}
                             {record.domain && (
-                              <div>
-                                <span className="font-medium">Domain:</span> {record.domain}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Domain</span>
+                                <span className="truncate">{record.domain}</span>
                               </div>
                             )}
                           </div>
 
                           {record.additionalData && (
-                            <div className="mt-2">
+                            <div className="mt-3">
                               <span className="font-medium text-sm">Additional Data:</span>
-                              <pre className="text-xs bg-gray-100 p-2 rounded mt-1 overflow-x-auto">
+                              <pre className="text-xs bg-gray-100 p-2 rounded mt-1 overflow-x-auto max-w-full">
                                 {JSON.stringify(record.additionalData, null, 2)}
                               </pre>
                             </div>
                           )}
                         </div>
                         
-                        <div className="text-right text-sm text-gray-500">
+                        <div className="text-right text-sm text-gray-500 flex-shrink-0">
                           <div className="flex items-center gap-1">
                             <Calendar className="w-4 h-4" />
                             {formatDate(record.timestamp)}
@@ -430,17 +451,43 @@ export default function SearchPage() {
                   {/* Pagination */}
                   {results.pagination.pages > 1 && (
                     <div className="flex justify-center mt-6">
-                      <div className="flex gap-2">
-                        {Array.from({ length: results.pagination.pages }, (_, i) => i + 1).map((page) => (
-                          <Button
-                            key={page}
-                            variant={page === results.pagination.current ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => handlePageChange(page)}
-                          >
-                            {page}
-                          </Button>
-                        ))}
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(Math.max(1, results.pagination.current - 1))}
+                          disabled={results.pagination.current === 1}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                          Previous
+                        </Button>
+                        
+                        <div className="flex gap-1">
+                          {Array.from({ length: Math.min(5, results.pagination.pages) }, (_, i) => {
+                            const page = i + 1
+                            return (
+                              <Button
+                                key={page}
+                                variant={page === results.pagination.current ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => handlePageChange(page)}
+                                className="w-8 h-8 p-0"
+                              >
+                                {page}
+                              </Button>
+                            )
+                          })}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePageChange(Math.min(results.pagination.pages, results.pagination.current + 1))}
+                          disabled={results.pagination.current === results.pagination.pages}
+                        >
+                          Next
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -463,109 +510,127 @@ export default function SearchPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {breachResults.result.map((breach, index) => (
-                    <Card key={index} className="p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-2 flex-1">
-                          <div className="flex items-center gap-2">
+                  {getPaginatedBreachResults().map((breach, index) => (
+                    <Card key={index} className="p-4 hover:shadow-md transition-shadow">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-3">
                             {getSearchTypeIcon(searchType)}
-                            <h3 className="font-semibold">{breach.email}</h3>
-                            <Badge variant="secondary">{breach.source.name}</Badge>
+                            <h3 className="font-semibold truncate">{breach.email}</h3>
+                            <Badge variant="secondary" className="flex-shrink-0">{breach.source.name}</Badge>
                           </div>
                           
-                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 text-sm">
                             {breach.first_name && (
-                              <div>
-                                <span className="font-medium">First Name:</span> {breach.first_name}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">First Name</span>
+                                <span className="truncate">{breach.first_name}</span>
                               </div>
                             )}
                             {breach.last_name && (
-                              <div>
-                                <span className="font-medium">Last Name:</span> {breach.last_name}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Last Name</span>
+                                <span className="truncate">{breach.last_name}</span>
                               </div>
                             )}
                             {breach.username && (
-                              <div>
-                                <span className="font-medium">Username:</span> {breach.username}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Username</span>
+                                <span className="truncate">{breach.username}</span>
                               </div>
                             )}
                             {breach.password && (
-                              <div>
-                                <span className="font-medium">Password:</span> {breach.password}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Password</span>
+                                <span className="truncate">{breach.password}</span>
                               </div>
                             )}
                             {breach.name && (
-                              <div>
-                                <span className="font-medium">Name:</span> {breach.name}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Name</span>
+                                <span className="truncate">{breach.name}</span>
                               </div>
                             )}
                             {breach.dob && (
-                              <div>
-                                <span className="font-medium">Date of Birth:</span> {breach.dob}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Date of Birth</span>
+                                <span className="truncate">{breach.dob}</span>
                               </div>
                             )}
                             {breach.address && (
-                              <div>
-                                <span className="font-medium">Address:</span> {breach.address}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Address</span>
+                                <span className="truncate">{breach.address}</span>
                               </div>
                             )}
                             {breach.city && (
-                              <div>
-                                <span className="font-medium">City:</span> {breach.city}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">City</span>
+                                <span className="truncate">{breach.city}</span>
                               </div>
                             )}
                             {breach.state && (
-                              <div>
-                                <span className="font-medium">State:</span> {breach.state}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">State</span>
+                                <span className="truncate">{breach.state}</span>
                               </div>
                             )}
                             {breach.zip && (
-                              <div>
-                                <span className="font-medium">ZIP:</span> {breach.zip}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">ZIP</span>
+                                <span className="truncate">{breach.zip}</span>
                               </div>
                             )}
                             {breach.country && (
-                              <div>
-                                <span className="font-medium">Country:</span> {breach.country}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Country</span>
+                                <span className="truncate">{breach.country}</span>
                               </div>
                             )}
                             {breach.phone && (
-                              <div>
-                                <span className="font-medium">Phone:</span> {breach.phone}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Phone</span>
+                                <span className="truncate">{breach.phone}</span>
                               </div>
                             )}
                             {breach.ssn && (
-                              <div>
-                                <span className="font-medium">SSN:</span> {breach.ssn}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">SSN</span>
+                                <span className="truncate">{breach.ssn}</span>
                               </div>
                             )}
                             {breach.gender && (
-                              <div>
-                                <span className="font-medium">Gender:</span> {breach.gender}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Gender</span>
+                                <span className="truncate">{breach.gender}</span>
                               </div>
                             )}
                             {breach.ip && (
-                              <div>
-                                <span className="font-medium">IP:</span> {breach.ip}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">IP</span>
+                                <span className="truncate">{breach.ip}</span>
                               </div>
                             )}
                             {breach.domain && (
-                              <div>
-                                <span className="font-medium">Domain:</span> {breach.domain}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Domain</span>
+                                <span className="truncate">{breach.domain}</span>
                               </div>
                             )}
                             {breach.origin && (
-                              <div>
-                                <span className="font-medium">Origin:</span> {breach.origin}
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Origin</span>
+                                <span className="truncate">{breach.origin}</span>
                               </div>
                             )}
-                            <div>
-                              <span className="font-medium">Available Fields:</span> {breach.fields.join(', ')}
+                            <div className="flex flex-col">
+                              <span className="font-medium text-xs text-muted-foreground">Available Fields</span>
+                              <span className="truncate">{breach.fields.join(', ')}</span>
                             </div>
                           </div>
                         </div>
                         
-                        <div className="text-right text-sm text-gray-500">
+                        <div className="text-right text-sm text-gray-500 flex-shrink-0">
                           {breach.source.breach_date && (
                             <div className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
@@ -576,6 +641,50 @@ export default function SearchPage() {
                       </div>
                     </Card>
                   ))}
+
+                  {/* Breach Results Pagination */}
+                  {totalBreachPages > 1 && (
+                    <div className="flex justify-center mt-6">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleBreachPageChange(Math.max(1, breachCurrentPage - 1))}
+                          disabled={breachCurrentPage === 1}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                          Previous
+                        </Button>
+                        
+                        <div className="flex gap-1">
+                          {Array.from({ length: Math.min(5, totalBreachPages) }, (_, i) => {
+                            const page = i + 1
+                            return (
+                              <Button
+                                key={page}
+                                variant={page === breachCurrentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => handleBreachPageChange(page)}
+                                className="w-8 h-8 p-0"
+                              >
+                                {page}
+                              </Button>
+                            )
+                          })}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleBreachPageChange(Math.min(totalBreachPages, breachCurrentPage + 1))}
+                          disabled={breachCurrentPage === totalBreachPages}
+                        >
+                          Next
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

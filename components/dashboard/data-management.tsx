@@ -47,6 +47,8 @@ export function DataManagement() {
     recentDatabases: BreachDatabase[]
     topDatabases: BreachDatabase[]
   } | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
@@ -120,6 +122,43 @@ export function DataManagement() {
         name: source.name,
         value: source.recordCount,
       }))
+
+  // Pagination logic
+  const getPaginatedData = () => {
+    if (breachData) {
+      const filteredData = breachData.topDatabases.filter(
+        (db) => selectedSource === "all" || db.id.toString() === selectedSource
+      )
+      const startIndex = (currentPage - 1) * itemsPerPage
+      const endIndex = startIndex + itemsPerPage
+      return filteredData.slice(startIndex, endIndex)
+    } else {
+      const filteredData = dataSources.filter(
+        (source) => selectedSource === "all" || source.id === selectedSource
+      )
+      const startIndex = (currentPage - 1) * itemsPerPage
+      const endIndex = startIndex + itemsPerPage
+      return filteredData.slice(startIndex, endIndex)
+    }
+  }
+
+  const getTotalPages = () => {
+    if (breachData) {
+      const filteredData = breachData.topDatabases.filter(
+        (db) => selectedSource === "all" || db.id.toString() === selectedSource
+      )
+      return Math.ceil(filteredData.length / itemsPerPage)
+    } else {
+      const filteredData = dataSources.filter(
+        (source) => selectedSource === "all" || source.id === selectedSource
+      )
+      return Math.ceil(filteredData.length / itemsPerPage)
+    }
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
 
   if (loading) {
     return (
@@ -307,10 +346,10 @@ export function DataManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {breachData ? (
-                    breachData.topDatabases
-                      .filter((db) => selectedSource === "all" || db.id.toString() === selectedSource)
-                      .map((database) => (
+                  {getPaginatedData().map((item) => {
+                    if (breachData) {
+                      const database = item as BreachDatabase
+                      return (
                         <TableRow key={database.id}>
                           <TableCell className="font-medium">{database.name}</TableCell>
                           <TableCell>{database.count.toLocaleString()}</TableCell>
@@ -327,11 +366,10 @@ export function DataManagement() {
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))
-                  ) : (
-                    dataSources
-                      .filter((source) => selectedSource === "all" || source.id === selectedSource)
-                      .map((source) => (
+                      )
+                    } else {
+                      const source = item as DataSource
+                      return (
                         <TableRow key={source.id}>
                           <TableCell className="font-medium">{source.name}</TableCell>
                           <TableCell>{source.recordCount.toLocaleString()}</TableCell>
@@ -356,10 +394,45 @@ export function DataManagement() {
                             </Button>
                           </TableCell>
                         </TableRow>
-                      ))
-                  )}
+                      )
+                    }
+                  })}
                 </TableBody>
               </Table>
+              
+              {/* Pagination */}
+              {getTotalPages() > 1 && (
+                <div className="flex justify-center mt-6">
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    {Array.from({ length: getTotalPages() }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={page === currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === getTotalPages()}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
