@@ -15,10 +15,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    // Check Elasticsearch connection
+    // Check Elasticsearch connection (optional - only if configured)
     const isConnected = await checkConnection()
-    if (!isConnected) {
-      return NextResponse.json({ error: "Database connection failed" }, { status: 503 })
+    if (isConnected === false) {
+      // Only return error if we have Elasticsearch configured but it's not working
+      if (process.env.ELASTICSEARCH_HOST || process.env.ELASTICSEARCH_URL) {
+        return NextResponse.json({ error: "Database connection failed" }, { status: 503 })
+      }
+      // If no Elasticsearch is configured, continue without it
+      console.log('Elasticsearch not configured - continuing without database features')
     }
 
     // Authentication check (optional for some queries)
@@ -42,7 +47,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         action: "graphql_query",
         details: {
-          ip: request.ip || "unknown",
+          ip: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
           userAgent: request.headers.get("user-agent") || "unknown",
         },
       })
