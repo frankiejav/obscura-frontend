@@ -337,13 +337,13 @@ export function DataManagement() {
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
-                <Table className="text-sm">
+                <Table className="text-xs">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[40%] min-w-[180px] py-2 px-2">Database Name</TableHead>
-                      <TableHead className="w-[20%] min-w-[80px] py-2 px-2">Records</TableHead>
-                      <TableHead className="w-[25%] min-w-[100px] py-2 px-2">Breach Date</TableHead>
-                      <TableHead className="w-[15%] min-w-[80px] py-2 px-2">Status</TableHead>
+                      <TableHead className="w-[45%] min-w-[150px] py-1 px-1">Database Name</TableHead>
+                      <TableHead className="w-[20%] min-w-[60px] py-1 px-1">Records</TableHead>
+                      <TableHead className="w-[20%] min-w-[80px] py-1 px-1">Breach Date</TableHead>
+                      <TableHead className="w-[15%] min-w-[60px] py-1 px-1">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -352,15 +352,15 @@ export function DataManagement() {
                         const database = item as BreachDatabase
                         return (
                           <TableRow key={database.id}>
-                            <TableCell className="font-medium max-w-0 truncate py-2 px-2">
+                            <TableCell className="font-medium max-w-0 truncate py-1 px-1">
                               <div className="truncate text-xs" title={database.name}>
                                 {database.name}
                               </div>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap py-2 px-2 text-xs">{database.count.toLocaleString()}</TableCell>
-                            <TableCell className="whitespace-nowrap py-2 px-2 text-xs">{database.breach_date || 'Unknown'}</TableCell>
-                            <TableCell className="py-2 px-2">
-                              <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                            <TableCell className="whitespace-nowrap py-1 px-1 text-xs">{database.count.toLocaleString()}</TableCell>
+                            <TableCell className="whitespace-nowrap py-1 px-1 text-xs">{database.breach_date || 'Unknown'}</TableCell>
+                            <TableCell className="py-1 px-1">
+                              <span className="inline-flex items-center rounded-full px-1 py-0.5 text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
                                 Breached
                               </span>
                             </TableCell>
@@ -370,16 +370,16 @@ export function DataManagement() {
                         const source = item as DataSource
                         return (
                           <TableRow key={source.id}>
-                            <TableCell className="font-medium max-w-0 truncate py-2 px-2">
+                            <TableCell className="font-medium max-w-0 truncate py-1 px-1">
                               <div className="truncate text-xs" title={source.name}>
                                 {source.name}
                               </div>
                             </TableCell>
-                            <TableCell className="whitespace-nowrap py-2 px-2 text-xs">{source.recordCount.toLocaleString()}</TableCell>
-                            <TableCell className="whitespace-nowrap py-2 px-2 text-xs">{new Date(source.lastUpdated).toLocaleString()}</TableCell>
-                            <TableCell className="py-2 px-2">
+                            <TableCell className="whitespace-nowrap py-1 px-1 text-xs">{source.recordCount.toLocaleString()}</TableCell>
+                            <TableCell className="whitespace-nowrap py-1 px-1 text-xs">{new Date(source.lastUpdated).toLocaleString()}</TableCell>
+                            <TableCell className="py-1 px-1">
                               <span
-                                className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium ${
+                                className={`inline-flex items-center rounded-full px-1 py-0.5 text-xs font-medium ${
                                   source.status === "active"
                                     ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
                                     : source.status === "processing"
@@ -390,9 +390,9 @@ export function DataManagement() {
                                 {source.status}
                               </span>
                             </TableCell>
-                            <TableCell className="text-right py-2 px-2">
-                              <Button variant="outline" size="sm" className="h-6 px-2 text-xs">
-                                <Download className="mr-1 h-3 w-3" />
+                            <TableCell className="text-right py-1 px-1">
+                              <Button variant="outline" size="sm" className="h-5 px-1 text-xs">
+                                <Download className="mr-0.5 h-3 w-3" />
                                 Export
                               </Button>
                             </TableCell>
@@ -406,33 +406,28 @@ export function DataManagement() {
               
               {/* Pagination */}
               {getTotalPages() > 1 && (
-                <div className="flex justify-center mt-6">
-                  <div className="flex gap-2">
+                <div className="flex justify-center mt-4">
+                  <div className="flex items-center gap-1">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
+                      className="h-6 px-2"
                     >
-                      Previous
+                      ← Previous
                     </Button>
-                    {Array.from({ length: getTotalPages() }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        variant={page === currentPage ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handlePageChange(page)}
-                      >
-                        {page}
-                      </Button>
-                    ))}
+                    <span className="text-xs text-muted-foreground px-2">
+                      Page {currentPage} of {getTotalPages()}
+                    </span>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(currentPage + 1)}
                       disabled={currentPage === getTotalPages()}
+                      className="h-6 px-2"
                     >
-                      Next
+                      Next →
                     </Button>
                   </div>
                 </div>
