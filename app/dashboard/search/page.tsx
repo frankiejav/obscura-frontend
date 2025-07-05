@@ -28,7 +28,7 @@ interface SearchResult {
   }
 }
 
-interface LeakCheckResult {
+interface BreachResult {
   email: string
   source: {
     name: string
@@ -43,11 +43,11 @@ interface LeakCheckResult {
   fields: string[]
 }
 
-interface LeakCheckSearchResult {
+interface BreachSearchResult {
   success: boolean
   found: number
   quota: number
-  result: LeakCheckResult[]
+  result: BreachResult[]
 }
 
 export default function SearchPage() {
@@ -61,22 +61,22 @@ export default function SearchPage() {
   const [loading, setLoading] = useState(false)
   const [sources, setSources] = useState<string[]>([])
 
-  // LeakCheck state
-  const [leakCheckType, setLeakCheckType] = useState('auto')
-  const [leakCheckResults, setLeakCheckResults] = useState<LeakCheckSearchResult | null>(null)
-  const [leakCheckLoading, setLeakCheckLoading] = useState(false)
-  const [leakCheckEnabled, setLeakCheckEnabled] = useState(false)
+  // Breach search state
+  const [breachSearchType, setBreachSearchType] = useState('auto')
+  const [breachResults, setBreachResults] = useState<BreachSearchResult | null>(null)
+  const [breachLoading, setBreachLoading] = useState(false)
+  const [breachSearchEnabled, setBreachSearchEnabled] = useState(false)
 
-  // Fetch available sources and check LeakCheck status
+  // Fetch available sources and check breach search status
   useEffect(() => {
     fetchSources()
-    checkLeakCheckStatus()
+    checkBreachSearchStatus()
   }, [])
 
-  // Check LeakCheck status periodically
+  // Check breach search status periodically
   useEffect(() => {
     const interval = setInterval(() => {
-      checkLeakCheckStatus()
+      checkBreachSearchStatus()
     }, 5000) // Check every 5 seconds
 
     return () => clearInterval(interval)
@@ -95,17 +95,17 @@ export default function SearchPage() {
     }
   }
 
-  const checkLeakCheckStatus = async () => {
+  const checkBreachSearchStatus = async () => {
     try {
       const response = await fetch('/api/settings')
       if (response.ok) {
         const data = await response.json()
         if (data.leakCheck) {
-          setLeakCheckEnabled(data.leakCheck.enabled)
+          setBreachSearchEnabled(data.leakCheck.enabled)
         }
       }
     } catch (error) {
-      console.error('Error checking LeakCheck status:', error)
+      console.error('Error checking breach search status:', error)
     }
   }
 
@@ -114,9 +114,9 @@ export default function SearchPage() {
     if (!searchTerm.trim()) return
 
     setLoading(true)
-    setLeakCheckLoading(true)
+    setBreachLoading(true)
     setResults(null)
-    setLeakCheckResults(null)
+    setBreachResults(null)
 
     try {
       // Search internal data
@@ -138,9 +138,9 @@ export default function SearchPage() {
         setResults(data)
       }
 
-      // Search LeakCheck if enabled
-      if (leakCheckEnabled) {
-        const leakCheckResponse = await fetch('/api/leakcheck', {
+      // Search breach data if enabled
+      if (breachSearchEnabled) {
+        const breachResponse = await fetch('/api/leakcheck', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -150,14 +150,14 @@ export default function SearchPage() {
           }),
         })
 
-        if (leakCheckResponse.ok) {
-          const data = await leakCheckResponse.json()
-          setLeakCheckResults(data)
+        if (breachResponse.ok) {
+          const data = await breachResponse.json()
+          setBreachResults(data)
         }
       }
     } catch (error) {
       console.error('Search failed:', error)
-      setLeakCheckResults({
+      setBreachResults({
         success: false,
         found: 0,
         quota: 0,
@@ -165,7 +165,7 @@ export default function SearchPage() {
       })
     } finally {
       setLoading(false)
-      setLeakCheckLoading(false)
+      setBreachLoading(false)
     }
   }
 
@@ -220,7 +220,7 @@ export default function SearchPage() {
     }
   }
 
-  const totalResults = (results?.pagination.total || 0) + (leakCheckResults?.found || 0)
+  const totalResults = (results?.pagination.total || 0) + (breachResults?.found || 0)
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -285,10 +285,10 @@ export default function SearchPage() {
               </Select>
             </div>
 
-            {leakCheckEnabled && (
+            {breachSearchEnabled && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">LeakCheck Type</label>
-                <Select value={leakCheckType} onValueChange={setLeakCheckType}>
+                <label className="text-sm font-medium">Breach Search Type</label>
+                <Select value={breachSearchType} onValueChange={setBreachSearchType}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -325,19 +325,19 @@ export default function SearchPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">&nbsp;</label>
-              <Button onClick={handleSearch} disabled={loading || leakCheckLoading} className="w-full">
-                {loading || leakCheckLoading ? 'Searching...' : 'Search All Sources'}
+              <Button onClick={handleSearch} disabled={loading || breachLoading} className="w-full">
+                {loading || breachLoading ? 'Searching...' : 'Search All Sources'}
               </Button>
             </div>
           </div>
 
-          {leakCheckEnabled && (
+          {breachSearchEnabled && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Shield className="w-4 h-4" />
-              <span>LeakCheck API is enabled and will be searched automatically</span>
-              {leakCheckResults?.quota && (
+              <span>Breach search API is enabled and will be searched automatically</span>
+              {breachResults?.quota && (
                 <Badge variant="outline">
-                  {leakCheckResults.quota} queries remaining
+                  {breachResults.quota} queries remaining
                 </Badge>
               )}
             </div>
@@ -346,7 +346,7 @@ export default function SearchPage() {
       </Card>
 
       {/* Search Results */}
-      {(results || leakCheckResults) && (
+      {(results || breachResults) && (
         <div className="space-y-6">
           {/* Internal Data Results */}
           {results && results.results.length > 0 && (
@@ -439,21 +439,21 @@ export default function SearchPage() {
             </Card>
           )}
 
-          {/* LeakCheck Results */}
-          {leakCheckResults && leakCheckResults.result.length > 0 && (
+          {/* Breach Results */}
+          {breachResults && breachResults.result.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="w-5 h-5" />
                   Data Breach Results
                   <Badge variant="destructive">
-                    {leakCheckResults.found} breaches found
+                    {breachResults.found} breaches found
                   </Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {leakCheckResults.result.map((breach, index) => (
+                  {breachResults.result.map((breach, index) => (
                     <Card key={index} className="p-4 border-orange-200 bg-orange-50">
                       <div className="space-y-2">
                         <div className="flex items-center justify-between">
@@ -510,8 +510,8 @@ export default function SearchPage() {
           )}
 
           {/* No Results Message */}
-          {((results && results.results.length === 0) || (leakCheckResults && leakCheckResults.result.length === 0)) && 
-           (!results || results.results.length === 0) && (!leakCheckResults || leakCheckResults.result.length === 0) && (
+          {((results && results.results.length === 0) || (breachResults && breachResults.result.length === 0)) && 
+           (!results || results.results.length === 0) && (!breachResults || breachResults.result.length === 0) && (
             <Card>
               <CardContent className="text-center py-8 text-gray-500">
                 No results found in any data source

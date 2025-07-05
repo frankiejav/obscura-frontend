@@ -25,7 +25,7 @@ interface DataRecord {
   timestamp: string
 }
 
-interface LeakCheckDatabase {
+interface BreachDatabase {
   id: number
   name: string
   count: number
@@ -44,12 +44,12 @@ export default function DashboardPage() {
     activeSources: 0,
   })
   const [loading, setLoading] = useState(true)
-  const [leakCheckEnabled, setLeakCheckEnabled] = useState(false)
-  const [leakCheckData, setLeakCheckData] = useState<{
+  const [breachSearchEnabled, setBreachSearchEnabled] = useState(false)
+  const [breachData, setBreachData] = useState<{
     totalCount: number
     totalDatabases: number
-    recentDatabases: LeakCheckDatabase[]
-    topDatabases: LeakCheckDatabase[]
+    recentDatabases: BreachDatabase[]
+    topDatabases: BreachDatabase[]
   } | null>(null)
 
   useEffect(() => {
@@ -59,11 +59,11 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     setLoading(true)
     try {
-      // Fetch LeakCheck databases data
-      const leakCheckResponse = await fetch('/api/leakcheck-databases')
-      if (leakCheckResponse.ok) {
-        const leakCheckData = await leakCheckResponse.json()
-        setLeakCheckData(leakCheckData)
+      // Fetch breach databases data
+      const breachResponse = await fetch('/api/leakcheck-databases')
+      if (breachResponse.ok) {
+        const breachData = await breachResponse.json()
+        setBreachData(breachData)
       }
 
       // Fetch data sources
@@ -80,8 +80,8 @@ export default function DashboardPage() {
         ).length
 
         setStats({
-          totalRecords: leakCheckData?.totalCount || totalRecords,
-          totalSources: leakCheckData?.totalDatabases || dataSources.length,
+          totalRecords: breachData?.totalCount || totalRecords,
+          totalSources: breachData?.totalDatabases || dataSources.length,
           activeSources,
         })
       }
@@ -154,10 +154,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {leakCheckData ? `${(leakCheckData.totalCount / 1000000000).toFixed(1)}B+` : stats.totalRecords.toLocaleString()}
+              {breachData ? `${(breachData.totalCount / 1000000000).toFixed(1)}B+` : stats.totalRecords.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              {leakCheckData ? 'Across all LeakCheck databases' : 'Across all data sources'}
+              {breachData ? 'Across all breach databases' : 'Across all data sources'}
             </p>
           </CardContent>
         </Card>
@@ -168,9 +168,9 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{leakCheckData?.totalDatabases || stats.totalSources}</div>
+            <div className="text-2xl font-bold">{breachData?.totalDatabases || stats.totalSources}</div>
             <p className="text-xs text-muted-foreground">
-              {leakCheckData ? 'LeakCheck databases' : `${stats.activeSources} active sources`}
+              {breachData ? 'Breach databases' : `${stats.activeSources} active sources`}
             </p>
           </CardContent>
         </Card>
@@ -181,21 +181,21 @@ export default function DashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{leakCheckData?.recentDatabases.length || recentRecords.length}</div>
+            <div className="text-2xl font-bold">{breachData?.recentDatabases.length || recentRecords.length}</div>
             <p className="text-xs text-muted-foreground">
-              {leakCheckData ? 'Recent breach databases' : 'Records added recently'}
+              {breachData ? 'Recent breach databases' : 'Records added recently'}
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* LeakCheck Status */}
-      {leakCheckEnabled && (
+      {/* Breach Search Status */}
+      {breachSearchEnabled && (
         <Card className="border-green-200 bg-green-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-800">
               <Shield className="w-5 h-5" />
-              LeakCheck API Active
+              Breach Search API Active
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -211,18 +211,18 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database className="w-5 h-5" />
-            {leakCheckData ? 'Top LeakCheck Databases' : 'Data Sources'}
+            {breachData ? 'Top Breach Databases' : 'Data Sources'}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {leakCheckData ? (
-            leakCheckData.topDatabases.length === 0 ? (
+          {breachData ? (
+            breachData.topDatabases.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No databases found
               </div>
             ) : (
               <div className="space-y-4">
-                {leakCheckData.topDatabases.map((database) => (
+                {breachData.topDatabases.map((database) => (
                   <div
                     key={database.id}
                     className="flex items-center justify-between p-4 border rounded-lg"
@@ -294,18 +294,18 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="w-5 h-5" />
-            {leakCheckData ? 'Recent Breach Databases' : 'Recent Records'}
+            {breachData ? 'Recent Breach Databases' : 'Recent Records'}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {leakCheckData ? (
-            leakCheckData.recentDatabases.length === 0 ? (
+          {breachData ? (
+            breachData.recentDatabases.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No recent breach databases found
               </div>
             ) : (
               <div className="space-y-4">
-                {leakCheckData.recentDatabases.map((database) => (
+                {breachData.recentDatabases.map((database) => (
                   <div
                     key={database.id}
                     className="flex items-center justify-between p-4 border rounded-lg"

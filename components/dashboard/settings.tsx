@@ -35,7 +35,7 @@ interface Settings {
     tokenExpiration: string
     logLevel: string
   }
-  leakCheck: {
+  breachSearch: {
     enabled: boolean
     quota: number
     lastSync: string | null
@@ -65,11 +65,11 @@ const defaultSettings: Settings = {
     tokenExpiration: "24",
     logLevel: "info",
   },
-  leakCheck: {
-    enabled: !!process.env.LEAKCHECK_API_KEY,
-    quota: 400,
-    lastSync: null,
-  },
+      breachSearch: {
+      enabled: !!process.env.LEAKCHECK_API_KEY,
+      quota: 1000,
+      lastSync: null,
+    },
 }
 
 export function SettingsPage() {
@@ -151,7 +151,7 @@ export function SettingsPage() {
   }
 
   const isAdmin = user?.role === "admin"
-  const availableTabs = isAdmin ? ["general", "security", "notifications", "api", "leakcheck"] : ["general", "security", "notifications"]
+  const availableTabs = isAdmin ? ["general", "security", "notifications", "api", "breachsearch"] : ["general", "security", "notifications"]
 
   return (
     <div className="space-y-6">
@@ -166,7 +166,7 @@ export function SettingsPage() {
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isAdmin && <TabsTrigger value="api">API</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="leakcheck">LeakCheck</TabsTrigger>}
+          {isAdmin && <TabsTrigger value="breachsearch">Breach Search</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="general">
@@ -494,27 +494,27 @@ export function SettingsPage() {
         )}
 
         {isAdmin && (
-          <TabsContent value="leakcheck">
+          <TabsContent value="breachsearch">
             <Card>
               <CardHeader>
-                <CardTitle>LeakCheck Settings</CardTitle>
-                <CardDescription>Configure LeakCheck API integration.</CardDescription>
+                <CardTitle>Breach Search Settings</CardTitle>
+                <CardDescription>Configure breach search API integration.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Enable LeakCheck</Label>
+                    <Label>Enable Breach Search</Label>
                     <p className="text-sm text-muted-foreground">
-                      Enable LeakCheck API integration for breach data.
+                      Enable breach search API integration for breach data.
                     </p>
                   </div>
                   <Switch
-                    checked={settings.leakCheck.enabled}
+                    checked={settings.breachSearch.enabled}
                     onCheckedChange={(checked) =>
                       setSettings({
                         ...settings,
-                        leakCheck: {
-                          ...settings.leakCheck,
+                        breachSearch: {
+                          ...settings.breachSearch,
                           enabled: checked,
                         },
                       })
@@ -526,23 +526,23 @@ export function SettingsPage() {
                   <Input
                     id="quota"
                     type="number"
-                    value={settings.leakCheck.quota}
+                    value={settings.breachSearch.quota}
                     onChange={(e) =>
                       setSettings({
                         ...settings,
-                        leakCheck: {
-                          ...settings.leakCheck,
+                        breachSearch: {
+                          ...settings.breachSearch,
                           quota: parseInt(e.target.value),
                         },
                       })
                     }
                   />
                 </div>
-                {settings.leakCheck.lastSync && (
+                {settings.breachSearch.lastSync && (
                   <div className="space-y-2">
                     <Label>Last Sync</Label>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(settings.leakCheck.lastSync).toLocaleString()}
+                      {new Date(settings.breachSearch.lastSync).toLocaleString()}
                     </p>
                   </div>
                 )}

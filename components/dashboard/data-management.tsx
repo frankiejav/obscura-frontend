@@ -24,7 +24,7 @@ type MonthlyRecord = {
   count: number
 }
 
-type LeakCheckDatabase = {
+type BreachDatabase = {
   id: number
   name: string
   count: number
@@ -41,37 +41,37 @@ export function DataManagement() {
   const [monthlyRecords, setMonthlyRecords] = useState<MonthlyRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [leakCheckData, setLeakCheckData] = useState<{
+  const [breachData, setBreachData] = useState<{
     totalCount: number
     totalDatabases: number
-    recentDatabases: LeakCheckDatabase[]
-    topDatabases: LeakCheckDatabase[]
+    recentDatabases: BreachDatabase[]
+    topDatabases: BreachDatabase[]
   } | null>(null)
 
   // Auto-refresh every 30 seconds
   useEffect(() => {
     fetchDataSources()
     fetchMonthlyRecords()
-    fetchLeakCheckData()
+    fetchBreachData()
 
     const interval = setInterval(() => {
       fetchDataSources()
       fetchMonthlyRecords()
-      fetchLeakCheckData()
+      fetchBreachData()
     }, 30000)
 
     return () => clearInterval(interval)
   }, [])
 
-  const fetchLeakCheckData = async () => {
+  const fetchBreachData = async () => {
     try {
       const response = await fetch('/api/leakcheck-databases')
       if (response.ok) {
         const data = await response.json()
-        setLeakCheckData(data)
+        setBreachData(data)
       }
     } catch (error) {
-      console.error('Error fetching LeakCheck data:', error)
+      console.error('Error fetching breach data:', error)
     }
   }
 
@@ -107,12 +107,12 @@ export function DataManagement() {
 
   const handleRefresh = async () => {
     setRefreshing(true)
-    await Promise.all([fetchDataSources(), fetchMonthlyRecords(), fetchLeakCheckData()])
+    await Promise.all([fetchDataSources(), fetchMonthlyRecords(), fetchBreachData()])
     setRefreshing(false)
   }
 
-  const sourceDistribution = leakCheckData 
-    ? leakCheckData.topDatabases.slice(0, 5).map((db) => ({
+  const sourceDistribution = breachData 
+    ? breachData.topDatabases.slice(0, 5).map((db) => ({
         name: db.name,
         value: db.count,
       }))
@@ -141,12 +141,12 @@ export function DataManagement() {
         <div className="flex items-center gap-2">
           <Select value={selectedSource || "all"} onValueChange={(value) => setSelectedSource(value || "all")}>
             <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder={leakCheckData ? "All Databases" : "All Sources"} />
+              <SelectValue placeholder={breachData ? "All Databases" : "All Sources"} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{leakCheckData ? "All Databases" : "All Sources"}</SelectItem>
-              {leakCheckData 
-                ? leakCheckData.topDatabases.map((db) => (
+              <SelectItem value="all">{breachData ? "All Databases" : "All Sources"}</SelectItem>
+              {breachData 
+                ? breachData.topDatabases.map((db) => (
                     <SelectItem key={db.id} value={db.id.toString()}>
                       {db.name}
                     </SelectItem>
@@ -186,10 +186,10 @@ export function DataManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {leakCheckData ? `${(leakCheckData.totalCount / 1000000000).toFixed(1)}B+` : dataSources.reduce((acc, source) => acc + source.recordCount, 0).toLocaleString()}
+                  {breachData ? `${(breachData.totalCount / 1000000000).toFixed(1)}B+` : dataSources.reduce((acc, source) => acc + source.recordCount, 0).toLocaleString()}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {leakCheckData ? `Across ${leakCheckData.totalDatabases} LeakCheck databases` : `Across ${dataSources.length} sources`}
+                  {breachData ? `Across ${breachData.totalDatabases} breach databases` : `Across ${dataSources.length} sources`}
                 </p>
               </CardContent>
             </Card>
@@ -200,10 +200,10 @@ export function DataManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {leakCheckData ? leakCheckData.totalDatabases : dataSources.filter((source) => source.status === "active").length}
+                  {breachData ? breachData.totalDatabases : dataSources.filter((source) => source.status === "active").length}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {leakCheckData ? 'LeakCheck databases' : `Out of ${dataSources.length} total sources`}
+                  {breachData ? 'Breach databases' : `Out of ${dataSources.length} total sources`}
                 </p>
               </CardContent>
             </Card>
@@ -214,10 +214,10 @@ export function DataManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {leakCheckData ? leakCheckData.recentDatabases.length : dataSources.filter((source) => source.status === "processing").length}
+                  {breachData ? breachData.recentDatabases.length : dataSources.filter((source) => source.status === "processing").length}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {leakCheckData ? 'Recent breach databases' : 'Sources currently updating'}
+                  {breachData ? 'Recent breach databases' : 'Sources currently updating'}
                 </p>
               </CardContent>
             </Card>
@@ -228,10 +228,10 @@ export function DataManagement() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {leakCheckData ? leakCheckData.topDatabases.length : dataSources.filter((source) => source.status === "error").length}
+                  {breachData ? breachData.topDatabases.length : dataSources.filter((source) => source.status === "error").length}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {leakCheckData ? 'Largest databases by records' : 'Sources with issues'}
+                  {breachData ? 'Largest databases by records' : 'Sources with issues'}
                 </p>
               </CardContent>
             </Card>
@@ -240,9 +240,9 @@ export function DataManagement() {
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>{leakCheckData ? 'Records by Database' : 'Records by Source'}</CardTitle>
+                <CardTitle>{breachData ? 'Records by Database' : 'Records by Source'}</CardTitle>
                 <CardDescription>
-                  {leakCheckData ? 'Distribution of records across top LeakCheck databases' : 'Distribution of records across data sources'}
+                  {breachData ? 'Distribution of records across top breach databases' : 'Distribution of records across data sources'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="h-80">
@@ -290,9 +290,9 @@ export function DataManagement() {
         <TabsContent value="sources">
           <Card>
             <CardHeader>
-              <CardTitle>{leakCheckData ? 'LeakCheck Databases' : 'Data Sources'}</CardTitle>
+              <CardTitle>{breachData ? 'Breach Databases' : 'Data Sources'}</CardTitle>
               <CardDescription>
-                {leakCheckData ? 'Monitor LeakCheck breach databases' : 'Manage and monitor your data sources'}
+                {breachData ? 'Monitor breach databases' : 'Manage and monitor your data sources'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -307,8 +307,8 @@ export function DataManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leakCheckData ? (
-                    leakCheckData.topDatabases
+                  {breachData ? (
+                    breachData.topDatabases
                       .filter((db) => selectedSource === "all" || db.id.toString() === selectedSource)
                       .map((database) => (
                         <TableRow key={database.id}>
