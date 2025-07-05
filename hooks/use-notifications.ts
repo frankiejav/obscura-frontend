@@ -1,71 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Notification, CreateNotificationInput } from '@/lib/types/notifications'
 
-// Mock REST client - replace with actual REST API calls
-const mockRestClient = {
-  get: async (endpoint: string) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 100))
-    
-    // Mock responses based on endpoint
-    if (endpoint.includes('notifications')) {
-      return {
-        data: {
-          notifications: [],
-          totalCount: 0
-        }
-      }
-    }
-    
-    if (endpoint.includes('unread-count')) {
-      return {
-        data: {
-          count: 0
-        }
-      }
-    }
-    
-    return { data: null }
-  },
-  
-  post: async (endpoint: string, data?: any) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 200))
-    
-    // Mock responses based on endpoint
-    if (endpoint.includes('mark-read')) {
-      return {
-        data: {
-          id: data.id,
-          isRead: true
-        } as Partial<Notification>
-      }
-    }
-    
-    if (endpoint.includes('create')) {
-      return {
-        data: {
-          id: Date.now().toString(),
-          title: data.title,
-          message: data.message,
-          type: data.type,
-          priority: data.priority,
-          isRead: false,
-          createdAt: new Date().toISOString(),
-          createdBy: {
-            id: 'current-user',
-            name: 'Current User',
-            email: 'user@obscura.com',
-            role: 'ADMIN'
-          }
-        } as Notification
-      }
-    }
-    
-    return { data: null }
-  }
-}
-
 export function useNotifications(userId?: string) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
@@ -77,10 +12,9 @@ export function useNotifications(userId?: string) {
     setError(null)
     
     try {
-      const response = await mockRestClient.get('/api/notifications?limit=50')
-      const notificationsList = response.data?.notifications || []
-      
-      setNotifications(notificationsList)
+      // Mock API call - replace with actual REST API
+      await new Promise(resolve => setTimeout(resolve, 100))
+      setNotifications([])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch notifications')
     } finally {
@@ -90,8 +24,9 @@ export function useNotifications(userId?: string) {
 
   const fetchUnreadCount = async () => {
     try {
-      const response = await mockRestClient.get('/api/notifications/unread-count')
-      setUnreadCount(response.data?.count || 0)
+      // Mock API call - replace with actual REST API
+      await new Promise(resolve => setTimeout(resolve, 100))
+      setUnreadCount(0)
     } catch (err) {
       console.error('Failed to fetch unread count:', err)
     }
@@ -99,7 +34,7 @@ export function useNotifications(userId?: string) {
 
   const markAsRead = async (notificationId: string) => {
     try {
-      // Simulate API call
+      // Mock API call - replace with actual REST API
       await new Promise(resolve => setTimeout(resolve, 200))
       
       // Update local state
@@ -118,7 +53,8 @@ export function useNotifications(userId?: string) {
 
   const markAllAsRead = async () => {
     try {
-      await mockRestClient.post('/api/notifications/mark-all-read')
+      // Mock API call - replace with actual REST API
+      await new Promise(resolve => setTimeout(resolve, 200))
       
       // Update local state
       setNotifications(prev => 
@@ -133,8 +69,25 @@ export function useNotifications(userId?: string) {
 
   const createNotification = async (notificationData: CreateNotificationInput) => {
     try {
-      const response = await mockRestClient.post('/api/notifications/create', notificationData)
-      const newNotification = response.data
+      // Mock API call - replace with actual REST API
+      await new Promise(resolve => setTimeout(resolve, 200))
+      
+      const newNotification: Notification = {
+        id: Date.now().toString(),
+        title: notificationData.title,
+        message: notificationData.message,
+        type: notificationData.type,
+        priority: notificationData.priority,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        createdBy: {
+          id: 'current-user',
+          name: 'Current User',
+          email: 'user@obscura.com',
+          role: 'ADMIN'
+        },
+        targetUserId: notificationData.targetUserId
+      }
       
       // Add to local state
       setNotifications(prev => [newNotification, ...prev])
@@ -151,7 +104,8 @@ export function useNotifications(userId?: string) {
 
   const deleteNotification = async (notificationId: string) => {
     try {
-      await mockRestClient.post('/api/notifications/delete', { id: notificationId })
+      // Mock API call - replace with actual REST API
+      await new Promise(resolve => setTimeout(resolve, 200))
       
       // Remove from local state
       setNotifications(prev => prev.filter(n => n.id !== notificationId))
