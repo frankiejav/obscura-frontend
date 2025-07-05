@@ -164,6 +164,11 @@ export function SettingsPage() {
           title: "Settings saved",
           description: "Your settings have been saved successfully.",
         })
+        
+        // Force a page refresh to update LeakCheck status across the app
+        setTimeout(() => {
+          window.location.reload()
+        }, 1000)
       } else {
         throw new Error(data.errors?.[0]?.message || 'Failed to save settings')
       }
