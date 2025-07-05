@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     // Check if LeakCheck is enabled in settings
     try {
-      const settingsResult = await db.query('SELECT leak_check FROM settings WHERE id = 1')
+      const settingsResult = await db.query('SELECT leak_check FROM settings WHERE id = $1', ['default-settings-id'])
       if (settingsResult.rows.length > 0) {
         const leakCheckSettings = settingsResult.rows[0].leak_check
         if (leakCheckSettings && !leakCheckSettings.enabled) {
