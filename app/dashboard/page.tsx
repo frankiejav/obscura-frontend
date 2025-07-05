@@ -25,6 +25,16 @@ interface DataRecord {
   timestamp: string
 }
 
+interface LeakCheckDatabase {
+  id: number
+  name: string
+  count: number
+  breach_date: string | null
+  unverified: number
+  passwordless: number
+  compilation: number
+}
+
 export default function DashboardPage() {
   const [dataSources, setDataSources] = useState<DataSource[]>([])
   const [recentRecords, setRecentRecords] = useState<DataRecord[]>([])
@@ -35,6 +45,12 @@ export default function DashboardPage() {
   })
   const [loading, setLoading] = useState(true)
   const [leakCheckEnabled, setLeakCheckEnabled] = useState(false)
+  const [leakCheckData, setLeakCheckData] = useState<{
+    totalCount: number
+    totalDatabases: number
+    recentDatabases: LeakCheckDatabase[]
+    topDatabases: LeakCheckDatabase[]
+  } | null>(null)
 
   useEffect(() => {
     fetchDashboardData()
@@ -43,6 +59,13 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     setLoading(true)
     try {
+      // Fetch LeakCheck databases data
+      const leakCheckResponse = await fetch('/api/leakcheck-databases')
+      if (leakCheckResponse.ok) {
+        const leakCheckData = await leakCheckResponse.json()
+        setLeakCheckData(leakCheckData)
+      }
+
       // Fetch data sources
       const sourcesResponse = await fetch('/api/data-sources')
       if (sourcesResponse.ok) {
@@ -57,8 +80,8 @@ export default function DashboardPage() {
         ).length
 
         setStats({
-          totalRecords,
-          totalSources: dataSources.length,
+          totalRecords: leakCheckData?.totalCount || totalRecords,
+          totalSources: leakCheckData?.totalDatabases || dataSources.length,
           activeSources,
         })
       }
@@ -130,9 +153,11 @@ export default function DashboardPage() {
             <Database className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalRecords.toLocaleString()}</div>
+            <div className="text-2xl font-bold">
+              {leakCheckData ? `${(leakCheckData.totalCount / 1000000000).toFixed(1)}B+` : stats.totalRecords.toLocaleString()}
+            </div>
             <p className="text-xs text-muted-foreground">
-              Across all data sources
+              {leakCheckData ? 'Across all LeakCheck databases' : 'Across all data sources'}
             </p>
           </CardContent>
         </Card>
@@ -143,9 +168,9 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSources}</div>
+            <div className="text-2xl font-bold">{leakCheckData?.totalDatabases || stats.totalSources}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.activeSources} active sources
+              {leakCheckData ? 'LeakCheck databases' : `${stats.activeSources} active sources`}
             </p>
           </CardContent>
         </Card>
@@ -156,9 +181,9 @@ export default function DashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recentRecords.length}</div>
+            <div className="text-2xl font-bold">{leakCheckData?.recentDatabases.length || recentRecords.length}</div>
             <p className="text-xs text-muted-foreground">
-              Records added recently
+              {leakCheckData ? 'Recent breach databases' : 'Records added recently'}
             </p>
           </CardContent>
         </Card>
@@ -186,42 +211,80 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database className="w-5 h-5" />
-            Data Sources
+            {leakCheckData ? 'Top LeakCheck Databases' : 'Data Sources'}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {dataSources.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No data sources found
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {dataSources.map((source) => (
-                <div
-                  key={source.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{source.name}</h3>
-                      <Badge className={getStatusColor(source.status)}>
-                        {source.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                      <span className="flex items-center gap-1">
-                        <TrendingUp className="w-4 h-4" />
-                        {source.recordCount.toLocaleString()} records
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-4 h-4" />
-                        {formatDate(source.lastUpdated)}
-                      </span>
+          {leakCheckData ? (
+            leakCheckData.topDatabases.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No databases found
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {leakCheckData.topDatabases.map((database) => (
+                  <div
+                    key={database.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{database.name}</h3>
+                        <Badge variant="destructive">
+                          {database.breach_date ? `Breached ${database.breach_date}` : 'Unknown Date'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="w-4 h-4" />
+                          {database.count.toLocaleString()} records
+                        </span>
+                        {database.breach_date && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {database.breach_date}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
+          ) : (
+            dataSources.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No data sources found
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {dataSources.map((source) => (
+                  <div
+                    key={source.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{source.name}</h3>
+                        <Badge className={getStatusColor(source.status)}>
+                          {source.status}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="w-4 h-4" />
+                          {source.recordCount.toLocaleString()} records
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          {formatDate(source.lastUpdated)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           )}
         </CardContent>
       </Card>
@@ -231,49 +294,87 @@ export default function DashboardPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="w-5 h-5" />
-            Recent Records
+            {leakCheckData ? 'Recent Breach Databases' : 'Recent Records'}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {recentRecords.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No recent records found
-            </div>
+          {leakCheckData ? (
+            leakCheckData.recentDatabases.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No recent breach databases found
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {leakCheckData.recentDatabases.map((database) => (
+                  <div
+                    key={database.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{database.name}</h3>
+                        <Badge variant="destructive">
+                          {database.breach_date ? `Breached ${database.breach_date}` : 'Unknown Date'}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                        <span className="flex items-center gap-1">
+                          <TrendingUp className="w-4 h-4" />
+                          {database.count.toLocaleString()} records
+                        </span>
+                        {database.breach_date && (
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {database.breach_date}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           ) : (
-            <div className="space-y-4">
-              {recentRecords.map((record) => (
-                <div
-                  key={record.id}
-                  className="flex items-center justify-between p-4 border rounded-lg"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">
-                        {record.name || record.email || record.ip || 'Unknown'}
-                      </h3>
-                      <Badge variant="secondary">{record.source}</Badge>
+            recentRecords.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                No recent records found
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {recentRecords.map((record) => (
+                  <div
+                    key={record.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">
+                          {record.name || record.email || record.ip || 'Unknown'}
+                        </h3>
+                        <Badge variant="secondary">{record.source}</Badge>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mt-1">
+                        {record.name && (
+                          <span>Name: {record.name}</span>
+                        )}
+                        {record.email && (
+                          <span>Email: {record.email}</span>
+                        )}
+                        {record.ip && (
+                          <span>IP: {record.ip}</span>
+                        )}
+                        {record.domain && (
+                          <span>Domain: {record.domain}</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mt-1">
-                      {record.name && (
-                        <span>Name: {record.name}</span>
-                      )}
-                      {record.email && (
-                        <span>Email: {record.email}</span>
-                      )}
-                      {record.ip && (
-                        <span>IP: {record.ip}</span>
-                      )}
-                      {record.domain && (
-                        <span>Domain: {record.domain}</span>
-                      )}
+                    <div className="text-right text-sm text-gray-500">
+                      {formatDate(record.timestamp)}
                     </div>
                   </div>
-                  <div className="text-right text-sm text-gray-500">
-                    {formatDate(record.timestamp)}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )
           )}
         </CardContent>
       </Card>
