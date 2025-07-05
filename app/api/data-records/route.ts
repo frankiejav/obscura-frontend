@@ -13,6 +13,21 @@ function getTotalHits(result: any): number {
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if Elasticsearch client is available
+    if (!esClient) {
+      console.log('Elasticsearch client not available, returning empty results')
+      return NextResponse.json({
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+          startCursor: null,
+          endCursor: null,
+        },
+        totalCount: 0,
+      })
+    }
+
     const { searchParams } = new URL(request.url)
     const first = parseInt(searchParams.get('first') || '10')
     const after = searchParams.get('after') || '0'
@@ -57,6 +72,12 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error fetching data records:', error)
+    
+    // Check if it's an authentication error
+    if (error instanceof Error && error.message.includes('security_exception')) {
+      console.log('Elasticsearch authentication failed, returning empty results')
+    }
+    
     return NextResponse.json({
       edges: [],
       pageInfo: {
@@ -66,6 +87,6 @@ export async function GET(request: NextRequest) {
         endCursor: null,
       },
       totalCount: 0,
-    }, { status: 500 })
+    })
   }
 } 

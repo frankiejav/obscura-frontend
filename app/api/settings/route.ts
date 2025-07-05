@@ -6,7 +6,7 @@ export async function GET() {
     // Get settings from database
     const result = await db.query(
       'SELECT * FROM settings WHERE id = $1',
-      ['default-settings-id']
+      ['00000000-0000-0000-0000-000000000001']
     )
     
     if (result.rows.length === 0) {
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
          api = EXCLUDED.api,
          leak_check = EXCLUDED.leak_check`,
       [
-        'default-settings-id',
+        '00000000-0000-0000-0000-000000000001',
         JSON.stringify(settings.general),
         JSON.stringify(settings.security),
         JSON.stringify(settings.notifications),
