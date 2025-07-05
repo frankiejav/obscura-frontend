@@ -60,6 +60,10 @@ if (elasticsearchUrl) {
       } : undefined,
       requestTimeout: 30000,
       maxRetries: 3,
+      // Explicitly set the API version to avoid conflicts
+      headers: {
+        'User-Agent': 'obscura-frontend/1.0'
+      }
     })
   } catch (error) {
     console.error('Invalid Elasticsearch URL:', elasticsearchUrl)
