@@ -141,7 +141,7 @@ export const resolvers = {
           },
           leakCheck: {
             enabled: settings.leakCheck?.enabled || defaults.leakCheck.enabled,
-            quota: settings.leakCheck?.quota || defaults.leakCheck.quota,
+            quota: parseInt(settings.leakCheck?.quota || defaults.leakCheck.quota) || 0,
             lastSync: settings.leakCheck?.lastSync ? new Date(settings.leakCheck.lastSync) : null,
           },
         }
