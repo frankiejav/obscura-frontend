@@ -53,6 +53,7 @@ interface BreachResult {
   gender?: string
   ip?: string
   domain?: string
+  origin?: string
   fields: string[]
 }
 
@@ -551,6 +552,11 @@ export default function SearchPage() {
                             {breach.domain && (
                               <div>
                                 <span className="font-medium">Domain:</span> {breach.domain}
+                              </div>
+                            )}
+                            {breach.origin && (
+                              <div>
+                                <span className="font-medium">Origin:</span> {breach.origin}
                               </div>
                             )}
                             <div>
