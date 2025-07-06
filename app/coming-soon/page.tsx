@@ -1,12 +1,37 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState, useEffect } from "react"
 import dynamic from "next/dynamic"
 
-// Dynamically import the Globe component to avoid SSR issues
-const World = dynamic(() => import("@/components/ui/globe").then((m) => m.World), {
+// Dynamically import the World component with SSR disabled
+const World = dynamic(() => import("@/components/ui/globe").then((m) => ({ default: m.World })), {
   ssr: false,
-})
+  loading: () => (
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
+        <p className="mt-4 text-muted-foreground font-mono">LOADING GLOBE...</p>
+      </div>
+    </div>
+  ),
+});
+
+// Preload the globe component on mount
+const GlobeWithPreload = ({ globeConfig, data }: any) => {
+  useEffect(() => {
+    // Preload the globe component
+    const preloadGlobe = async () => {
+      try {
+        await import("@/components/ui/globe");
+      } catch (error) {
+        console.error("Failed to preload globe:", error);
+      }
+    };
+    preloadGlobe();
+  }, []);
+
+  return <World globeConfig={globeConfig} data={data} />;
+};
 
 export default function ComingSoon() {
   const [mounted, setMounted] = useState(false)
@@ -16,93 +41,438 @@ export default function ComingSoon() {
   }, [])
 
   const globeConfig = {
-    pointSize: 2,
+    pointSize: 4,
     globeColor: "#1a1a1a",
     showAtmosphere: true,
     atmosphereColor: "#ffffff",
-    atmosphereAltitude: 0.05,
-    emissive: "#000000",
+    atmosphereAltitude: 0.1,
+    emissive: "#333333",
     emissiveIntensity: 0.1,
     shininess: 0.9,
-    polygonColor: "rgba(255,255,255,0.1)",
-    ambientLight: "#ffffff",
+    polygonColor: "rgba(255,255,255,0.7)",
+    ambientLight: "#666666",
     directionalLeftLight: "#ffffff",
     directionalTopLight: "#ffffff",
     pointLight: "#ffffff",
-    arcTime: 2000,
+    arcTime: 1000,
     arcLength: 0.9,
     rings: 1,
-    maxRings: 2,
+    maxRings: 3,
+    initialPosition: { lat: 22.3193, lng: 114.1694 },
     autoRotate: true,
-    autoRotateSpeed: 0.3,
-  }
+    autoRotateSpeed: 0.5,
+  };
 
-  // Minimal sample data for the globe
+  const colors = ["#ffffff", "#cccccc", "#666666"];
   const sampleArcs = [
     {
       order: 1,
-      startLat: 40.7128,
-      startLng: -74.006,
-      endLat: 51.5072,
-      endLng: -0.1276,
+      startLat: -19.885592,
+      startLng: -43.951191,
+      endLat: -22.9068,
+      endLng: -43.1729,
       arcAlt: 0.1,
-      color: "#ffffff",
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 1,
+      startLat: 28.6139,
+      startLng: 77.209,
+      endLat: 3.139,
+      endLng: 101.6869,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 1,
+      startLat: -19.885592,
+      startLng: -43.951191,
+      endLat: -1.303396,
+      endLng: 36.852443,
+      arcAlt: 0.5,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 2,
+      startLat: 1.3521,
+      startLng: 103.8198,
+      endLat: 35.6762,
+      endLng: 139.6503,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
     },
     {
       order: 2,
       startLat: 51.5072,
       startLng: -0.1276,
+      endLat: 3.139,
+      endLng: 101.6869,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 2,
+      startLat: -15.785493,
+      startLng: -47.909029,
+      endLat: 36.162809,
+      endLng: -115.119411,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 3,
+      startLat: -33.8688,
+      startLng: 151.2093,
+      endLat: 22.3193,
+      endLng: 114.1694,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 3,
+      startLat: 21.3099,
+      startLng: -157.8581,
+      endLat: 40.7128,
+      endLng: -74.006,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 3,
+      startLat: -6.2088,
+      startLng: 106.8456,
+      endLat: 51.5072,
+      endLng: -0.1276,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 4,
+      startLat: 11.986597,
+      startLng: 8.571831,
+      endLat: -15.595412,
+      endLng: -56.05918,
+      arcAlt: 0.5,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 4,
+      startLat: -34.6037,
+      startLng: -58.3816,
+      endLat: 22.3193,
+      endLng: 114.1694,
+      arcAlt: 0.7,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 4,
+      startLat: 51.5072,
+      startLng: -0.1276,
+      endLat: 48.8566,
+      endLng: -2.3522,
+      arcAlt: 0.1,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 5,
+      startLat: 14.5995,
+      startLng: 120.9842,
+      endLat: 51.5072,
+      endLng: -0.1276,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 5,
+      startLat: 1.3521,
+      startLng: 103.8198,
+      endLat: -33.8688,
+      endLng: 151.2093,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 5,
+      startLat: 34.0522,
+      startLng: -118.2437,
+      endLat: 48.8566,
+      endLng: -2.3522,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 6,
+      startLat: -15.432563,
+      startLng: 28.315853,
+      endLat: 1.094136,
+      endLng: -63.34546,
+      arcAlt: 0.7,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 6,
+      startLat: 37.5665,
+      startLng: 126.978,
       endLat: 35.6762,
       endLng: 139.6503,
-      arcAlt: 0.2,
-      color: "#ffffff",
+      arcAlt: 0.1,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
     },
-  ]
+    {
+      order: 6,
+      startLat: 22.3193,
+      startLng: 114.1694,
+      endLat: 51.5072,
+      endLng: -0.1276,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 7,
+      startLat: -19.885592,
+      startLng: -43.951191,
+      endLat: -15.595412,
+      endLng: -56.05918,
+      arcAlt: 0.1,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 7,
+      startLat: 48.8566,
+      startLng: -2.3522,
+      endLat: 52.52,
+      endLng: 13.405,
+      arcAlt: 0.1,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 7,
+      startLat: 52.52,
+      startLng: 13.405,
+      endLat: 34.0522,
+      endLng: -118.2437,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 8,
+      startLat: -8.833221,
+      startLng: 13.264837,
+      endLat: -33.936138,
+      endLng: 18.436529,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 8,
+      startLat: 49.2827,
+      startLng: -123.1207,
+      endLat: 52.3676,
+      endLng: 4.9041,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 8,
+      startLat: 1.3521,
+      startLng: 103.8198,
+      endLat: 40.7128,
+      endLng: -74.006,
+      arcAlt: 0.5,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 9,
+      startLat: 51.5072,
+      startLng: -0.1276,
+      endLat: 34.0522,
+      endLng: -118.2437,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 9,
+      startLat: 22.3193,
+      startLng: 114.1694,
+      endLat: -22.9068,
+      endLng: -43.1729,
+      arcAlt: 0.7,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 9,
+      startLat: 1.3521,
+      startLng: 103.8198,
+      endLat: -34.6037,
+      endLng: -58.3816,
+      arcAlt: 0.5,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 10,
+      startLat: -22.9068,
+      startLng: -43.1729,
+      endLat: 28.6139,
+      endLng: 77.209,
+      arcAlt: 0.7,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 10,
+      startLat: 34.0522,
+      startLng: -118.2437,
+      endLat: 31.2304,
+      endLng: 121.4737,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 10,
+      startLat: -6.2088,
+      startLng: 106.8456,
+      endLat: 52.3676,
+      endLng: 4.9041,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 11,
+      startLat: 41.9028,
+      startLng: 12.4964,
+      endLat: 34.0522,
+      endLng: -118.2437,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 11,
+      startLat: -6.2088,
+      startLng: 106.8456,
+      endLat: 31.2304,
+      endLng: 121.4737,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 11,
+      startLat: 22.3193,
+      startLng: 114.1694,
+      endLat: 1.3521,
+      endLng: 103.8198,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 12,
+      startLat: 34.0522,
+      startLng: -118.2437,
+      endLat: 37.7749,
+      endLng: -122.4194,
+      arcAlt: 0.1,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 12,
+      startLat: 35.6762,
+      startLng: 139.6503,
+      endLat: 22.3193,
+      endLng: 114.1694,
+      arcAlt: 0.2,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 12,
+      startLat: 22.3193,
+      startLng: 114.1694,
+      endLat: 34.0522,
+      endLng: -118.2437,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 13,
+      startLat: 52.52,
+      startLng: 13.405,
+      endLat: 22.3193,
+      endLng: 114.1694,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 13,
+      startLat: 11.986597,
+      startLng: 8.571831,
+      endLat: 35.6762,
+      endLng: 139.6503,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 13,
+      startLat: -22.9068,
+      startLng: -43.1729,
+      endLat: -34.6037,
+      endLng: -58.3816,
+      arcAlt: 0.1,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+    {
+      order: 14,
+      startLat: -33.936138,
+      startLng: 18.436529,
+      endLat: 21.395643,
+      endLng: 39.883798,
+      arcAlt: 0.3,
+      color: colors[Math.floor(Math.random() * (colors.length - 1))],
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-black text-white flex items-center justify-center relative overflow-hidden">
-      {/* Background Globe */}
-      {mounted && (
-        <div className="absolute inset-0 opacity-10">
-          <div className="w-full h-full">
-            <World data={sampleArcs} globeConfig={globeConfig} />
+    <div className="min-h-screen bg-background">
+      {/* Hero Section with Globe Background */}
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
+        {/* Globe Background */}
+        <div className="absolute inset-0 z-0 flex items-center justify-center">
+          <div className="w-3/4 h-3/4">
+            <GlobeWithPreload data={sampleArcs} globeConfig={globeConfig} />
           </div>
         </div>
-      )}
+        
+        {/* Content Overlay */}
+        <div className="relative z-10 container mx-auto px-4 text-center">
+          <div className="max-w-4xl mx-auto">
+            <div className="border border-transparent bg-card/20 backdrop-blur-sm p-12 rounded-lg min-h-[625px] flex flex-col justify-center">
+              <div className="space-y-6">
+                {/* Obscura Labs Logo/Title */}
+                <div className="space-y-2">
+                  <h1 className="text-4xl md:text-6xl font-bold font-mono tracking-wider glitch" data-text="OBSCURA LABS">
+                    OBSCURA LABS
+                  </h1>
+                  <div className="w-16 h-1 bg-white mx-auto"></div>
+                </div>
 
-      {/* Main Content */}
-      <div className="relative z-10 text-center px-4 max-w-md mx-auto">
-        <div className="space-y-6">
-          {/* Obscura Labs Logo/Title */}
-          <div className="space-y-2">
-            <h1 className="text-4xl md:text-6xl font-bold font-mono tracking-wider glitch" data-text="OBSCURA LABS">
-              OBSCURA LABS
-            </h1>
-            <div className="w-16 h-1 bg-white mx-auto"></div>
-          </div>
+                {/* Coming Soon Message */}
+                <div className="space-y-4">
+                  <h2 className="text-2xl md:text-3xl font-mono font-light tracking-wide">
+                    COMING SOON
+                  </h2>
+                  <p className="text-lg md:text-xl font-mono text-muted-foreground leading-relaxed">
+                    Obscura Labs is currently operating in private mode.
+                  </p>
+                </div>
 
-          {/* Coming Soon Message */}
-          <div className="space-y-4">
-            <h2 className="text-2xl md:text-3xl font-mono font-light tracking-wide">
-              COMING SOON
-            </h2>
-            <p className="text-lg md:text-xl font-mono text-gray-300 leading-relaxed">
-              Obscura Labs is currently operating in private mode.
-            </p>
-          </div>
-
-          {/* Status Indicator */}
-          <div className="flex items-center justify-center space-x-2">
-            <div className="status-indicator status-processing"></div>
-            <span className="text-sm font-mono text-gray-400 tracking-wide">
-              SYSTEM STATUS: RESTRICTED ACCESS
-            </span>
+                {/* Status Indicator */}
+                <div className="flex items-center justify-center space-x-2">
+                  <div className="status-indicator status-processing"></div>
+                  <span className="text-sm font-mono text-muted-foreground tracking-wide">
+                    SYSTEM STATUS: RESTRICTED ACCESS
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Tactical Grid Overlay */}
-      <div className="absolute inset-0 tactical-grid opacity-5 pointer-events-none"></div>
+      </section>
     </div>
   )
 } 
