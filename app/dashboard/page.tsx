@@ -183,7 +183,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{breachData?.recentDatabases.length || recentRecords.length}</div>
             <p className="text-xs text-muted-foreground">
-              {breachData ? 'Recent breach databases' : 'Records added recently'}
+              {breachData ? 'Recent databases' : 'Records added recently'}
             </p>
           </CardContent>
         </Card>
