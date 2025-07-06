@@ -1,44 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import dynamic from "next/dynamic"
-
-// Dynamically import the World component with SSR disabled
-const World = dynamic(() => import("@/components/ui/globe").then((m) => ({ default: m.World })), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-        <p className="mt-4 text-muted-foreground font-mono">LOADING GLOBE...</p>
-      </div>
-    </div>
-  ),
-});
-
-// Preload the globe component on mount
-const GlobeWithPreload = ({ globeConfig, data }: any) => {
-  useEffect(() => {
-    // Preload the globe component
-    const preloadGlobe = async () => {
-      try {
-        await import("@/components/ui/globe");
-      } catch (error) {
-        console.error("Failed to preload globe:", error);
-      }
-    };
-    preloadGlobe();
-  }, []);
-
-  return <World globeConfig={globeConfig} data={data} />;
-};
+import { useEffect } from "react"
+import { World } from "@/components/ui/globe"
 
 export default function ComingSoon() {
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   const globeConfig = {
     pointSize: 4,
@@ -434,7 +399,7 @@ export default function ComingSoon() {
         {/* Globe Background */}
         <div className="absolute inset-0 z-0 flex items-center justify-center">
           <div className="w-3/4 h-3/4">
-            <GlobeWithPreload data={sampleArcs} globeConfig={globeConfig} />
+            <World data={sampleArcs} globeConfig={globeConfig} />
           </div>
         </div>
         
@@ -442,32 +407,21 @@ export default function ComingSoon() {
         <div className="relative z-10 container mx-auto px-4 text-center">
           <div className="max-w-4xl mx-auto">
             <div className="border border-transparent bg-card/20 backdrop-blur-sm p-12 rounded-lg min-h-[625px] flex flex-col justify-center">
-              <div className="space-y-6">
-                {/* Obscura Labs Logo/Title */}
-                <div className="space-y-2">
-                  <h1 className="text-4xl md:text-6xl font-bold font-mono tracking-wider glitch" data-text="OBSCURA LABS">
-                    OBSCURA LABS
-                  </h1>
-                  <div className="w-16 h-1 bg-white mx-auto"></div>
-                </div>
-
-                {/* Coming Soon Message */}
-                <div className="space-y-4">
-                  <h2 className="text-2xl md:text-3xl font-mono font-light tracking-wide">
-                    COMING SOON
-                  </h2>
-                  <p className="text-lg md:text-xl font-mono text-muted-foreground leading-relaxed">
-                    Obscura Labs is currently operating in private mode.
-                  </p>
-                </div>
-
-                {/* Status Indicator */}
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="status-indicator status-processing"></div>
-                  <span className="text-sm font-mono text-muted-foreground tracking-wide">
-                    SYSTEM STATUS: RESTRICTED ACCESS
-                  </span>
-                </div>
+              <h1 className="text-5xl md:text-7xl font-bold text-primary mb-8 tracking-tight leading-tight">
+                OBSCURA LABS
+                <br />
+                <span className="text-muted-foreground">COMING SOON</span>
+              </h1>
+              <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
+                Obscura Labs is currently operating in private mode.
+              </p>
+              
+              {/* Status Indicator */}
+              <div className="flex items-center justify-center space-x-2 mb-8">
+                <div className="status-indicator status-processing"></div>
+                <span className="text-sm font-mono text-muted-foreground tracking-wide">
+                  SYSTEM STATUS: RESTRICTED ACCESS
+                </span>
               </div>
             </div>
           </div>
