@@ -37,6 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
         setIsLoading(false)
         setIsCheckingAuth(false)
+        // Don't redirect if on landing page
+        const pathname = window.location.pathname
+        if (pathname !== "/") {
+          router.push("/login")
+        }
         return
       }
 
@@ -56,8 +61,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem("token")
         setUser(null)
         if (response.status === 401) {
-          // Redirect to login if token is invalid
-          router.push("/login")
+          // Only redirect to login if not on landing page
+          const pathname = window.location.pathname
+          if (pathname !== "/") {
+            router.push("/login")
+          }
         }
       }
     } catch (error) {
