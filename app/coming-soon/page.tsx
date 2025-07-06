@@ -1,9 +1,27 @@
 "use client"
 
-import { useEffect } from "react"
-import { World } from "@/components/ui/globe"
+import { useEffect, useState } from "react"
+import dynamic from "next/dynamic"
+
+// Dynamically import the World component with SSR disabled to avoid window reference errors
+const World = dynamic(() => import("@/components/ui/globe").then((m) => ({ default: m.World })), {
+  ssr: false,
+  loading: () => null, // No loading spinner for instant feel
+});
+
+// Preload the globe component immediately
+const preloadGlobe = () => {
+  import("@/components/ui/globe");
+};
 
 export default function ComingSoon() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    // Start preloading immediately
+    preloadGlobe();
+    setMounted(true)
+  }, [])
 
   const globeConfig = {
     pointSize: 4,
@@ -399,7 +417,7 @@ export default function ComingSoon() {
         {/* Globe Background */}
         <div className="absolute inset-0 z-0 flex items-center justify-center">
           <div className="w-3/4 h-3/4">
-            <World data={sampleArcs} globeConfig={globeConfig} />
+            {mounted && <World data={sampleArcs} globeConfig={globeConfig} />}
           </div>
         </div>
         
