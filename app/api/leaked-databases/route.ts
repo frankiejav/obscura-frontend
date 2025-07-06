@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-interface LeakCheckDatabase {
+interface BreachDatabase {
   id: number
   name: string
   count: number
@@ -10,14 +10,21 @@ interface LeakCheckDatabase {
   compilation: number
 }
 
-interface LeakCheckResponse {
-  data: LeakCheckDatabase[]
+interface BreachResponse {
+  data: BreachDatabase[]
 }
 
 export async function GET() {
   try {
-    // Fetch data from LeakCheck API
-    const response = await fetch('https://leakcheck.io/databases-list?_=1751679364404', {
+    // Get database list URL from environment variable
+    const dbListUrl = process.env.DB_LIST
+    
+    if (!dbListUrl) {
+      throw new Error('DB_LIST environment variable is not configured')
+    }
+    
+    // Fetch data from Leaked Databases API
+    const response = await fetch(dbListUrl, {
       headers: {
         'User-Agent': 'Obscura-Labs/1.0',
         'Accept': 'application/json',
@@ -28,7 +35,7 @@ export async function GET() {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
 
-    const data: LeakCheckResponse = await response.json()
+    const data: BreachResponse = await response.json()
 
     // Calculate total count across all databases
     const totalCount = data.data.reduce((sum, db) => sum + db.count, 0)
@@ -56,7 +63,7 @@ export async function GET() {
       allDatabases: data.data
     })
   } catch (error) {
-    console.error('Error fetching LeakCheck databases:', error)
+    console.error('Error fetching databases:', error)
     
     // Return fallback data if API fails
     return NextResponse.json({

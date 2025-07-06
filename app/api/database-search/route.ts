@@ -14,19 +14,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Query must be at least 3 characters long' }, { status: 400 })
     }
 
-    // Check if LeakCheck is enabled in settings
+    // Check if database search is enabled in settings
     try {
-      const settingsResult = await db.query('SELECT leak_check FROM settings WHERE id = $1', ['00000000-0000-0000-0000-000000000001'])
+      const settingsResult = await db.query('SELECT database_search FROM settings WHERE id = $1', ['00000000-0000-0000-0000-000000000001'])
       if (settingsResult.rows.length > 0) {
-        const leakCheckSettings = settingsResult.rows[0].leak_check
-        if (leakCheckSettings && !leakCheckSettings.enabled) {
+        const databaseSearchSettings = settingsResult.rows[0].database_search
+        if (databaseSearchSettings && !databaseSearchSettings.enabled) {
           return NextResponse.json({ 
-            error: 'LeakCheck is disabled in settings' 
+            error: 'Database search is disabled in settings' 
           }, { status: 403 })
         }
       }
     } catch (error) {
-      console.error('Error checking LeakCheck settings:', error)
+      console.error('Error checking database search settings:', error)
       // Continue with API key check if settings check fails
     }
 
@@ -34,25 +34,25 @@ export async function POST(request: NextRequest) {
     const apiKey = process.env.LEAKCHECK_API_KEY
 
     if (!apiKey) {
-      return NextResponse.json({ error: 'LeakCheck API key not configured in environment variables' }, { status: 500 })
+      return NextResponse.json({ error: 'Database search API key not configured in environment variables' }, { status: 500 })
     }
 
-    // Call LeakCheck API
+    // Call external database search API
     const url = new URL('https://leakcheck.io/api/v2/query/' + encodeURIComponent(query))
     if (type && type !== 'auto') {
       url.searchParams.append('type', type)
     }
 
-    const leakCheckResponse = await fetch(url.toString(), {
+    const databaseSearchResponse = await fetch(url.toString(), {
       headers: {
         'Accept': 'application/json',
         'X-API-Key': apiKey,
       },
     })
 
-    if (!leakCheckResponse.ok) {
-      const errorText = await leakCheckResponse.text()
-      let errorMessage = `LeakCheck API error: ${leakCheckResponse.status}`
+    if (!databaseSearchResponse.ok) {
+      const errorText = await databaseSearchResponse.text()
+      let errorMessage = `Database search API error: ${databaseSearchResponse.status}`
       
       try {
         const errorData = JSON.parse(errorText)
@@ -61,14 +61,14 @@ export async function POST(request: NextRequest) {
         errorMessage += ` - ${errorText}`
       }
       
-      return NextResponse.json({ error: errorMessage }, { status: leakCheckResponse.status })
+      return NextResponse.json({ error: errorMessage }, { status: databaseSearchResponse.status })
     }
 
-    const result = await leakCheckResponse.json()
+    const result = await databaseSearchResponse.json()
 
     return NextResponse.json(result)
   } catch (error) {
-    console.error('LeakCheck API error:', error)
+    console.error('Database search API error:', error)
     return NextResponse.json({ 
       error: 'Internal server error' 
     }, { status: 500 })

@@ -60,7 +60,7 @@ export default function DashboardPage() {
     setLoading(true)
     try {
       // Fetch breach databases data
-      const breachResponse = await fetch('/api/leakcheck-databases')
+      const breachResponse = await fetch('/api/leaked-databases')
       if (breachResponse.ok) {
         const breachData = await breachResponse.json()
         setBreachData(breachData)

@@ -68,7 +68,7 @@ export function DataManagement() {
 
   const fetchBreachData = async () => {
     try {
-      const response = await fetch('/api/leakcheck-databases')
+      const response = await fetch('/api/leaked-databases')
       if (response.ok) {
         const data = await response.json()
         setBreachData(data)

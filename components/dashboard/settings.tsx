@@ -16,7 +16,6 @@ interface Settings {
   general: {
     apiUrl: string
     defaultPageSize: string
-    theme: string
   }
   security: {
     twoFactorAuth: boolean
@@ -35,18 +34,12 @@ interface Settings {
     tokenExpiration: string
     logLevel: string
   }
-  breachSearch: {
-    enabled: boolean
-    quota: number
-    lastSync: string | null
-  }
 }
 
 const defaultSettings: Settings = {
   general: {
     apiUrl: "https://api.obscuralabs.io",
     defaultPageSize: "10",
-    theme: "dark",
   },
   security: {
     twoFactorAuth: false,
@@ -65,11 +58,6 @@ const defaultSettings: Settings = {
     tokenExpiration: "24",
     logLevel: "info",
   },
-      breachSearch: {
-      enabled: !!process.env.LEAKCHECK_API_KEY,
-      quota: 1000,
-      lastSync: null,
-    },
 }
 
 export function SettingsPage() {
@@ -90,7 +78,12 @@ export function SettingsPage() {
       const response = await fetch('/api/settings')
       if (response.ok) {
         const data = await response.json()
-        setSettings(data)
+        // Ensure all required properties exist with fallbacks
+        const mergedSettings = {
+          ...defaultSettings,
+          ...data,
+        }
+        setSettings(mergedSettings)
       } else {
         // Use default settings if API fails
         setSettings(defaultSettings)
@@ -151,7 +144,7 @@ export function SettingsPage() {
   }
 
   const isAdmin = user?.role === "admin"
-  const availableTabs = isAdmin ? ["general", "security", "notifications", "api", "breachsearch"] : ["general", "security", "notifications"]
+  const availableTabs = isAdmin ? ["general", "security", "notifications", "api"] : ["general", "security", "notifications"]
 
   return (
     <div className="space-y-6">
@@ -161,12 +154,11 @@ export function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-5' : 'grid-cols-3'}`}>
+        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
           {isAdmin && <TabsTrigger value="api">API</TabsTrigger>}
-          {isAdmin && <TabsTrigger value="breachsearch">Breach Search</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="general">
@@ -214,30 +206,6 @@ export function SettingsPage() {
                     <SelectItem value="25">25</SelectItem>
                     <SelectItem value="50">50</SelectItem>
                     <SelectItem value="100">100</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="theme">Theme</Label>
-                <Select
-                  value={settings.general.theme}
-                  onValueChange={(value) =>
-                    setSettings({
-                      ...settings,
-                      general: {
-                        ...settings.general,
-                        theme: value,
-                      },
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -493,63 +461,7 @@ export function SettingsPage() {
           </TabsContent>
         )}
 
-        {isAdmin && (
-          <TabsContent value="breachsearch">
-            <Card>
-              <CardHeader>
-                <CardTitle>Breach Search Settings</CardTitle>
-                <CardDescription>Configure breach search API integration.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Enable Breach Search</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Enable breach search API integration for breach data.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.breachSearch.enabled}
-                    onCheckedChange={(checked) =>
-                      setSettings({
-                        ...settings,
-                        breachSearch: {
-                          ...settings.breachSearch,
-                          enabled: checked,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="quota">API Quota</Label>
-                  <Input
-                    id="quota"
-                    type="number"
-                    value={settings.breachSearch.quota}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        breachSearch: {
-                          ...settings.breachSearch,
-                          quota: parseInt(e.target.value),
-                        },
-                      })
-                    }
-                  />
-                </div>
-                {settings.breachSearch.lastSync && (
-                  <div className="space-y-2">
-                    <Label>Last Sync</Label>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(settings.breachSearch.lastSync).toLocaleString()}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
+
       </Tabs>
 
       <div className="flex justify-end">

@@ -5,8 +5,8 @@ export async function GET() {
   try {
     // Get settings from database
     const result = await db.query(
-      'SELECT * FROM settings WHERE id = $1',
-      ['00000000-0000-0000-0000-000000000001']
+      'SELECT * FROM settings WHERE key = $1',
+      ['default']
     )
     
     if (result.rows.length === 0) {
@@ -15,7 +15,6 @@ export async function GET() {
         general: {
           apiUrl: "https://api.obscuralabs.io",
           defaultPageSize: "10",
-          theme: "dark",
         },
         security: {
           twoFactorAuth: false,
@@ -34,16 +33,11 @@ export async function GET() {
           tokenExpiration: "24",
           logLevel: "info",
         },
-        leakCheck: {
-          enabled: !!process.env.LEAKCHECK_API_KEY,
-          quota: 400,
-          lastSync: null,
-        },
       })
     }
     
     const settings = result.rows[0]
-    return NextResponse.json(settings)
+    return NextResponse.json(settings.value)
   } catch (error) {
     console.error('Error fetching settings:', error)
     return NextResponse.json(
@@ -51,7 +45,6 @@ export async function GET() {
         general: {
           apiUrl: "https://api.obscuralabs.io",
           defaultPageSize: "10",
-          theme: "dark",
         },
         security: {
           twoFactorAuth: false,
@@ -69,11 +62,6 @@ export async function GET() {
           rateLimit: "1000",
           tokenExpiration: "24",
           logLevel: "info",
-        },
-        leakCheck: {
-          enabled: !!process.env.LEAKCHECK_API_KEY,
-          quota: 400,
-          lastSync: null,
         },
       },
       { status: 500 }
@@ -87,22 +75,16 @@ export async function POST(request: NextRequest) {
     
     // Upsert settings in database
     await db.query(
-      `INSERT INTO settings (id, general, security, notifications, api, leak_check) 
-       VALUES ($1, $2, $3, $4, $5, $6) 
+      `INSERT INTO settings (id, key, value) 
+       VALUES ($1, $2, $3) 
        ON CONFLICT (id) 
        DO UPDATE SET 
-         general = EXCLUDED.general,
-         security = EXCLUDED.security,
-         notifications = EXCLUDED.notifications,
-         api = EXCLUDED.api,
-         leak_check = EXCLUDED.leak_check`,
+         value = EXCLUDED.value,
+         updated_at = NOW()`,
       [
-        '00000000-0000-0000-0000-000000000001',
-        JSON.stringify(settings.general),
-        JSON.stringify(settings.security),
-        JSON.stringify(settings.notifications),
-        JSON.stringify(settings.api),
-        JSON.stringify(settings.leakCheck),
+        'ec42d5d8-4a2d-4c9d-8e6d-b7fe64547018',
+        'default',
+        JSON.stringify(settings),
       ]
     )
     

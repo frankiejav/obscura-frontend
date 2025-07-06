@@ -118,9 +118,9 @@ export default function SearchPage() {
       const response = await fetch('/api/settings')
       if (response.ok) {
         const data = await response.json()
-        if (data.leakCheck) {
-          setBreachSearchEnabled(data.leakCheck.enabled)
-        }
+              if (data.databaseSearch) {
+        setBreachSearchEnabled(data.databaseSearch.enabled)
+      }
       }
     } catch (error) {
       console.error('Error checking breach search status:', error)
@@ -160,7 +160,7 @@ export default function SearchPage() {
 
       // Search breach data if enabled
       if (breachSearchEnabled) {
-        const breachResponse = await fetch('/api/leakcheck', {
+        const breachResponse = await fetch('/api/database-search', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

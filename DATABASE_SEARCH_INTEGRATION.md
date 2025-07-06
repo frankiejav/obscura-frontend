@@ -1,17 +1,17 @@
-# LeakCheck API Integration
+# Database Search API Integration
 
-This document describes the LeakCheck API integration implemented in the Obscura Labs platform.
+This document describes the database search API integration implemented in the Obscura Labs platform.
 
 ## Overview
 
-The LeakCheck API integration allows administrators to enable data breach searches for users. When enabled, clients can search for email addresses, usernames, and other data in known data breaches through the LeakCheck API.
+The database search API integration allows administrators to enable data breach searches for users. When enabled, clients can search for email addresses, usernames, and other data in known data breaches through the external database search API.
 
 ## Features
 
 ### Admin Features
-- **Enable/Disable**: Admins can activate or deactivate the LeakCheck API integration
+- **Enable/Disable**: Admins can activate or deactivate the database search API integration
 - **Environment Variable Configuration**: API keys are securely stored in environment variables
-- **Data Sync**: Sync LeakCheck database information to update data sources
+- **Data Sync**: Sync external database information to update data sources
 - **Quota Monitoring**: Track remaining API queries
 - **Settings Management**: Configure through the admin settings panel
 
@@ -29,22 +29,22 @@ The LeakCheck API integration allows administrators to enable data breach search
 The following types were added to the GraphQL schema:
 
 ```graphql
-type LeakCheckSettings {
+type DatabaseSearchSettings {
   enabled: Boolean!
   quota: Int!
   lastSync: DateTime
 }
 
-type LeakCheckResult {
+type DatabaseSearchResult {
   email: String!
-  source: LeakCheckSource!
+  source: DatabaseSearchSource!
   first_name: String
   last_name: String
   username: String
   fields: [String!]!
 }
 
-type LeakCheckSource {
+type DatabaseSearchSource {
   name: String!
   breach_date: String
   unverified: Int!
@@ -52,26 +52,26 @@ type LeakCheckSource {
   compilation: Int!
 }
 
-type LeakCheckSearchResult {
+type DatabaseSearchSearchResult {
   success: Boolean!
   found: Int!
   quota: Int!
-  result: [LeakCheckResult!]!
+  result: [DatabaseSearchResult!]!
 }
 ```
 
 ### API Endpoints
 
 #### GraphQL Queries
-- `leakCheckSearch(query: String!, type: String)`: Search for data in breaches
-- `settings.leakCheck`: Get LeakCheck configuration
+- `databaseSearch(query: String!, type: String)`: Search for data in breaches
+- `settings.databaseSearch`: Get database search configuration
 
 #### GraphQL Mutations
-- `syncLeakCheckData`: Sync LeakCheck database information
-- `updateSettings`: Update LeakCheck settings (admin only)
+- `syncDatabaseSearchData`: Sync external database information
+- `updateSettings`: Update database search settings (admin only)
 
 #### REST API
-- `POST /api/leakcheck`: Internal API route for LeakCheck API calls
+- `POST /api/database-search`: Internal API route for database search API calls
 
 ### Security Features
 
@@ -85,21 +85,21 @@ type LeakCheckSearchResult {
 
 1. **Admin Configuration**:
    - Admin sets `LEAKCHECK_API_KEY` environment variable
-   - Admin enables LeakCheck in settings
-   - Admin can sync LeakCheck data to update data sources
+   - Admin enables database search in settings
+   - Admin can sync external database data to update data sources
 
 2. **Client Search**:
    - Client enters search query
    - Query is sent to GraphQL API
-   - GraphQL resolver calls internal `/api/leakcheck` route
-   - Internal route validates and calls LeakCheck API using environment variable
+   - GraphQL resolver calls internal `/api/database-search` route
+   - Internal route validates and calls external database search API using environment variable
    - Results are returned to client
 
 3. **Data Updates**:
-   - LeakCheck data is synced to Elasticsearch
+   - External database data is synced to Elasticsearch
    - Individual databases appear as separate data sources
-   - Dashboard shows LeakCheck as a data source
-   - Total record count includes LeakCheck data
+   - Dashboard shows external databases as data sources
+   - Total record count includes external database data
 
 ## Configuration
 
@@ -108,17 +108,17 @@ type LeakCheckSearchResult {
 #### Required Environment Variable
 
 **`LEAKCHECK_API_KEY`**
-- **Description**: Your LeakCheck API key for accessing the data breach search API
-- **Required**: Yes (if using LeakCheck features)
+- **Description**: Your database search API key for accessing the data breach search API
+- **Required**: Yes (if using database search features)
 - **Format**: String
 - **Source**: [leakcheck.io](https://leakcheck.io)
 
 ### Admin Setup
 
-1. **Get API Key**: Obtain a LeakCheck API key from [leakcheck.io](https://leakcheck.io)
+1. **Get API Key**: Obtain a database search API key from [leakcheck.io](https://leakcheck.io)
 2. **Set Environment Variable**: Add `LEAKCHECK_API_KEY` to your Vercel environment variables
-3. **Enable Integration**: Go to Settings → LeakCheck tab
-4. **Enable API**: Toggle "Enable LeakCheck API"
+3. **Enable Integration**: Go to Settings → Database Search tab
+4. **Enable API**: Toggle "Enable Database Search API"
 5. **Sync Data**: Click "Sync Data" to update data sources
 
 ### Environment Variable Setup
@@ -133,37 +133,37 @@ type LeakCheckSearchResult {
 #### Local Development
 Create a `.env.local` file:
 ```bash
-LEAKCHECK_API_KEY=your_leakcheck_api_key_here
+LEAKCHECK_API_KEY=your_database_search_api_key_here
 ```
 
 ## Usage
 
 ### For Admins
 
-1. **Access Settings**: Navigate to Dashboard → Settings → LeakCheck tab
-2. **Enable API**: Toggle "Enable LeakCheck API" (requires environment variable)
+1. **Access Settings**: Navigate to Dashboard → Settings → Database Search tab
+2. **Enable API**: Toggle "Enable Database Search API" (requires environment variable)
 3. **Sync Data**: Click "Sync Data" to update data sources
 4. **Monitor Quota**: Check remaining queries in the settings
 
 ### For Clients
 
 1. **Access Search**: Navigate to Dashboard → Search
-2. **Select LeakCheck Tab**: Click on the "LeakCheck" tab
+2. **Select Database Search Tab**: Click on the "Database Search" tab
 3. **Enter Query**: Type email, username, or other data to search
 4. **Select Type**: Choose search type (auto-detect recommended)
 5. **Search**: Click "Search Breaches" to find results
 
 ## Database Integration
 
-The LeakCheck integration fetches the complete database list from [https://leakcheck.io/databases-list](https://leakcheck.io/databases-list) and creates:
+The database search integration fetches the complete database list from [https://leakcheck.io/databases-list](https://leakcheck.io/databases-list) and creates:
 
-1. **Main LeakCheck Data Source**: Aggregated view with total record count
-2. **Individual Database Sources**: Each LeakCheck database as a separate data source
-3. **Record Count**: Total records = (10,000,000,000+) + (Sum of all LeakCheck databases)
+1. **Main Database Search Data Source**: Aggregated view with total record count
+2. **Individual Database Sources**: Each external database as a separate data source
+3. **Record Count**: Total records = (10,000,000,000+) + (Sum of all external databases)
 
 ### Database List Features
 
-- **Real-time Sync**: Fetches latest database information from LeakCheck
+- **Real-time Sync**: Fetches latest database information from external API
 - **Individual Tracking**: Each database tracked separately with metadata
 - **Breach Details**: Includes breach dates, verification status, and compilation info
 - **Record Counts**: Accurate counts from each database
@@ -174,7 +174,7 @@ The integration includes comprehensive error handling:
 
 - **Environment Variable Issues**: Clear error messages for missing API keys
 - **Network Errors**: Graceful handling of network failures
-- **Rate Limiting**: Respects LeakCheck API rate limits
+- **Rate Limiting**: Respects external API rate limits
 - **Invalid Queries**: Validation for query length and format
 - **Disabled API**: Clear indication when API is not enabled
 
@@ -182,10 +182,10 @@ The integration includes comprehensive error handling:
 
 ### Dashboard Integration
 
-- **Status Indicator**: Green card shows when LeakCheck is active
-- **Data Sources**: LeakCheck databases appear as individual data sources
-- **Record Counts**: Total records include LeakCheck data
-- **Recent Activity**: Shows recent LeakCheck searches
+- **Status Indicator**: Green card shows when database search is active
+- **Data Sources**: External databases appear as individual data sources
+- **Record Counts**: Total records include external database data
+- **Recent Activity**: Shows recent database searches
 
 ### Quota Management
 
@@ -205,11 +205,11 @@ The integration includes comprehensive error handling:
 
 ### Common Issues
 
-1. **"LeakCheck API key not configured in environment variables"**
+1. **"Database search API key not configured in environment variables"**
    - Solution: Add `LEAKCHECK_API_KEY` to your environment variables
 
-2. **"LeakCheck API is not enabled"**
-   - Solution: Admin must enable LeakCheck in settings after setting environment variable
+2. **"Database search API is not enabled"**
+   - Solution: Admin must enable database search in settings after setting environment variable
 
 3. **"Query must be at least 3 characters"**
    - Solution: Enter a longer search query
@@ -220,8 +220,8 @@ The integration includes comprehensive error handling:
 ### Debug Information
 
 - Check browser console for detailed error messages
-- Verify API key is valid in LeakCheck dashboard
-- Ensure network connectivity to LeakCheck API
+- Verify API key is valid in external API dashboard
+- Ensure network connectivity to external API
 - Check admin settings for proper configuration
 - Verify environment variable is set correctly
 
