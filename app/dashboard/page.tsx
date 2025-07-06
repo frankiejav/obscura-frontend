@@ -157,7 +157,7 @@ export default function DashboardPage() {
               {breachData ? `${(breachData.totalCount / 1000000000).toFixed(1)}B+` : stats.totalRecords.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              {breachData ? 'Across all breach databases' : 'Across all data sources'}
+              {breachData ? 'Across all databases' : 'Across all data sources'}
             </p>
           </CardContent>
         </Card>
@@ -170,7 +170,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{breachData?.totalDatabases || stats.totalSources}</div>
             <p className="text-xs text-muted-foreground">
-              {breachData ? 'Breach databases' : `${stats.activeSources} active sources`}
+              {breachData ? 'Active sources' : `${stats.activeSources} active sources`}
             </p>
           </CardContent>
         </Card>
