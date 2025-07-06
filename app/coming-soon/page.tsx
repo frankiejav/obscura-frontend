@@ -12,7 +12,7 @@ export default function ComingSoon() {
             <div className="border border-white/20 bg-card/30 p-12 rounded-lg min-h-[625px] flex flex-col justify-center">
               {/* Logo */}
               <div className="flex justify-center mb-8">
-                <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={64} height={64} className="opacity-90" priority />
+                <Image src="./symbolwhite.png" alt="Obscura Labs" width={64} height={64} className="opacity-90" priority />
               </div>
               
               <h1 className="text-5xl md:text-7xl font-bold text-primary mb-8 tracking-tight leading-tight">
