@@ -2,6 +2,9 @@
   "name": "obscura-labs-web-app",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "build": "next build",
     "db:admin": "node scripts/create-admin-neon.js",
@@ -14,6 +17,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.66",
+    "@ai-sdk/vercel": "^1.0.14",
     "@clickhouse/client": "^1.12.0",
     "@hookform/resolvers": "^3.9.1",
     "@neondatabase/serverless": "latest",
@@ -46,7 +50,7 @@
     "@radix-ui/react-tooltip": "latest",
     "@react-three/drei": "^10.4.4",
     "@react-three/fiber": "^9.2.0",
-    "ai": "^4.0.17",
+    "ai": "^4.3.19",
     "bcryptjs": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
