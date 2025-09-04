@@ -4,582 +4,131 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { Shield, Eye, Lock, Target, AlertTriangle, Users, ArrowRight } from "lucide-react"
-import dynamic from "next/dynamic"
-
-// Dynamically import the World component with SSR disabled
-const World = dynamic(() => import("@/components/ui/globe").then((m) => ({ default: m.World })), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <div className="text-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-        <p className="mt-4 text-muted-foreground font-mono">LOADING GLOBE...</p>
-      </div>
-    </div>
-  ),
-});
-
-// Preload the globe component on mount
-const GlobeWithPreload = ({ globeConfig, data }: any) => {
-  useEffect(() => {
-    // Preload the globe component
-    const preloadGlobe = async () => {
-      try {
-        await import("@/components/ui/globe");
-      } catch (error) {
-        console.error("Failed to preload globe:", error);
-      }
-    };
-    preloadGlobe();
-  }, []);
-
-  return <World globeConfig={globeConfig} data={data} />;
-};
+import Link from "next/link"
+import { Eye, Target, Users, ArrowRight, Database, Bell, Key, BarChart3, Settings, Search, Monitor, Shield, Lock, AlertTriangle, Globe, Zap, TrendingUp, CheckCircle, Download } from "lucide-react"
 
 export default function LandingPage() {
   const router = useRouter()
+  const [isScrolled, setIsScrolled] = useState(false)
 
-  const globeConfig = {
-    pointSize: 4,
-    globeColor: "#1a1a1a",
-    showAtmosphere: true,
-    atmosphereColor: "#ffffff",
-    atmosphereAltitude: 0.1,
-    emissive: "#333333",
-    emissiveIntensity: 0.1,
-    shininess: 0.9,
-    polygonColor: "rgba(255,255,255,0.7)",
-    ambientLight: "#666666",
-    directionalLeftLight: "#ffffff",
-    directionalTopLight: "#ffffff",
-    pointLight: "#ffffff",
-    arcTime: 1000,
-    arcLength: 0.9,
-    rings: 1,
-    maxRings: 3,
-    initialPosition: { lat: 22.3193, lng: 114.1694 },
-    autoRotate: true,
-    autoRotateSpeed: 0.5,
-  };
-
-  const colors = ["#ffffff", "#cccccc", "#666666"];
-  const sampleArcs = [
-    {
-      order: 1,
-      startLat: -19.885592,
-      startLng: -43.951191,
-      endLat: -22.9068,
-      endLng: -43.1729,
-      arcAlt: 0.1,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 1,
-      startLat: 28.6139,
-      startLng: 77.209,
-      endLat: 3.139,
-      endLng: 101.6869,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 1,
-      startLat: -19.885592,
-      startLng: -43.951191,
-      endLat: -1.303396,
-      endLng: 36.852443,
-      arcAlt: 0.5,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 2,
-      startLat: 1.3521,
-      startLng: 103.8198,
-      endLat: 35.6762,
-      endLng: 139.6503,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 2,
-      startLat: 51.5072,
-      startLng: -0.1276,
-      endLat: 3.139,
-      endLng: 101.6869,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 2,
-      startLat: -15.785493,
-      startLng: -47.909029,
-      endLat: 36.162809,
-      endLng: -115.119411,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 3,
-      startLat: -33.8688,
-      startLng: 151.2093,
-      endLat: 22.3193,
-      endLng: 114.1694,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 3,
-      startLat: 21.3099,
-      startLng: -157.8581,
-      endLat: 40.7128,
-      endLng: -74.006,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 3,
-      startLat: -6.2088,
-      startLng: 106.8456,
-      endLat: 51.5072,
-      endLng: -0.1276,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 4,
-      startLat: 11.986597,
-      startLng: 8.571831,
-      endLat: -15.595412,
-      endLng: -56.05918,
-      arcAlt: 0.5,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 4,
-      startLat: -34.6037,
-      startLng: -58.3816,
-      endLat: 22.3193,
-      endLng: 114.1694,
-      arcAlt: 0.7,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 4,
-      startLat: 51.5072,
-      startLng: -0.1276,
-      endLat: 48.8566,
-      endLng: -2.3522,
-      arcAlt: 0.1,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 5,
-      startLat: 14.5995,
-      startLng: 120.9842,
-      endLat: 51.5072,
-      endLng: -0.1276,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 5,
-      startLat: 1.3521,
-      startLng: 103.8198,
-      endLat: -33.8688,
-      endLng: 151.2093,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 5,
-      startLat: 34.0522,
-      startLng: -118.2437,
-      endLat: 48.8566,
-      endLng: -2.3522,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 6,
-      startLat: -15.432563,
-      startLng: 28.315853,
-      endLat: 1.094136,
-      endLng: -63.34546,
-      arcAlt: 0.7,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 6,
-      startLat: 37.5665,
-      startLng: 126.978,
-      endLat: 35.6762,
-      endLng: 139.6503,
-      arcAlt: 0.1,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 6,
-      startLat: 22.3193,
-      startLng: 114.1694,
-      endLat: 51.5072,
-      endLng: -0.1276,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 7,
-      startLat: -19.885592,
-      startLng: -43.951191,
-      endLat: -15.595412,
-      endLng: -56.05918,
-      arcAlt: 0.1,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 7,
-      startLat: 48.8566,
-      startLng: -2.3522,
-      endLat: 52.52,
-      endLng: 13.405,
-      arcAlt: 0.1,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 7,
-      startLat: 52.52,
-      startLng: 13.405,
-      endLat: 34.0522,
-      endLng: -118.2437,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 8,
-      startLat: -8.833221,
-      startLng: 13.264837,
-      endLat: -33.936138,
-      endLng: 18.436529,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 8,
-      startLat: 49.2827,
-      startLng: -123.1207,
-      endLat: 52.3676,
-      endLng: 4.9041,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 8,
-      startLat: 1.3521,
-      startLng: 103.8198,
-      endLat: 40.7128,
-      endLng: -74.006,
-      arcAlt: 0.5,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 9,
-      startLat: 51.5072,
-      startLng: -0.1276,
-      endLat: 34.0522,
-      endLng: -118.2437,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 9,
-      startLat: 22.3193,
-      startLng: 114.1694,
-      endLat: -22.9068,
-      endLng: -43.1729,
-      arcAlt: 0.7,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 9,
-      startLat: 1.3521,
-      startLng: 103.8198,
-      endLat: -34.6037,
-      endLng: -58.3816,
-      arcAlt: 0.5,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 10,
-      startLat: -22.9068,
-      startLng: -43.1729,
-      endLat: 28.6139,
-      endLng: 77.209,
-      arcAlt: 0.7,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 10,
-      startLat: 34.0522,
-      startLng: -118.2437,
-      endLat: 31.2304,
-      endLng: 121.4737,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 10,
-      startLat: -6.2088,
-      startLng: 106.8456,
-      endLat: 52.3676,
-      endLng: 4.9041,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 11,
-      startLat: 41.9028,
-      startLng: 12.4964,
-      endLat: 34.0522,
-      endLng: -118.2437,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 11,
-      startLat: -6.2088,
-      startLng: 106.8456,
-      endLat: 31.2304,
-      endLng: 121.4737,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 11,
-      startLat: 22.3193,
-      startLng: 114.1694,
-      endLat: 1.3521,
-      endLng: 103.8198,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 12,
-      startLat: 34.0522,
-      startLng: -118.2437,
-      endLat: 37.7749,
-      endLng: -122.4194,
-      arcAlt: 0.1,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 12,
-      startLat: 35.6762,
-      startLng: 139.6503,
-      endLat: 22.3193,
-      endLng: 114.1694,
-      arcAlt: 0.2,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 12,
-      startLat: 22.3193,
-      startLng: 114.1694,
-      endLat: 34.0522,
-      endLng: -118.2437,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 13,
-      startLat: 52.52,
-      startLng: 13.405,
-      endLat: 22.3193,
-      endLng: 114.1694,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 13,
-      startLat: 11.986597,
-      startLng: 8.571831,
-      endLat: 35.6762,
-      endLng: 139.6503,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 13,
-      startLat: -22.9068,
-      startLng: -43.1729,
-      endLat: -34.6037,
-      endLng: -58.3816,
-      arcAlt: 0.1,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-    {
-      order: 14,
-      startLat: -33.936138,
-      startLng: 18.436529,
-      endLat: 21.395643,
-      endLng: 39.883798,
-      arcAlt: 0.3,
-      color: colors[Math.floor(Math.random() * (colors.length - 1))],
-    },
-  ];
-
-  const valueStatements = [
-    {
-      title: "Real-World Threat Detection",
-      description: "Parses breach archives and malware logs tied to your verified assets. Timely exposure alerts."
-    },
-    {
-      title: "Data Removal Without Hassle",
-      description: "Automated takedowns from broker and people-search sites. Status tracked in-platform."
-    },
-    {
-      title: "Expert-Led Response",
-      description: "Concierge support directly from the platform owner—no queue, no offshore agents."
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50)
     }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const overviewBullets = [
+    "Large-scale ingestion from stealer logs, breaches, phishing kits, and underground sources",
+    "Normalization and correlation across emails, usernames, devices, and sessions",
+    "Automated monitoring for domains, employees, and high-risk cohorts",
+    "API, webhooks, and bulk export for downstream systems"
   ]
 
   const capabilities = [
     {
-      title: "Credential & Leak Monitoring",
-      description: "Comprehensive sweep of decades of breached credentials and code-sourced malware dumps tied to your emails and domains."
+      icon: <Search className="h-6 w-6 text-white/80" />,
+      title: "Exposure Search",
+      description: "Query emails, domains, usernames, phone numbers, IPs, and device traits across recaptured datasets."
     },
     {
-      title: "Network & Infrastructure Scans",
-      description: "Periodic audit of verified home/office IPs for open ports, exposed devices, and misconfigurations."
+      icon: <Shield className="h-6 w-6 text-white/80" />,
+      title: "Session Hijack Detection",
+      description: "Identify malware-stolen cookies and tokens that enable account takeover."
     },
     {
-      title: "Personal Identity Score",
-      description: "Real-time composite risk score based on exposure volume, velocity, botnet signals, and asset sensitivity."
+      icon: <Monitor className="h-6 w-6 text-white/80" />,
+      title: "Domain & Employee Monitoring",
+      description: "Track corporate domains and staff identities for fresh exposures."
     },
     {
-      title: "Privacy Hardening & VPN",
-      description: "Guided device audits and secure VPN setup—reduce privacy leaks from apps, tracking, and metadata."
+      icon: <Key className="h-6 w-6 text-white/80" />,
+      title: "Credential Recapture",
+      description: "Detect credential reuse and password exposures across sources."
+    },
+    {
+      icon: <BarChart3 className="h-6 w-6 text-white/80" />,
+      title: "Risk Scoring",
+      description: "Correlate multi-source evidence into prioritized identity risk."
+    },
+    {
+      icon: <Settings className="h-6 w-6 text-white/80" />,
+      title: "API & Integrations",
+      description: "Stream results to SIEM/IdP/SOAR and internal tools with webhooks and bulk export."
     }
   ]
 
-  const statistics = [
-    { number: "6.5B+", label: "breached credentials analyzed" },
-    { number: "Thousands", label: "of credentials extracted weekly from malware dumps" },
-    { number: "1 in 3", label: "executives exposed via stealth data resale" },
-    { number: "<6 hours", label: "average time from leak to compromise" },
-    { number: "20+", label: "saved passwords and live sessions per malware log" }
-  ]
-
   const processSteps = [
-    "Verify asset ownership",
-    "Monitor breach and leak sources", 
-    "Generate threat alerts",
-    "Provide remediation & takedown support",
-    "Offer ongoing guidance from owner"
+    "Ingest — Continuously collect stealer logs, breach dumps, and phishing harvests.",
+    "Normalize — Parse, deduplicate, and map identities, credentials, and session artifacts.",
+    "Correlate — Link personas across sources; detect reuse and high-risk overlaps.",
+    "Score — Prioritize exposures with evidence and suggested remediation.",
+    "Deliver — Dashboard, alerts, API/webhooks, and exports for rapid action."
   ]
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-white/20 bg-card/30 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <div className="min-h-screen bg-neutral-950">
+      <header className={`sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-neutral-900/80 backdrop-blur-md border-b border-white/10' 
+          : 'bg-transparent'
+      }`}>
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={32} height={32} className="opacity-90" />
-            <span className="text-lg font-semibold text-primary">OBSCURA LABS</span>
+            <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={32} height={32} priority />
+            <span className="text-lg font-semibold text-white">OBSCURA LABS</span>
           </div>
-
         </div>
       </header>
 
-      {/* Hero Section with Globe Background */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden">
-        {/* Globe Background */}
-        <div className="absolute inset-0 z-0 flex items-center justify-center">
-          <div className="w-3/4 h-3/4">
-            <GlobeWithPreload data={sampleArcs} globeConfig={globeConfig} />
-          </div>
-        </div>
-        
-        {/* Content Overlay */}
-        <div className="relative z-10 container mx-auto px-4 text-center">
-          <div className="max-w-4xl mx-auto">
-            <div className="border border-transparent bg-card/20 backdrop-blur-sm p-12 rounded-lg min-h-[625px] flex flex-col justify-center">
-              <h1 className="text-5xl md:text-7xl font-bold text-primary mb-8 tracking-tight leading-tight">
-                DIGITAL EXPOSURE PROTECTION
-                <br />
-                <span className="text-muted-foreground">FOR HNW INDIVIDUALS & EXECUTIVES</span>
-              </h1>
-              <p className="text-xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
-                Solo-operated intelligence system delivering continuous breach monitoring, identity security, and white-glove response—without corporate overhead.
-              </p>
+      <section className="relative py-32 px-6 bg-gradient-to-b from-neutral-900 to-neutral-950">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 tracking-tight leading-tight">
+              Identity Exposure
+              <span className="block text-white">
+                Intelligence
+              </span>
+            </h1>
+            <p className="text-xl text-neutral-200 mb-12 max-w-4xl mx-auto leading-relaxed">
+              Obscura Labs detects and correlates compromised identities from stealer logs, breach collections, phishing kits, and malware-exfiltrated data—then delivers automated monitoring, alerts, and API access for rapid remediation.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
                 size="lg" 
-                className="tactical-button px-8 py-4 text-lg font-semibold border-2 border-white/30 hover:border-white/50"
+                className="px-8 py-4 text-lg font-semibold bg-white text-black hover:bg-neutral-200 shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => router.push('/login')}
               >
-                REQUEST ACCESS
+                Open Dashboard
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
+              <Link href="#overview">
+                <Button 
+                  variant="outline"
+                  size="lg" 
+                  className="px-8 py-4 text-lg font-semibold border border-white/20 hover:border-white/40 text-white hover:bg-white/5 transition-all duration-300"
+                >
+                  Platform Overview
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Value Statements */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-3 gap-12">
-            {valueStatements.map((statement, index) => (
-              <div key={index} className="text-center border border-white/10 bg-card/20 backdrop-blur-sm p-8 rounded-lg hover:bg-card/30 transition-all duration-300">
-                <h3 className="text-xl font-semibold text-primary mb-4">{statement.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{statement.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Capabilities */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-primary mb-12 text-center border-b border-white/20 pb-4">CAPABILITIES</h2>
-          <div className="space-y-12">
-            {capabilities.map((capability, index) => (
-              <div key={index} className="tactical-card p-8 border border-white/20 bg-card/30 backdrop-blur-sm hover:bg-card/40 transition-all duration-300">
-                <h3 className="text-xl font-semibold text-primary mb-4">{capability.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{capability.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Statistics */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-primary mb-12 text-center border-b border-white/20 pb-4">THREAT LANDSCAPE</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {statistics.map((stat, index) => (
-              <div key={index} className="tactical-card p-6 text-center border border-white/20 bg-card/30 backdrop-blur-sm hover:bg-card/40 transition-all duration-300">
-                <div className="text-3xl font-bold text-primary mb-2">{stat.number}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-primary mb-12 text-center border-b border-white/20 pb-4">HOW IT WORKS</h2>
-          <div className="border border-white/20 bg-card/30 backdrop-blur-sm p-8 rounded-lg">
-            <div className="space-y-6">
-              {processSteps.map((step, index) => (
-                <div key={index} className="flex items-center gap-4">
-                  <div className="w-8 h-8 bg-primary/20 border-2 border-white/30 rounded-full flex items-center justify-center text-sm font-semibold text-primary">
-                    {index + 1}
-                  </div>
-                  <span className="text-muted-foreground text-lg">{step}</span>
+      <section id="overview" className="py-24 px-6 bg-neutral-950">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-6">What is Obscura Labs</h2>
+            <p className="text-lg text-neutral-200 max-w-4xl mx-auto leading-relaxed mb-8">
+              Obscura Labs is an identity threat intelligence platform. We continuously collect stealer logs, breach dumps, and phishing harvests, recapture session artifacts (cookies/tokens), normalize identities across sources, and score risk. Security teams use our dashboard and API to search exposures, monitor employee and consumer identities, and automate remediation via integrations with their SIEM/IdP/SOAR.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {overviewBullets.map((bullet, index) => (
+                <div key={index} className="flex items-start gap-3 text-left">
+                  <div className="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
+                  <span className="text-neutral-200">{bullet}</span>
                 </div>
               ))}
             </div>
@@ -587,43 +136,92 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Why Solo Matters */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="tactical-card p-8 border-2 border-white/20 bg-card/30 backdrop-blur-sm">
-            <h2 className="text-2xl font-bold text-primary mb-6">WHY SOLO MATTERS</h2>
-            <p className="text-muted-foreground text-lg leading-relaxed">
-              Operated entirely by the platform's creator — no offshoring, no support layers. One trusted expert, one point of accountability.
-            </p>
+      <section className="py-24 px-6 bg-neutral-950">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-6">Platform Capabilities</h2>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {capabilities.map((capability, index) => (
+              <div key={index} className="group p-8 rounded-2xl bg-neutral-900/60 backdrop-blur-sm ring-1 ring-white/10 hover:ring-white/20 transition-all duration-300 hover:-translate-y-0.5">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0">
+                    {capability.icon}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-2">{capability.title}</h3>
+                    <p className="text-neutral-200 leading-relaxed">{capability.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="max-w-2xl mx-auto text-center">
-          <div className="border border-white/20 bg-card/30 backdrop-blur-sm p-12 rounded-lg">
-            <h2 className="text-3xl font-bold text-primary mb-6">NO PUBLIC SIGNUP</h2>
-            <p className="text-muted-foreground mb-8 text-lg">
-              Access is by invitation only.
+      <section className="py-24 px-6 bg-neutral-950">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-6">How It Works</h2>
+          </div>
+          <div className="bg-neutral-900/60 backdrop-blur-sm rounded-2xl ring-1 ring-white/10 p-8">
+            <div className="space-y-6">
+              {processSteps.map((step, index) => (
+                <div key={index} className="flex items-center gap-4">
+                  <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black font-semibold text-sm">
+                    {index + 1}
+                  </div>
+                  <span className="text-neutral-200 text-lg font-medium">{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24 px-6 bg-neutral-950">
+        <div className="container mx-auto max-w-4xl">
+          <div className="text-center">
+            <div className="bg-neutral-900/60 backdrop-blur-sm p-12 rounded-2xl ring-1 ring-white/10">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-6">
+                <Users className="h-8 w-8 text-black" />
+              </div>
+              <h2 className="text-3xl font-bold text-white mb-6">For Security, Fraud, and DFIR</h2>
+              <p className="text-neutral-200 text-lg leading-relaxed max-w-2xl mx-auto">
+                Reduce account takeover, stop session hijack, and accelerate investigations. Monitor your workforce and consumer populations, automate containment via identity and access tools, and export enriched evidence for casework.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-24 px-6 bg-neutral-900">
+        <div className="container mx-auto max-w-4xl text-center">
+          <div className="text-white flex flex-col items-center">
+            <h2 className="text-3xl font-bold mb-6">Start Monitoring Identities</h2>
+            <p className="text-xl text-neutral-200 mb-8 max-w-2xl">
+              Search exposures, enable domain monitoring, and connect the API.
             </p>
             <Button 
               size="lg" 
-              className="tactical-button px-8 py-4 text-lg font-semibold border-2 border-white/30 hover:border-white/50"
+              className="px-8 py-4 text-lg font-semibold bg-white text-black hover:bg-neutral-200 shadow-lg hover:shadow-xl transition-all duration-300"
               onClick={() => router.push('/login')}
             >
-              REQUEST ACCESS
+              Open Dashboard
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/20 bg-card/30 backdrop-blur-sm py-8">
-        <div className="container mx-auto px-4 text-center">
-          <p className="text-sm text-muted-foreground">
-            © 2024 Obscura Labs. Digital protection and intelligence platform.
+      <footer className="border-t border-white/10 bg-neutral-950 py-12">
+        <div className="container mx-auto px-6 text-center">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={24} height={24} />
+            <span className="text-lg font-semibold text-white">OBSCURA LABS</span>
+          </div>
+          <p className="text-sm text-neutral-300">
+            © {new Date().getFullYear()} Obscura Labs. Identity threat intelligence platform for security teams.
           </p>
         </div>
       </footer>

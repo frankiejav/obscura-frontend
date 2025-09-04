@@ -10,11 +10,11 @@
     "dev": "next dev",
     "lint": "next lint",
     "start": "next start",
-    "test:elasticsearch": "node scripts/test-elasticsearch.js"
+    "test:clickhouse": "node scripts/test-clickhouse.js"
   },
   "dependencies": {
     "@ai-sdk/openai": "^0.0.66",
-    "@elastic/elasticsearch": "8.11.0",
+    "@clickhouse/client": "^1.12.0",
     "@hookform/resolvers": "^3.9.1",
     "@neondatabase/serverless": "latest",
     "@radix-ui/react-accordion": "latest",
@@ -52,6 +52,7 @@
     "clsx": "^2.1.1",
     "cmdk": "latest",
     "date-fns": "^4.1.0",
+    "dotenv": "^17.2.1",
     "embla-carousel-react": "latest",
     "fs": "latest",
     "input-otp": "latest",

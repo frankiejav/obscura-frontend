@@ -48,13 +48,6 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
       <div className="flex h-16 items-center justify-between px-6">
         <div className="flex items-center gap-4">
           <SidebarTrigger className="text-white hover:bg-white/10" />
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-white" />
-            <div>
-              <h1 className="text-white font-mono text-lg font-bold tracking-wider">COMMAND CENTER</h1>
-              <p className="text-gray-400 font-mono text-xs">PRIVATE LEAKED DATA ACCESS TERMINAL</p>
-            </div>
-          </div>
         </div>
 
         <div className="flex items-center gap-4">

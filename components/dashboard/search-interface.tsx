@@ -24,6 +24,7 @@ type SearchResult = {
   id: string
   name?: string
   email?: string
+  username?: string
   ip?: string
   domain?: string
   source?: string
@@ -100,6 +101,7 @@ export function SearchInterface() {
                   <SelectItem value="all">All Fields</SelectItem>
                   <SelectItem value="name">Name</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="username">Username</SelectItem>
                   <SelectItem value="ip">IP Address</SelectItem>
                   <SelectItem value="domain">Domain</SelectItem>
                   <SelectItem value="source">Source</SelectItem>
@@ -138,6 +140,7 @@ export function SearchInterface() {
                   <TableRow>
                     {(searchType === "all" || searchType === "name") && <TableHead>Name</TableHead>}
                     {(searchType === "all" || searchType === "email") && <TableHead>Email</TableHead>}
+                    {(searchType === "all" || searchType === "username") && <TableHead>Username</TableHead>}
                     {(searchType === "all" || searchType === "ip") && <TableHead>IP Address</TableHead>}
                     {(searchType === "all" || searchType === "domain") && <TableHead>Domain</TableHead>}
                     <TableHead>Source</TableHead>
@@ -149,6 +152,7 @@ export function SearchInterface() {
                     <TableRow key={result.id}>
                       {(searchType === "all" || searchType === "name") && <TableCell>{result.name || "—"}</TableCell>}
                       {(searchType === "all" || searchType === "email") && <TableCell>{result.email || "—"}</TableCell>}
+                      {(searchType === "all" || searchType === "username") && <TableCell>{result.username || "—"}</TableCell>}
                       {(searchType === "all" || searchType === "ip") && <TableCell>{result.ip || "—"}</TableCell>}
                       {(searchType === "all" || searchType === "domain") && (
                         <TableCell>{result.domain || "—"}</TableCell>

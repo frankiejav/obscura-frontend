@@ -1,13 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { ingestDataRecords, ParsedDataRecord } from "@/lib/data-ingestion"
-import { checkConnection } from "@/lib/elasticsearch"
+import { checkConnection } from "@/lib/clickhouse"
 
 export async function POST(request: NextRequest) {
   try {
-    // Check Elasticsearch connection
+    // Check ClickHouse connection
     const isConnected = await checkConnection()
     if (!isConnected) {
-      return NextResponse.json({ error: "Database connection failed" }, { status: 503 })
+      return NextResponse.json({ error: "ClickHouse connection failed" }, { status: 503 })
     }
 
     const body = await request.json()
@@ -24,18 +24,29 @@ export async function POST(request: NextRequest) {
 
     // Validate record structure
     const validatedRecords: ParsedDataRecord[] = records.map((record: any, index: number) => {
-      if (!record.source) {
-        throw new Error(`Record at index ${index} is missing required 'source' field`)
-      }
-
       return {
-        name: record.name,
-        email: record.email,
-        ip: record.ip,
+        victim_id: record.victim_id,
+        source_name: record.source_name || sourceName,
         domain: record.domain,
-        source: record.source,
-        additionalData: record.additionalData,
-        timestamp: record.timestamp ? new Date(record.timestamp) : undefined,
+        email: record.email,
+        username: record.username,
+        password: record.password,
+        phone: record.phone,
+        name: record.name,
+        address: record.address,
+        country: record.country,
+        origin: record.origin,
+        fields: record.fields,
+        hostname: record.hostname,
+        ip_address: record.ip_address || record.ip,
+        language: record.language,
+        timezone: record.timezone,
+        os_version: record.os_version,
+        hwid: record.hwid,
+        cpu_name: record.cpu_name,
+        gpu: record.gpu,
+        ram_size: record.ram_size,
+        ts: record.ts || record.timestamp ? new Date(record.ts || record.timestamp) : undefined,
       }
     })
 
@@ -59,7 +70,7 @@ export async function POST(request: NextRequest) {
     console.error("Data ingestion error:", error)
     return NextResponse.json({
       success: false,
-      error: error.message || "Internal server error",
+      error: error instanceof Error ? error.message : "Internal server error",
     }, { status: 500 })
   }
 }
@@ -75,26 +86,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       status: "ready",
       message: "Data ingestion endpoint is ready",
-      usage: {
-        method: "POST",
-        body: {
-          records: "Array of data records",
-          sourceName: "String identifying the data source",
+              usage: {
+          method: "POST",
+          body: {
+            records: "Array of data records",
+            sourceName: "String identifying the data source",
+          },
+          example: {
+            records: [
+              {
+                name: "John Doe",
+                email: "john@example.com",
+                username: "johndoe",
+                ip_address: "192.168.1.1",
+                domain: "example.com",
+                source_name: "breach_2024",
+                password: "password123",
+                phone: "+1234567890",
+              },
+            ],
+            sourceName: "Breach Data 2024",
+          },
         },
-        example: {
-          records: [
-            {
-              name: "John Doe",
-              email: "john@example.com",
-              ip: "192.168.1.1",
-              domain: "example.com",
-              source: "breach_2024",
-              additionalData: { breach_type: "email" },
-            },
-          ],
-          sourceName: "Breach Data 2024",
-        },
-      },
     })
   } catch (error) {
     console.error("Ingestion status error:", error)

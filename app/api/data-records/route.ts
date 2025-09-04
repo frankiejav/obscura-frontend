@@ -1,82 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
-import client from '@/lib/elasticsearch'
-
-const esClient = client as any
-
-// Helper to get total hits value safely
-function getTotalHits(result: any): number {
-  if (!result || !result.hits || typeof result.hits.total === 'undefined') return 0;
-  if (typeof result.hits.total === 'number') return result.hits.total;
-  if (typeof result.hits.total.value === 'number') return result.hits.total.value;
-  return 0;
-}
+import { searchDataRecords } from '@/lib/data-ingestion'
 
 export async function GET(request: NextRequest) {
   try {
-    // Check if Elasticsearch client is available
-    if (!esClient) {
-      console.log('Elasticsearch client not available, returning empty results')
-      return NextResponse.json({
-        edges: [],
-        pageInfo: {
-          hasNextPage: false,
-          hasPreviousPage: false,
-          startCursor: null,
-          endCursor: null,
-        },
-        totalCount: 0,
-      })
-    }
-
     const { searchParams } = new URL(request.url)
     const first = parseInt(searchParams.get('first') || '10')
-    const after = searchParams.get('after') || '0'
-    const source = searchParams.get('source')
+    const after = parseInt(searchParams.get('after') || '0')
+    const source = searchParams.get('source') || undefined
 
-    const query: any = {
-      bool: {
-        must: [],
-      },
-    }
+    // Calculate page number from cursor
+    const page = Math.floor(after / first) + 1
 
-    if (source) {
-      query.bool.must.push({ term: { source } })
-    }
-
-    const result = await esClient.search({
-      index: 'obscura_emails',
-      body: {
-        size: first,
-        from: parseInt(after),
-        query,
-        sort: [{ timestamp: { order: 'desc' } }],
-      } as any,
+    // Use ClickHouse search function
+    const result = await searchDataRecords({
+      source,
+      page,
+      limit: first,
     })
 
-    const edges = result.hits.hits.map((hit: any) => ({
-      node: Object.assign({ id: hit._id }, hit._source || {}),
-      cursor: hit._id,
+    // Transform results to GraphQL-style edges format
+    const edges = result.results.map((record: any, index: number) => ({
+      node: record,
+      cursor: (after + index).toString(),
     }))
 
-    const total = getTotalHits(result)
+    const hasNextPage = result.pagination.current < result.pagination.pages
+    const hasPreviousPage = result.pagination.current > 1
 
     return NextResponse.json({
       edges,
       pageInfo: {
-        hasNextPage: total > (parseInt(after) + first),
-        hasPreviousPage: parseInt(after) > 0,
-        startCursor: edges[0]?.cursor,
-        endCursor: edges[edges.length - 1]?.cursor,
+        hasNextPage,
+        hasPreviousPage,
+        startCursor: edges[0]?.cursor || null,
+        endCursor: edges[edges.length - 1]?.cursor || null,
       },
-      totalCount: total,
+      totalCount: result.pagination.total,
     })
   } catch (error) {
     console.error('Error fetching data records:', error)
-    
-    // Check if it's an authentication error
-    if (error instanceof Error && error.message.includes('security_exception')) {
-      console.log('Elasticsearch authentication failed, returning empty results')
-    }
     
     return NextResponse.json({
       edges: [],

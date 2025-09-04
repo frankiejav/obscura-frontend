@@ -5,13 +5,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight, Key } from 'lucide-react'
 
 interface DataRecord {
   id: string
   name?: string
   email?: string
+  username?: string
+  password?: string
   ip?: string
   domain?: string
   source: string
@@ -21,11 +24,13 @@ interface DataRecord {
 
 interface SearchResult {
   results: DataRecord[]
+  profileResults?: DataRecord[]
   pagination: {
     total: number
     pages: number
     current: number
   }
+  profilesEnabled?: boolean
 }
 
 interface BreachResult {
@@ -66,17 +71,13 @@ interface BreachSearchResult {
 
 export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchType, setSearchType] = useState('ALL')
-  const [source, setSource] = useState('all')
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const [searchType, setSearchType] = useState('auto')
+  const [profilesEnabled, setProfilesEnabled] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [results, setResults] = useState<SearchResult | null>(null)
   const [loading, setLoading] = useState(false)
-  const [sources, setSources] = useState<string[]>([])
 
   // Breach search state
-  const [breachSearchType, setBreachSearchType] = useState('auto')
   const [breachResults, setBreachResults] = useState<BreachSearchResult | null>(null)
   const [breachLoading, setBreachLoading] = useState(false)
   const [breachSearchEnabled, setBreachSearchEnabled] = useState(false)
@@ -85,9 +86,8 @@ export default function SearchPage() {
   const [breachCurrentPage, setBreachCurrentPage] = useState(1)
   const [breachResultsPerPage] = useState(10)
 
-  // Fetch available sources and check breach search status
+  // Check breach search status
   useEffect(() => {
-    fetchSources()
     checkBreachSearchStatus()
   }, [])
 
@@ -99,19 +99,6 @@ export default function SearchPage() {
 
     return () => clearInterval(interval)
   }, [])
-
-  const fetchSources = async () => {
-    try {
-      const response = await fetch('/api/data-sources')
-      if (response.ok) {
-        const data = await response.json()
-        const sourceNames = data.map((ds: any) => ds.name)
-        setSources(sourceNames)
-      }
-    } catch (error) {
-      console.error('Error fetching sources:', error)
-    }
-  }
 
   const checkBreachSearchStatus = async () => {
     try {
@@ -145,12 +132,13 @@ export default function SearchPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          term: searchTerm,
-          type: searchType,
-          page: currentPage,
-          limit: 10,
-        }),
+                                     body: JSON.stringify({
+             term: searchTerm,
+             type: searchType === 'auto' ? 'ALL' : searchType,
+             page: currentPage,
+             limit: 10,
+             profilesEnabled: profilesEnabled,
+           }),
       })
 
       if (response.ok) {
@@ -167,6 +155,7 @@ export default function SearchPage() {
           },
           body: JSON.stringify({
             query: searchTerm,
+            type: searchType,
           }),
         })
 
@@ -200,9 +189,10 @@ export default function SearchPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           term: searchTerm,
-          type: searchType,
+          type: searchType === 'auto' ? 'ALL' : searchType,
           page: page,
           limit: 10,
+          profilesEnabled: profilesEnabled,
         }),
       })
       .then(response => response.json())
@@ -253,7 +243,7 @@ export default function SearchPage() {
   }
 
   const totalBreachPages = breachResults ? Math.ceil(breachResults.result.length / breachResultsPerPage) : 0
-  const totalResults = (results?.pagination.total || 0) + (breachResults?.found || 0)
+  const totalResults = (results?.pagination.total || 0) + (breachResults?.found || 0) + (results?.profileResults?.length || 0)
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -273,7 +263,7 @@ export default function SearchPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Search Term</label>
               <Input
@@ -291,75 +281,36 @@ export default function SearchPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All Fields</SelectItem>
-                  <SelectItem value="NAME">Name</SelectItem>
-                  <SelectItem value="EMAIL">Email</SelectItem>
-                  <SelectItem value="IP">IP Address</SelectItem>
-                  <SelectItem value="DOMAIN">Domain</SelectItem>
-                  <SelectItem value="SOURCE">Source</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Data Source</label>
-              <Select value={source} onValueChange={setSource}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sources</SelectItem>
-                  {sources.map((sourceName) => (
-                    <SelectItem key={sourceName} value={sourceName}>
-                      {sourceName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Breach Search Type</label>
-              <Select value={breachSearchType} onValueChange={setBreachSearchType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
                   <SelectItem value="auto">Auto-detect</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
                   <SelectItem value="username">Username</SelectItem>
                   <SelectItem value="phone">Phone</SelectItem>
                   <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="ip">IP Address</SelectItem>
+                  <SelectItem value="domain">Domain</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Date Range</label>
-              <div className="grid grid-cols-2 gap-2">
-                <Input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  placeholder="From"
+              <label className="text-sm font-medium">Profiles</label>
+              <div className="flex items-center space-x-2 h-10">
+                <Switch
+                  checked={profilesEnabled}
+                  onCheckedChange={setProfilesEnabled}
+                  id="profiles-toggle"
                 />
-                <Input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  placeholder="To"
-                />
+                <label htmlFor="profiles-toggle" className="text-sm">
+                  {profilesEnabled ? 'ON' : 'OFF'}
+                </label>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">&nbsp;</label>
-              <Button onClick={handleSearch} disabled={loading || breachLoading} className="w-full">
-                {loading || breachLoading ? 'Searching...' : 'Search All Sources'}
-              </Button>
-            </div>
+          <div className="flex justify-center">
+            <Button onClick={handleSearch} disabled={loading || breachLoading} className="px-8">
+              {loading || breachLoading ? 'Searching...' : 'Search All Sources'}
+            </Button>
           </div>
 
           {breachSearchEnabled && breachResults?.quota && (
@@ -412,6 +363,21 @@ export default function SearchPage() {
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground">Email</span>
                                 <span className="break-words">{record.email}</span>
+                              </div>
+                            )}
+                            {record.username && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Username</span>
+                                <span className="break-words">{record.username}</span>
+                              </div>
+                            )}
+                            {record.password && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
+                                  <Key className="w-3 h-3" />
+                                  Password
+                                </span>
+                                <span className="break-words font-mono text-red-600">{record.password}</span>
                               </div>
                             )}
                             {record.ip && (
@@ -491,6 +457,80 @@ export default function SearchPage() {
                       </div>
                     </div>
                   )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Profile Results */}
+          {results?.profileResults && results.profileResults.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Profile Credentials
+                  <Badge variant="outline">
+                    {results.profileResults.length} credentials found
+                  </Badge>
+                  <Badge variant="secondary">
+                    {[...new Set(results.profileResults.map(r => r.id))].length} profiles
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Group by victim ID */}
+                  {Object.entries(
+                    results.profileResults.reduce((groups: Record<string, DataRecord[]>, record) => {
+                      if (!groups[record.id]) groups[record.id] = []
+                      groups[record.id].push(record)
+                      return groups
+                    }, {})
+                  ).map(([victimId, profileRecords]) => (
+                    <Card key={victimId} className="p-4 border-l-4 border-l-blue-500">
+                      <div className="mb-3">
+                        <h4 className="font-semibold text-sm text-blue-600">Profile: {victimId}</h4>
+                        <Badge variant="outline" className="text-xs">
+                          {profileRecords.length} credentials
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        {profileRecords.map((record, index) => (
+                          <div key={`${record.id}-${index}`} className="bg-gray-50 p-3 rounded">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Globe className="w-4 h-4" />
+                              <span className="font-medium">{record.domain}</span>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
+                              {record.email && (
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-xs text-muted-foreground">Email</span>
+                                  <span className="break-words">{record.email}</span>
+                                </div>
+                              )}
+                              {record.username && (
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-xs text-muted-foreground">Username</span>
+                                  <span className="break-words">{record.username}</span>
+                                </div>
+                              )}
+                              {record.password && (
+                                <div className="flex flex-col">
+                                  <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
+                                    <Key className="w-3 h-3" />
+                                    Password
+                                  </span>
+                                  <span className="break-words font-mono text-red-600">{record.password}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  ))}
                 </div>
               </CardContent>
             </Card>

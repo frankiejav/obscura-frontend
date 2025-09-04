@@ -99,7 +99,7 @@ export async function getDataSourceStats() {
       LIMIT 100
     `
     
-    const results = await executeQuery(query) as any[]
+    const results = await executeQuery(query)
     
     return results.map((row: any, index: number) => ({
       id: `source_${index}`,
@@ -201,7 +201,6 @@ export async function searchDataRecords(options: {
         domain,
         source_name as source,
         username,
-        password,
         ts as timestamp
       FROM vault.creds 
       ${whereClause}
@@ -233,7 +232,7 @@ export async function searchDataRecords(options: {
       executeQuery(searchQuery),
       executeQuery(countQuery),
       executeQuery(sourcesQuery)
-    ]) as [any[], any[], any[]]
+    ])
 
     const total = countResults[0]?.total || 0
 
@@ -246,7 +245,6 @@ export async function searchDataRecords(options: {
         domain: row.domain,
         source: row.source,
         username: row.username,
-        password: row.password,
         timestamp: row.timestamp,
       })),
       pagination: {
@@ -266,53 +264,9 @@ export async function searchDataRecords(options: {
     console.error('Error searching data records:', error)
     return {
       results: [],
-      pagination: { total: 0, pages: 0, current: options.page || 1 },
+      pagination: { total: 0, pages: 0, current: page || 1 },
       aggregations: { sources: [], totalRecords: 0 },
     }
-  }
-}
-
-/**
- * Search for all credentials belonging to the same victim profiles
- */
-export async function searchProfileCredentials(victimIds: string[]) {
-  try {
-    if (victimIds.length === 0) return []
-
-    const idsString = victimIds.map(id => `'${id}'`).join(',')
-    
-    const profileQuery = `
-      SELECT 
-        victim_id as id,
-        name,
-        email,
-        ip_address as ip,
-        domain,
-        source_name as source,
-        username,
-        password,
-        ts as timestamp
-      FROM vault.creds 
-      WHERE victim_id IN (${idsString})
-      ORDER BY victim_id, domain, ts DESC
-    `
-
-    const results = await executeQuery(profileQuery) as any[]
-    
-    return results.map((row: any) => ({
-      id: row.id,
-      name: row.name,
-      email: row.email,
-      ip: row.ip,
-      domain: row.domain,
-      source: row.source,
-      username: row.username,
-      password: row.password,
-      timestamp: row.timestamp,
-    }))
-  } catch (error) {
-    console.error('Error searching profile credentials:', error)
-    return []
   }
 }
 
@@ -342,3 +296,4 @@ export async function deleteOldRecords(olderThanDays: number) {
     return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
+
