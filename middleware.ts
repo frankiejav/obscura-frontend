@@ -2,9 +2,12 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  // Get the client's IP address from x-forwarded-for header
+  // Get the client's IP address from various headers
   const forwardedFor = request.headers.get('x-forwarded-for')
-  const clientIP = forwardedFor ? forwardedFor.split(',')[0].trim() : null
+  const realIP = request.headers.get('x-real-ip')
+  const clientIP = forwardedFor 
+    ? forwardedFor.split(',')[0].trim() 
+    : realIP || request.ip || null
 
   // Get the authorized IP from environment variable
   const authorizedIP = process.env.IP_ADDRESS
@@ -14,6 +17,7 @@ export function middleware(request: NextRequest) {
     '/coming-soon',
     '/_next',
     '/favicon.ico',
+    '/favicon.png',
     '/robots.txt',
     '/api/public'
   ]
@@ -50,8 +54,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - favicon.png (favicon file)
      * - robots.txt (robots file)
      */
-    '/((?!api/public|_next/static|_next/image|favicon.ico|robots.txt).*)',
+    '/((?!api/public|_next/static|_next/image|favicon.ico|favicon.png|robots.txt).*)',
   ],
 } 
