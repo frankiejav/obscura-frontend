@@ -1,0 +1,66 @@
+CREATE TABLE vault.creds
+(
+    `ts` DateTime DEFAULT now(),
+    `victim_id` String,
+    `source_name` String,
+    `url` String DEFAULT '',
+    `domain` LowCardinality(String) DEFAULT '',
+    `email` String DEFAULT '',
+    `username` String DEFAULT '',
+    `password` Nullable(String),
+    `phone` Nullable(String),
+    `name` Nullable(String),
+    `address` Nullable(String),
+    `country` Nullable(String),
+    `origin` Nullable(String),
+    `fields` Array(String),
+    `hostname` Nullable(String),
+    `ip_address` String DEFAULT '',
+    `language` Nullable(String),
+    `timezone` Nullable(String),
+    `os_version` Nullable(String),
+    `hwid` Nullable(String),
+    `cpu_name` Nullable(String),
+    `gpu` Nullable(String),
+    `ram_size` Nullable(String),
+    `account_type` LowCardinality(String) DEFAULT 'personal',
+    `risk_score` UInt8 DEFAULT 0,
+    `risk_category` LowCardinality(String) DEFAULT 'low',
+    `is_privileged` Bool DEFAULT false,
+    `breach_impact` LowCardinality(String) DEFAULT 'low',
+    INDEX bf_email email TYPE tokenbf_v1(1024, 3, 0) GRANULARITY 64,
+    INDEX bf_user username TYPE tokenbf_v1(1024, 3, 0) GRANULARITY 64,
+    INDEX bf_url url TYPE tokenbf_v1(1024, 3, 0) GRANULARITY 64,
+    INDEX set_domain domain TYPE set(8192) GRANULARITY 64,
+    INDEX bf_ip ip_address TYPE tokenbf_v1(1024, 3, 0) GRANULARITY 64,
+    INDEX set_account account_type TYPE set(16) GRANULARITY 64
+)
+ENGINE = SharedReplacingMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}', ts)
+ORDER BY (domain, email, username, victim_id)
+SETTINGS index_granularity = 8192
+
+
+CREATE TABLE vault.cookies
+(
+    `ts` DateTime DEFAULT now(),
+    `victim_id` String,
+    `domain` LowCardinality(String),
+    `cookie_name` String,
+    `cookie_path` String DEFAULT '/',
+    `cookie_value` Nullable(String),
+    `cookie_value_length` UInt32 DEFAULT 0,
+    `secure` Bool DEFAULT false,
+    `cookie_type` LowCardinality(String) DEFAULT 'general',
+    `risk_level` LowCardinality(String) DEFAULT 'low',
+    `browser_source` LowCardinality(String) DEFAULT 'unknown',
+    `hostname` Nullable(String),
+    `ip_address` Nullable(String),
+    `country` Nullable(String),
+    INDEX bf_cookie_name cookie_name TYPE tokenbf_v1(1024, 3, 0) GRANULARITY 64,
+    INDEX set_cookie_domain domain TYPE set(8192) GRANULARITY 64,
+    INDEX set_cookie_type cookie_type TYPE set(32) GRANULARITY 64,
+    INDEX set_risk_level risk_level TYPE set(8) GRANULARITY 64
+)
+ENGINE = SharedReplacingMergeTree('/clickhouse/tables/{uuid}/{shard}', '{replica}', ts)
+ORDER BY (domain, cookie_name, victim_id)
+SETTINGS index_granularity = 8192

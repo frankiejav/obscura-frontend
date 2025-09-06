@@ -1,11 +1,11 @@
 import type { Metadata } from "next"
-import { DataManagement } from "@/components/dashboard/data-management"
+import { Monitoring } from "@/components/dashboard/monitoring"
 
 export const metadata: Metadata = {
-  title: "Data Management | Obscura Labs",
-  description: "Manage and explore data in the Obscura Labs platform",
+  title: "Monitoring | Obscura Labs",
+  description: "Monitor emails, domains, and phone numbers for data breaches",
 }
 
 export default function DataPage() {
-  return <DataManagement />
+  return <Monitoring />
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { User, Shield, Activity } from "lucide-react"
+import { User, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -19,29 +19,19 @@ import { useEffect, useState } from "react"
 
 interface DashboardHeaderProps {
   user: {
-    id: string
-    email: string
-    role: string
-    clearance_level: number
+    sub?: string
+    email?: string
+    name?: string
+    picture?: string
+    [key: string]: any
   }
 }
 
 export function DashboardHeader({ user }: DashboardHeaderProps) {
-  const shouldShowClearance = user.role === "ADMIN" || user.role === "Client"
-  const { createNotification } = useNotifications(user.id)
-  const [isSecureConnection, setIsSecureConnection] = useState(true)
-
-  useEffect(() => {
-    // Check if the connection is secure (HTTPS)
-    const checkSecureConnection = () => {
-      if (typeof window !== 'undefined') {
-        const isSecure = window.location.protocol === 'https:'
-        setIsSecureConnection(isSecure)
-      }
-    }
-
-    checkSecureConnection()
-  }, [])
+  const userRole = user.role || user['https://obscuralabs.io/role'] || 'client'
+  const userId = user.sub || user.id || 'unknown'
+  const shouldShowClearance = userRole === "ADMIN" || userRole === "Client"
+  const { createNotification } = useNotifications(userId)
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/20 bg-black/90 backdrop-blur">
@@ -51,13 +41,6 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs font-mono">
-            <Activity className={`w-3 h-3 ${isSecureConnection ? 'text-green-500' : 'text-red-500'}`} />
-            <span className={isSecureConnection ? 'text-green-500' : 'text-red-500'}>
-              {isSecureConnection ? 'SECURE CONNECTION' : 'INSECURE CONNECTION'}
-            </span>
-          </div>
-
           {shouldShowClearance && (
             <Badge variant="outline" className="border-white/30 text-white font-mono text-xs">
               CLEARANCE: L{user.clearance_level}
@@ -66,7 +49,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 
           <NotificationsPanel user={user} />
           
-          {user.role === "ADMIN" && (
+          {userRole === "ADMIN" && (
             <AdminNotificationForm 
               user={user} 
               onSubmit={createNotification} 
@@ -88,11 +71,11 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
               </DropdownMenuItem>
               <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
                 <Shield className="w-3 h-3 mr-2" />
-                Role: {user.role.toUpperCase()}
+                Role: {userRole.toUpperCase()}
               </DropdownMenuItem>
               {shouldShowClearance && (
                 <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
-                  <Activity className="w-3 h-3 mr-2" />
+                  <Shield className="w-3 h-3 mr-2" />
                   Clearance: {user.clearance_level}
                 </DropdownMenuItem>
               )}

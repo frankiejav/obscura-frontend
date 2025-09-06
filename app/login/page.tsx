@@ -1,122 +1,87 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useAuth } from "@/lib/auth-context"
-import { LoginForm } from "@/components/login-form"
-import { SignupForm } from "@/components/signup-form"
+import { useEffect } from 'react'
+import { useUser } from '@auth0/nextjs-auth0'
+import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { ArrowLeft, Shield, Lock } from "lucide-react"
 
 export default function LoginPage() {
-  const [isSignup, setIsSignup] = useState(false)
-  const { user, isLoading } = useAuth()
+  const { user, isLoading } = useUser()
   const router = useRouter()
-  const [systemStatus, setSystemStatus] = useState<'online' | 'offline' | 'loading'>('loading')
-  const [uptime, setUptime] = useState(0)
-  const [startTime] = useState(Date.now())
 
-  // Redirect to dashboard if already logged in
   useEffect(() => {
-    if (!isLoading && user) {
-      router.push("/dashboard")
+    // If user is already logged in, redirect to dashboard
+    if (user && !isLoading) {
+      router.push('/dashboard')
     }
   }, [user, isLoading, router])
 
-  // SYSTEM ONLINE check
-  useEffect(() => {
-    let isMounted = true
-    const checkSystemStatus = async () => {
-      try {
-        const response = await fetch("/api/system/status")
-        if (response.ok) {
-          const data = await response.json()
-          if (isMounted) setSystemStatus(data.status)
-        } else {
-          if (isMounted) setSystemStatus("offline")
-        }
-      } catch {
-        if (isMounted) setSystemStatus("offline")
-      }
-    }
-    checkSystemStatus()
-    const interval = setInterval(checkSystemStatus, 30000)
-    return () => {
-      isMounted = false
-      clearInterval(interval)
-    }
-  }, [])
-
-  // Real-time uptime
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setUptime(Math.floor((Date.now() - startTime) / 1000))
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [startTime])
-
-  // Format uptime as HH:MM:SS
-  const formatUptime = (seconds: number) => {
-    const h = String(Math.floor(seconds / 3600)).padStart(2, '0')
-    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')
-    const s = String(seconds % 60).padStart(2, '0')
-    return `${h}:${m}:${s}`
+  const handleLogin = () => {
+    router.push('/auth/login')
   }
+
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background tactical-grid">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-          <p className="mt-4 text-muted-foreground font-mono">INITIALIZING SYSTEM...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background tactical-grid">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-primary border-r-transparent"></div>
-          <p className="mt-4 text-muted-foreground font-mono">REDIRECTING TO DASHBOARD...</p>
-        </div>
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+        <div className="text-white">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background tactical-grid">
-      <div className="container flex flex-col items-center justify-center gap-8 px-4 py-16">
-        <div className="flex flex-col items-center gap-4">
-          <Image src="/images/obscura-logo-white.png" alt="Obscura" width={200} height={200} className="opacity-90" />
-          <div className="text-center">
-            <p className="text-lg text-muted-foreground font-mono tracking-wider mt-2 max-w-2xl">
-              PRIVATE INTELLIGENCE OPERATIONS DASHBOARD FOR THREAT MONITORING AND DIGITAL IDENTITY SECURITY
-            </p>
-            <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground">
-              <div className={`status-indicator ${systemStatus === 'online' ? 'status-active' : 'status-inactive'}`}></div>
-              <span>SYSTEM {systemStatus === 'loading' ? 'CHECKING...' : systemStatus.toUpperCase()}</span>
-              <span className="mx-2">|</span>
-              <span>UPTIME: {formatUptime(uptime)}</span>
+    <div className="min-h-screen bg-neutral-950">
+      <header className="bg-neutral-900/80 backdrop-blur-md border-b border-white/10">
+        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={32} height={32} priority />
+            <span className="text-lg font-semibold text-white">OBSCURA LABS</span>
+          </div>
+          <Link 
+            href="/" 
+            className="flex items-center gap-2 text-neutral-300 hover:text-white transition-colors duration-200"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Link>
+        </div>
+      </header>
+
+      <main className="flex items-center justify-center min-h-[calc(100vh-80px)] px-6">
+        <div className="w-full max-w-md">
+          <div className="bg-neutral-900/60 backdrop-blur-sm rounded-2xl ring-1 ring-white/10 p-8">
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-6">
+                <Shield className="h-8 w-8 text-black" />
+              </div>
+              <h1 className="text-3xl font-bold text-white mb-2">Access Dashboard</h1>
+              <p className="text-neutral-300">
+                Secure authentication powered by Auth0
+              </p>
+            </div>
+
+            <div className="space-y-6">
+              <Button 
+                onClick={handleLogin}
+                className="w-full py-3 text-lg font-semibold bg-white text-black hover:bg-neutral-200 transition-all duration-300"
+                size="lg"
+              >
+                <Lock className="mr-2 h-5 w-5" />
+                Sign In/Sign Up with Auth0
+              </Button>
+
+              <div className="text-center">
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="w-full max-w-md">
-          {isSignup ? <SignupForm /> : <LoginForm />}
-
-          <div className="mt-4 text-center">
-            <Button
-              variant="ghost"
-              onClick={() => setIsSignup(!isSignup)}
-              className="text-muted-foreground hover:text-primary font-mono text-sm tracking-wider"
-            >
-              {isSignup ? "← RETURN TO LOGIN" : "CREATE NEW ACCOUNT →"}
-            </Button>
+          <div className="mt-8 text-center">
           </div>
         </div>
-      </div>
+      </main>
     </div>
   )
-} 
+}

@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from "jose"
 const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
 
 export async function signJWT(payload: Record<string, any>, options: { expiresIn?: string } = {}) {
-  const { expiresIn = "15m" } = options
+  const { expiresIn = "1h" } = options
 
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })

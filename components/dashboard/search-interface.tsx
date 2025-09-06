@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useState } from "react"
-import { useAuth } from "@/lib/auth-context"
+import { useUser } from "@auth0/nextjs-auth0"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -32,7 +32,7 @@ type SearchResult = {
 }
 
 export function SearchInterface() {
-  const { user } = useAuth()
+  const { user } = useUser()
   const [searchTerm, setSearchTerm] = useState("")
   const [searchType, setSearchType] = useState("all")
   const [isLoading, setIsLoading] = useState(false)

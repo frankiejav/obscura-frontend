@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     const token = authHeader.substring(7)
-    const decoded = verifyToken(token)
+    const decoded = await verifyToken(token)
 
     if (!decoded || !decoded.userId) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No token provided" }, { status: 401 })
     }
 
-    const decoded = verifyToken(token)
+    const decoded = await verifyToken(token)
 
     if (!decoded || !decoded.userId) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 })

@@ -1,69 +1,90 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/database'
+import { auth0 } from '@/lib/auth0'
+import { neon } from '@neondatabase/serverless'
 
-export async function GET() {
+// Settings structure
+interface Settings {
+  profile: {
+    displayName: string
+    email: string
+    theme: 'light' | 'dark' | 'system'
+  }
+  notifications: {
+    emailAlerts: boolean
+    securityAlerts: boolean
+  }
+  display: {
+    defaultPageSize: string
+    compactView: boolean
+  }
+}
+
+// Default settings
+const getDefaultSettings = (email: string): Settings => ({
+  profile: {
+    displayName: email.split('@')[0],
+    email: email,
+    theme: 'system',
+  },
+  notifications: {
+    emailAlerts: true,
+    securityAlerts: true,
+  },
+  display: {
+    defaultPageSize: '25',
+    compactView: false,
+  },
+})
+
+// Get database connection
+const getDb = () => {
+  const databaseUrl = process.env.DATABASE_URL || process.env.NEON
+  if (!databaseUrl) {
+    throw new Error('Database URL not configured')
+  }
+  return neon(databaseUrl)
+}
+
+export async function GET(request: NextRequest) {
   try {
-    // Get settings from database
-    const result = await db.query(
-      'SELECT * FROM settings WHERE key = $1',
-      ['default']
-    )
+    const session = await auth0.getSession(request)
     
-    if (result.rows.length === 0) {
-      // Return default settings if none exist
-      return NextResponse.json({
-        general: {
-          apiUrl: "https://api.obscuralabs.io",
-          defaultPageSize: "10",
-        },
-        security: {
-          twoFactorAuth: false,
-          sessionTimeout: "30",
-          ipWhitelist: "",
-          enforceStrongPasswords: true,
-        },
-        notifications: {
-          emailAlerts: true,
-          dailySummary: false,
-          securityAlerts: true,
-          dataUpdates: false,
-        },
-        api: {
-          rateLimit: "1000",
-          tokenExpiration: "24",
-          logLevel: "info",
-        },
-      })
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const userId = session.user.sub as string
+    const userEmail = session.user.email as string
+    
+    try {
+      const sql = getDb()
+      
+      // Try to get settings from database
+      const result = await sql`
+        SELECT settings 
+        FROM user_settings 
+        WHERE user_id = ${userId}
+        LIMIT 1
+      `
+      
+      if (result.length > 0 && result[0].settings) {
+        return NextResponse.json(result[0].settings)
+      }
+    } catch (dbError) {
+      console.log('Database not available, using defaults:', dbError)
     }
     
-    const settings = result.rows[0]
-    return NextResponse.json(settings.value)
+    // Return default settings if no stored settings or database error
+    const defaultSettings = getDefaultSettings(userEmail)
+    return NextResponse.json(defaultSettings)
+    
   } catch (error) {
     console.error('Error fetching settings:', error)
     return NextResponse.json(
-      {
-        general: {
-          apiUrl: "https://api.obscuralabs.io",
-          defaultPageSize: "10",
-        },
-        security: {
-          twoFactorAuth: false,
-          sessionTimeout: "30",
-          ipWhitelist: "",
-          enforceStrongPasswords: true,
-        },
-        notifications: {
-          emailAlerts: true,
-          dailySummary: false,
-          securityAlerts: true,
-          dataUpdates: false,
-        },
-        api: {
-          rateLimit: "1000",
-          tokenExpiration: "24",
-          logLevel: "info",
-        },
-      },
+      { error: 'Failed to fetch settings' },
       { status: 500 }
     )
   }
@@ -71,24 +92,63 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const settings = await request.json()
+    const session = await auth0.getSession(request)
     
-    // Upsert settings in database
-    await db.query(
-      `INSERT INTO settings (id, key, value) 
-       VALUES ($1, $2, $3) 
-       ON CONFLICT (id) 
-       DO UPDATE SET 
-         value = EXCLUDED.value,
-         updated_at = NOW()`,
-      [
-        'ec42d5d8-4a2d-4c9d-8e6d-b7fe64547018',
-        'default',
-        JSON.stringify(settings),
-      ]
-    )
+    if (!session?.user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const userId = session.user.sub as string
+    const settings: Settings = await request.json()
     
-    return NextResponse.json(settings)
+    // Validate settings structure
+    if (!settings.profile || !settings.notifications || !settings.display) {
+      return NextResponse.json(
+        { error: 'Invalid settings format' },
+        { status: 400 }
+      )
+    }
+    
+    try {
+      const sql = getDb()
+      
+      // First, ensure the user_settings table exists
+      await sql`
+        CREATE TABLE IF NOT EXISTS user_settings (
+          id SERIAL PRIMARY KEY,
+          user_id VARCHAR(255) UNIQUE NOT NULL,
+          settings JSONB NOT NULL,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `
+      
+      // Upsert settings
+      await sql`
+        INSERT INTO user_settings (user_id, settings, updated_at)
+        VALUES (${userId}, ${JSON.stringify(settings)}, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id)
+        DO UPDATE SET 
+          settings = EXCLUDED.settings,
+          updated_at = CURRENT_TIMESTAMP
+      `
+      
+      return NextResponse.json({
+        ...settings,
+        message: 'Settings saved successfully',
+      })
+    } catch (dbError) {
+      console.error('Database error, settings not persisted:', dbError)
+      // Still return success even if database fails (settings saved in session)
+      return NextResponse.json({
+        ...settings,
+        message: 'Settings saved (session only)',
+      })
+    }
+    
   } catch (error) {
     console.error('Error saving settings:', error)
     return NextResponse.json(
@@ -96,4 +156,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

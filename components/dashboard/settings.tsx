@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useAuth } from "@/lib/auth-context"
+import { useUser } from "@auth0/nextjs-auth0"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -10,67 +10,52 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, Save } from "lucide-react"
+import { 
+  Loader2, 
+  Save, 
+  User, 
+  Bell, 
+  Monitor,
+  Mail,
+  Lock,
+  Palette,
+  AlertCircle
+} from "lucide-react"
+import { Separator } from "@/components/ui/separator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 interface Settings {
-  general: {
-    apiUrl: string
-    defaultPageSize: string
-  }
-  security: {
-    twoFactorAuth: boolean
-    sessionTimeout: string
-    ipWhitelist: string
-    enforceStrongPasswords: boolean
+  profile: {
+    displayName: string
+    email: string
+    theme: 'light' | 'dark' | 'system'
   }
   notifications: {
     emailAlerts: boolean
-    dailySummary: boolean
     securityAlerts: boolean
-    dataUpdates: boolean
   }
-  api: {
-    rateLimit: string
-    tokenExpiration: string
-    logLevel: string
+  display: {
+    defaultPageSize: string
+    compactView: boolean
   }
-}
-
-const defaultSettings: Settings = {
-  general: {
-    apiUrl: "https://api.obscuralabs.io",
-    defaultPageSize: "10",
-  },
-  security: {
-    twoFactorAuth: false,
-    sessionTimeout: "30",
-    ipWhitelist: "",
-    enforceStrongPasswords: true,
-  },
-  notifications: {
-    emailAlerts: true,
-    dailySummary: false,
-    securityAlerts: true,
-    dataUpdates: false,
-  },
-  api: {
-    rateLimit: "1000",
-    tokenExpiration: "24",
-    logLevel: "info",
-  },
 }
 
 export function SettingsPage() {
-  const { user } = useAuth()
+  const { user, isLoading: userLoading } = useUser()
   const { toast } = useToast()
-  const [activeTab, setActiveTab] = useState("general")
-  const [settings, setSettings] = useState<Settings>(defaultSettings)
-  const [loading, setLoading] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState("profile")
+  const [settings, setSettings] = useState<Settings | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [changingEmail, setChangingEmail] = useState(false)
+  const [newEmail, setNewEmail] = useState("")
+  const [showEmailChange, setShowEmailChange] = useState(false)
 
   useEffect(() => {
-    fetchSettings()
-  }, [])
+    if (!userLoading && user) {
+      fetchSettings()
+    }
+  }, [userLoading, user])
 
   const fetchSettings = async () => {
     setLoading(true)
@@ -78,42 +63,42 @@ export function SettingsPage() {
       const response = await fetch('/api/settings')
       if (response.ok) {
         const data = await response.json()
-        // Ensure all required properties exist with fallbacks
-        const mergedSettings = {
-          ...defaultSettings,
-          ...data,
-        }
-        setSettings(mergedSettings)
-      } else {
-        // Use default settings if API fails
-        setSettings(defaultSettings)
+        setSettings(data)
+        setNewEmail(data.profile.email)
+      } else if (response.status === 401) {
+        toast({
+          title: "Authentication Required",
+          description: "Please log in to access settings",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Error fetching settings:', error)
-      // Use default settings on error
-      setSettings(defaultSettings)
+      toast({
+        title: "Error",
+        description: "Failed to load settings",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
   }
 
   const handleSaveSettings = async () => {
-    setIsLoading(true)
+    if (!settings) return
+    
+    setSaving(true)
     try {
       const response = await fetch('/api/settings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       })
 
       if (response.ok) {
-        const savedSettings = await response.json()
-        setSettings(savedSettings)
         toast({
-          title: "Settings saved",
-          description: "Your settings have been saved successfully.",
+          title: "Success",
+          description: "Settings saved successfully",
         })
       } else {
         throw new Error('Failed to save settings')
@@ -126,86 +111,281 @@ export function SettingsPage() {
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+      setSaving(false)
     }
   }
 
-  if (loading) {
+  const handleEmailChange = async () => {
+    if (!newEmail || newEmail === settings?.profile.email) {
+      toast({
+        title: "Invalid Email",
+        description: "Please enter a different email address",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setChangingEmail(true)
+    try {
+      const response = await fetch('/api/auth/change-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newEmail }),
+      })
+
+      const data = await response.json()
+      
+      if (response.ok) {
+        toast({
+          title: "Email Update Initiated",
+          description: data.message,
+        })
+        setShowEmailChange(false)
+        if (settings) {
+          setSettings({
+            ...settings,
+            profile: { ...settings.profile, email: newEmail }
+          })
+        }
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to update email",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Error changing email:', error)
+      toast({
+        title: "Error",
+        description: "Failed to update email",
+        variant: "destructive",
+      })
+    } finally {
+      setChangingEmail(false)
+    }
+  }
+
+  const handlePasswordReset = async () => {
+    try {
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+      })
+
+      const data = await response.json()
+      
+      if (response.ok) {
+        toast({
+          title: "Password Reset Email Sent",
+          description: data.message,
+        })
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to send password reset email",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Error initiating password reset:', error)
+      toast({
+        title: "Error",
+        description: "Failed to initiate password reset",
+        variant: "destructive",
+      })
+    }
+  }
+
+  if (loading || userLoading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-muted-foreground">Loading settings...</p>
-          </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center space-y-3">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-500" />
+          <p className="text-sm text-gray-500">Loading settings...</p>
         </div>
       </div>
     )
   }
 
-  const isAdmin = user?.role === "admin"
-  const availableTabs = isAdmin ? ["general", "security", "notifications", "api"] : ["general", "security", "notifications"]
+  if (!user || !settings) {
+    return (
+      <Alert className="border-gray-200">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Please log in to access settings
+        </AlertDescription>
+      </Alert>
+    )
+  }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">Settings</h2>
-        <p className="text-muted-foreground">Manage your application settings and preferences.</p>
+    <div className="max-w-4xl mx-auto space-y-6 p-6">
+      {/* Header */}
+      <div className="space-y-1">
+        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+        <p className="text-gray-500">Manage your account and application preferences</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications</TabsTrigger>
-          {isAdmin && <TabsTrigger value="api">API</TabsTrigger>}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 bg-gray-100">
+          <TabsTrigger value="profile" className="data-[state=active]:bg-white">
+            <User className="h-4 w-4 mr-2" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-white">
+            <Bell className="h-4 w-4 mr-2" />
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger value="display" className="data-[state=active]:bg-white">
+            <Monitor className="h-4 w-4 mr-2" />
+            Display
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general">
-          <Card>
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-4">
+          <Card className="border-gray-200">
             <CardHeader>
-              <CardTitle>General Settings</CardTitle>
-              <CardDescription>Configure general application settings.</CardDescription>
+              <CardTitle className="text-xl">Profile Settings</CardTitle>
+              <CardDescription>
+                Manage your account information and authentication [[memory:8159793]]
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-6">
+              {/* Display Name */}
               <div className="space-y-2">
-                <Label htmlFor="api-url">API URL</Label>
+                <Label htmlFor="displayName">Display Name</Label>
                 <Input
-                  id="api-url"
-                  value={settings.general.apiUrl}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      general: {
-                        ...settings.general,
-                        apiUrl: e.target.value,
-                      },
-                    })
-                  }
+                  id="displayName"
+                  value={settings.profile.displayName}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    profile: { ...settings.profile, displayName: e.target.value }
+                  })}
+                  className="border-gray-300 focus:border-gray-500"
                 />
               </div>
+
+              {/* Email Section */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="email"
+                      type="email"
+                      value={settings.profile.email}
+                      disabled
+                      className="flex-1 bg-gray-50 border-gray-300"
+                    />
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowEmailChange(!showEmailChange)}
+                      className="border-gray-300 hover:bg-gray-50"
+                    >
+                      <Mail className="h-4 w-4 mr-2" />
+                      Change
+                    </Button>
+                  </div>
+                </div>
+
+                {showEmailChange && (
+                  <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+                    <Label htmlFor="newEmail">New Email Address</Label>
+                    <Input
+                      id="newEmail"
+                      type="email"
+                      value={newEmail}
+                      onChange={(e) => setNewEmail(e.target.value)}
+                      placeholder="Enter new email address"
+                      className="border-gray-300"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleEmailChange}
+                        disabled={changingEmail}
+                        className="bg-black hover:bg-gray-800 text-white"
+                      >
+                        {changingEmail ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Updating...
+                          </>
+                        ) : (
+                          'Update Email'
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowEmailChange(false)
+                          setNewEmail(settings.profile.email)
+                        }}
+                        className="border-gray-300 hover:bg-gray-50"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <Separator className="bg-gray-200" />
+
+              {/* Password Section */}
               <div className="space-y-2">
-                <Label htmlFor="page-size">Default Page Size</Label>
+                <Label>Password</Label>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Lock className="h-4 w-4" />
+                    <span>Password authentication via Auth0</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    onClick={handlePasswordReset}
+                    className="border-gray-300 hover:bg-white"
+                  >
+                    Reset Password
+                  </Button>
+                </div>
+              </div>
+
+              <Separator className="bg-gray-200" />
+
+              {/* Theme Selection */}
+              <div className="space-y-2">
+                <Label htmlFor="theme">Theme Preference</Label>
                 <Select
-                  value={settings.general.defaultPageSize}
-                  onValueChange={(value) =>
+                  value={settings.profile.theme}
+                  onValueChange={(value: 'light' | 'dark' | 'system') => 
                     setSettings({
                       ...settings,
-                      general: {
-                        ...settings.general,
-                        defaultPageSize: value,
-                      },
+                      profile: { ...settings.profile, theme: value }
                     })
                   }
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="border-gray-300">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
+                    <SelectItem value="light">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-white border border-gray-300 rounded" />
+                        Light
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="dark">
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 bg-black rounded" />
+                        Dark
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="system">
+                      <div className="flex items-center gap-2">
+                        <Palette className="h-4 w-4" />
+                        System
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -213,260 +393,123 @@ export function SettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="security">
-          <Card>
+        {/* Notifications Tab */}
+        <TabsContent value="notifications" className="space-y-4">
+          <Card className="border-gray-200">
             <CardHeader>
-              <CardTitle>Security Settings</CardTitle>
-              <CardDescription>Configure security and authentication settings.</CardDescription>
+              <CardTitle className="text-xl">Notification Preferences</CardTitle>
+              <CardDescription>
+                Configure how you receive alerts and updates
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Two-Factor Authentication</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Enable two-factor authentication for enhanced security.
-                  </p>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Email Alerts</Label>
+                    <p className="text-sm text-gray-500">
+                      Receive important notifications via email
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.notifications.emailAlerts}
+                    onCheckedChange={(checked) =>
+                      setSettings({
+                        ...settings,
+                        notifications: { ...settings.notifications, emailAlerts: checked }
+                      })
+                    }
+                    className="data-[state=checked]:bg-black"
+                  />
                 </div>
-                <Switch
-                  checked={settings.security.twoFactorAuth}
-                  onCheckedChange={(checked) =>
-                    setSettings({
-                      ...settings,
-                      security: {
-                        ...settings.security,
-                        twoFactorAuth: checked,
-                      },
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
-                <Input
-                  id="session-timeout"
-                  type="number"
-                  value={settings.security.sessionTimeout}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      security: {
-                        ...settings.security,
-                        sessionTimeout: e.target.value,
-                      },
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ip-whitelist">IP Whitelist</Label>
-                <Input
-                  id="ip-whitelist"
-                  placeholder="192.168.1.1, 10.0.0.0/8"
-                  value={settings.security.ipWhitelist}
-                  onChange={(e) =>
-                    setSettings({
-                      ...settings,
-                      security: {
-                        ...settings.security,
-                        ipWhitelist: e.target.value,
-                      },
-                    })
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Enforce Strong Passwords</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Require strong passwords for all users.
-                  </p>
+
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="space-y-0.5">
+                    <Label className="text-base">Security Alerts</Label>
+                    <p className="text-sm text-gray-500">
+                      Get notified about security-related events
+                    </p>
+                  </div>
+                  <Switch
+                    checked={settings.notifications.securityAlerts}
+                    onCheckedChange={(checked) =>
+                      setSettings({
+                        ...settings,
+                        notifications: { ...settings.notifications, securityAlerts: checked }
+                      })
+                    }
+                    className="data-[state=checked]:bg-black"
+                  />
                 </div>
-                <Switch
-                  checked={settings.security.enforceStrongPasswords}
-                  onCheckedChange={(checked) =>
-                    setSettings({
-                      ...settings,
-                      security: {
-                        ...settings.security,
-                        enforceStrongPasswords: checked,
-                      },
-                    })
-                  }
-                />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications">
-          <Card>
+        {/* Display Tab */}
+        <TabsContent value="display" className="space-y-4">
+          <Card className="border-gray-200">
             <CardHeader>
-              <CardTitle>Notification Settings</CardTitle>
-              <CardDescription>Configure email and system notifications.</CardDescription>
+              <CardTitle className="text-xl">Display Settings</CardTitle>
+              <CardDescription>
+                Customize how information is displayed
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Email Alerts</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive email notifications for important events.
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.notifications.emailAlerts}
-                  onCheckedChange={(checked) =>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="pageSize">Default Page Size</Label>
+                <Select
+                  value={settings.display.defaultPageSize}
+                  onValueChange={(value) =>
                     setSettings({
                       ...settings,
-                      notifications: {
-                        ...settings.notifications,
-                        emailAlerts: checked,
-                      },
+                      display: { ...settings.display, defaultPageSize: value }
                     })
                   }
-                />
+                >
+                  <SelectTrigger className="border-gray-300">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10 items</SelectItem>
+                    <SelectItem value="25">25 items</SelectItem>
+                    <SelectItem value="50">50 items</SelectItem>
+                    <SelectItem value="100">100 items</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="flex items-center justify-between">
+
+              <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="space-y-0.5">
-                  <Label>Daily Summary</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive daily summary emails.
+                  <Label className="text-base">Compact View</Label>
+                  <p className="text-sm text-gray-500">
+                    Display more information in less space
                   </p>
                 </div>
                 <Switch
-                  checked={settings.notifications.dailySummary}
+                  checked={settings.display.compactView}
                   onCheckedChange={(checked) =>
                     setSettings({
                       ...settings,
-                      notifications: {
-                        ...settings.notifications,
-                        dailySummary: checked,
-                      },
+                      display: { ...settings.display, compactView: checked }
                     })
                   }
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Security Alerts</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive immediate security alerts.
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.notifications.securityAlerts}
-                  onCheckedChange={(checked) =>
-                    setSettings({
-                      ...settings,
-                      notifications: {
-                        ...settings.notifications,
-                        securityAlerts: checked,
-                      },
-                    })
-                  }
-                />
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>Data Updates</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Receive notifications when data is updated.
-                  </p>
-                </div>
-                <Switch
-                  checked={settings.notifications.dataUpdates}
-                  onCheckedChange={(checked) =>
-                    setSettings({
-                      ...settings,
-                      notifications: {
-                        ...settings.notifications,
-                        dataUpdates: checked,
-                      },
-                    })
-                  }
+                  className="data-[state=checked]:bg-black"
                 />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
-
-        {isAdmin && (
-          <TabsContent value="api">
-            <Card>
-              <CardHeader>
-                <CardTitle>API Settings</CardTitle>
-                <CardDescription>Configure API rate limits and token settings.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rate-limit">Rate Limit (requests per hour)</Label>
-                  <Input
-                    id="rate-limit"
-                    type="number"
-                    value={settings.api.rateLimit}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        api: {
-                          ...settings.api,
-                          rateLimit: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="token-expiration">Token Expiration (hours)</Label>
-                  <Input
-                    id="token-expiration"
-                    type="number"
-                    value={settings.api.tokenExpiration}
-                    onChange={(e) =>
-                      setSettings({
-                        ...settings,
-                        api: {
-                          ...settings.api,
-                          tokenExpiration: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="log-level">Log Level</Label>
-                  <Select
-                    value={settings.api.logLevel}
-                    onValueChange={(value) =>
-                      setSettings({
-                        ...settings,
-                        api: {
-                          ...settings.api,
-                          logLevel: value,
-                        },
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="error">Error</SelectItem>
-                      <SelectItem value="warn">Warning</SelectItem>
-                      <SelectItem value="info">Info</SelectItem>
-                      <SelectItem value="debug">Debug</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-
-
       </Tabs>
 
-      <div className="flex justify-end">
-        <Button onClick={handleSaveSettings} disabled={isLoading}>
-          {isLoading ? (
+      {/* Save Button */}
+      <div className="flex justify-end pt-4">
+        <Button
+          onClick={handleSaveSettings}
+          disabled={saving}
+          className="bg-black hover:bg-gray-800 text-white"
+        >
+          {saving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Saving...
@@ -474,7 +517,7 @@ export function SettingsPage() {
           ) : (
             <>
               <Save className="mr-2 h-4 w-4" />
-              Save Settings
+              Save Changes
             </>
           )}
         </Button>

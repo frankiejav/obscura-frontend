@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Database, Users, Search, Activity, TrendingUp, Clock, Shield } from 'lucide-react'
+import { Database, Users, Search, Activity, Shield } from 'lucide-react'
 import Link from 'next/link'
 
 interface DataSource {
@@ -19,6 +19,7 @@ interface DataRecord {
   id: string
   name?: string
   email?: string
+  username?: string
   ip?: string
   domain?: string
   source: string
@@ -42,6 +43,7 @@ export default function DashboardPage() {
     totalRecords: 0,
     totalSources: 0,
     activeSources: 0,
+    last24hActivity: 0,
   })
   const [loading, setLoading] = useState(true)
   const [breachSearchEnabled, setBreachSearchEnabled] = useState(false)
@@ -54,16 +56,49 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboardData()
+    
+    // Set up auto-refresh for recent records every 30 seconds
+    const interval = setInterval(() => {
+      fetchRecentRecords()
+    }, 30000)
+    
+    return () => clearInterval(interval)
   }, [])
+
+  const fetchRecentRecords = async () => {
+    try {
+      // Fetch the latest 10 records
+      const recentResponse = await fetch('/api/data-records?first=10')
+      if (recentResponse.ok) {
+        const data = await recentResponse.json()
+        if (data.edges) {
+          setRecentRecords(
+            data.edges.map((edge: any) => edge.node)
+          )
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching recent records:', error)
+    }
+  }
 
   const fetchDashboardData = async () => {
     setLoading(true)
     try {
-      // Fetch breach databases data
-      const breachResponse = await fetch('/api/leaked-databases')
-      if (breachResponse.ok) {
-        const breachData = await breachResponse.json()
-        setBreachData(breachData)
+      let dashboardStats: any = null
+      
+      // Fetch dashboard stats (includes LeakCheck + ClickHouse data)
+      const statsResponse = await fetch('/api/dashboard/stats')
+      if (statsResponse.ok) {
+        dashboardStats = await statsResponse.json()
+        
+        // Set breach data from LeakCheck stats
+        setBreachData({
+          totalCount: dashboardStats.totalRecords,
+          totalDatabases: dashboardStats.totalSources,
+          recentDatabases: [],
+          topDatabases: []
+        })
       }
 
       // Fetch data sources
@@ -80,22 +115,15 @@ export default function DashboardPage() {
         ).length
 
         setStats({
-          totalRecords: breachData?.totalCount || totalRecords,
-          totalSources: breachData?.totalDatabases || dataSources.length,
+          totalRecords: dashboardStats?.totalRecords || totalRecords,
+          totalSources: dashboardStats?.totalSources || dataSources.length,
           activeSources,
+          last24hActivity: dashboardStats?.last24hActivity || 0,
         })
       }
 
       // Fetch recent records
-      const recentResponse = await fetch('/api/data-records?first=10')
-      if (recentResponse.ok) {
-        const data = await recentResponse.json()
-        if (data.edges) {
-          setRecentRecords(
-            data.edges.map((edge: any) => edge.node)
-          )
-        }
-      }
+      await fetchRecentRecords()
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
@@ -104,19 +132,45 @@ export default function DashboardPage() {
   }
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString()
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ACTIVE':
-        return 'bg-green-100 text-green-800'
-      case 'PROCESSING':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'ERROR':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
+    try {
+      // Handle the specific format "YYYY-MM-DD HH:mm:ss" by adding UTC timezone
+      let date: Date
+      if (dateString.match(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)) {
+        // Assume UTC timezone for this format
+        date = new Date(dateString + ' UTC')
+      } else {
+        date = new Date(dateString)
+      }
+      
+      const now = new Date()
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return dateString // Return original string if invalid
+      }
+      
+      const diffInMs = now.getTime() - date.getTime()
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60))
+      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60))
+      const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24))
+      
+      // Handle future dates or very recent dates
+      if (diffInMinutes < 0) {
+        return 'just now'
+      } else if (diffInMinutes < 1) {
+        return 'just now'
+      } else if (diffInMinutes < 60) {
+        return `${diffInMinutes}m ago`
+      } else if (diffInHours < 24) {
+        return `${diffInHours}h ago`
+      } else if (diffInDays < 7) {
+        return `${diffInDays}d ago`
+      } else {
+        return date.toLocaleDateString()
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error)
+      return dateString // Return original string on error
     }
   }
 
@@ -154,7 +208,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {breachData ? `${(breachData.totalCount / 1000000000).toFixed(1)}B+` : stats.totalRecords.toLocaleString()}
+              {breachData ? breachData.totalCount.toLocaleString() : stats.totalRecords.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
               {breachData ? 'Across all databases' : 'Across all data sources'}
@@ -181,9 +235,9 @@ export default function DashboardPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{breachData?.recentDatabases.length || recentRecords.length}</div>
+            <div className="text-2xl font-bold">{stats.last24hActivity.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              {breachData ? 'Recent databases' : 'Records added recently'}
+              {breachData ? 'Records added recently' : 'Records added recently'}
             </p>
           </CardContent>
         </Card>
@@ -206,175 +260,59 @@ export default function DashboardPage() {
         </Card>
       )}
 
-      {/* Data Sources */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Database className="w-5 h-5" />
-            {breachData ? 'Top Breach Databases' : 'Data Sources'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {breachData ? (
-            breachData.topDatabases.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No databases found
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {breachData.topDatabases.map((database) => (
-                  <div
-                    key={database.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{database.name}</h3>
-                        <Badge variant="destructive">
-                          {database.breach_date ? `Breached ${database.breach_date}` : 'Unknown Date'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                        <span className="flex items-center gap-1">
-                          <TrendingUp className="w-4 h-4" />
-                          {database.count.toLocaleString()} records
-                        </span>
-                        {database.breach_date && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {database.breach_date}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : (
-            dataSources.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No data sources found
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {dataSources.map((source) => (
-                  <div
-                    key={source.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{source.name}</h3>
-                        <Badge className={getStatusColor(source.status)}>
-                          {source.status}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                        <span className="flex items-center gap-1">
-                          <TrendingUp className="w-4 h-4" />
-                          {source.recordCount.toLocaleString()} records
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-4 h-4" />
-                          {formatDate(source.lastUpdated)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          )}
-        </CardContent>
-      </Card>
-
       {/* Recent Records */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            {breachData ? 'Recent Breach Databases' : 'Recent Records'}
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              Recent Records
+            </div>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              LIVE
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {breachData ? (
-            breachData.recentDatabases.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No recent breach databases found
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {breachData.recentDatabases.map((database) => (
-                  <div
-                    key={database.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">{database.name}</h3>
-                        <Badge variant="destructive">
-                          {database.breach_date ? `Breached ${database.breach_date}` : 'Unknown Date'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                        <span className="flex items-center gap-1">
-                          <TrendingUp className="w-4 h-4" />
-                          {database.count.toLocaleString()} records
-                        </span>
-                        {database.breach_date && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            {database.breach_date}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
+          {recentRecords.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No recent records found
+            </div>
           ) : (
-            recentRecords.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No recent records found
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {recentRecords.map((record) => (
-                  <div
-                    key={record.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold">
-                          {record.name || record.email || record.ip || 'Unknown'}
-                        </h3>
-                        <Badge variant="secondary">{record.source}</Badge>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600 mt-1">
-                        {record.name && (
-                          <span>Name: {record.name}</span>
-                        )}
-                        {record.email && (
-                          <span>Email: {record.email}</span>
-                        )}
-                        {record.ip && (
-                          <span>IP: {record.ip}</span>
-                        )}
-                        {record.domain && (
-                          <span>Domain: {record.domain}</span>
-                        )}
-                      </div>
+            <div className="space-y-3">
+              {recentRecords.map((record, index) => (
+                <div
+                  key={`${record.id}_${index}_${record.timestamp}`}
+                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                    <div className="font-mono text-sm">
+                      <span className="text-xs text-gray-500 block">VICTIM ID</span>
+                      <span className="font-semibold text-primary truncate block">{record.id}</span>
                     </div>
-                    <div className="text-right text-sm text-gray-500">
-                      {formatDate(record.timestamp)}
+                    <div className="font-mono text-sm">
+                      <span className="text-xs text-gray-500 block">EMAIL/USERNAME</span>
+                      <span className="font-semibold truncate block max-w-[200px]" title={record.email || record.username || 'N/A'}>
+                        {record.email || record.username || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="font-mono text-sm">
+                      <span className="text-xs text-gray-500 block">DOMAIN</span>
+                      <span className="font-semibold truncate block max-w-[200px]" title={record.domain || 'N/A'}>
+                        {record.domain || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="font-mono text-sm text-right">
+                      <span className="text-xs text-gray-500 block">DATE</span>
+                      <span className="font-semibold text-gray-700">
+                        {formatDate(record.timestamp)}
+                      </span>
                     </div>
                   </div>
-                ))}
-              </div>
-            )
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

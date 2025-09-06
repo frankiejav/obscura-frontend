@@ -2,7 +2,6 @@ import type React from "react"
 import { Inter, JetBrains_Mono } from "next/font/google"
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from "@/lib/auth-context"
 import "./globals.css"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
@@ -15,9 +14,8 @@ const jetBrains = JetBrains_Mono({
 })
 
 export const metadata = {
-  title: "Obscura Labs - Secure Data Platform",
-  description: "A secure data platform for Obscura Labs",
-  generator: 'v0.dev',
+  title: "Obscura Labs - Identity Threat Intelligence Platform",
+  description: "Obscura Labs is an identity threat intelligence platform that provides real-time intelligence on stolen credentials, cookies, and other identity-related data.",
   icons: {
     icon: [
       {
@@ -41,10 +39,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetBrains.variable} font-mono`} suppressHydrationWarning>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>
-            {children}
-            <Toaster />
-          </AuthProvider>
+          {children}
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

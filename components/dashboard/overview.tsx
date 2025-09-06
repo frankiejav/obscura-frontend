@@ -28,6 +28,10 @@ interface DashboardStats {
   totalSources: number
   activeSources: number
   recentRecords: number
+  leakcheckDatabases: number
+  credentialsCount: number
+  cookiesCount: number
+  last24hActivity: number
 }
 
 export function DashboardOverview() {
@@ -38,6 +42,10 @@ export function DashboardOverview() {
     totalSources: 0,
     activeSources: 0,
     recentRecords: 0,
+    leakcheckDatabases: 0,
+    credentialsCount: 0,
+    cookiesCount: 0,
+    last24hActivity: 0,
   })
   const [loading, setLoading] = useState(true)
 
@@ -48,35 +56,27 @@ export function DashboardOverview() {
   const fetchDashboardData = async () => {
     setLoading(true)
     try {
-      // Fetch data sources
+      // Fetch dashboard stats (includes LeakCheck + ClickHouse data)
+      const statsResponse = await fetch('/api/dashboard/stats')
+      if (statsResponse.ok) {
+        const dashboardStats = await statsResponse.json()
+        setStats(dashboardStats)
+      }
+
+      // Fetch data sources (existing sources)
       const sourcesResponse = await fetch('/api/data-sources')
       if (sourcesResponse.ok) {
         const dataSources = await sourcesResponse.json()
         setDataSources(dataSources)
-        const totalRecords = dataSources.reduce(
-          (sum: number, ds: DataSource) => sum + ds.recordCount,
-          0
-        )
-        const activeSources = dataSources.filter(
-          (ds: DataSource) => ds.status === 'ACTIVE'
-        ).length
-
-        setStats({
-          totalRecords,
-          totalSources: dataSources.length,
-          activeSources,
-          recentRecords: 0, // Will be updated below
-        })
       }
 
-      // Fetch recent records
-      const recentResponse = await fetch('/api/data-records?first=10')
+      // Fetch recent activity from ClickHouse
+      const recentResponse = await fetch('/api/dashboard/recent-activity')
       if (recentResponse.ok) {
         const data = await recentResponse.json()
         if (data.edges) {
           const records = data.edges.map((edge: any) => edge.node)
           setRecentRecords(records)
-          setStats(prev => ({ ...prev, recentRecords: records.length }))
         }
       }
     } catch (error) {
@@ -147,14 +147,14 @@ export function DashboardOverview() {
         <Card className="tactical-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground tracking-wider font-mono">
-              ACTIVE QUERIES
+              24H ACTIVITY
             </CardTitle>
             <Search className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary font-mono">{stats.recentRecords}</div>
+            <div className="text-2xl font-bold text-primary font-mono">{stats.last24hActivity.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground font-mono">
-              Recent activity
+              Records added today
             </p>
           </CardContent>
         </Card>
@@ -169,7 +169,7 @@ export function DashboardOverview() {
           <CardContent>
             <div className="text-2xl font-bold text-primary font-mono">{stats.totalRecords.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground font-mono">
-              Across {stats.totalSources} sources
+              LeakCheck + {stats.credentialsCount.toLocaleString()} creds + {stats.cookiesCount.toLocaleString()} cookies
             </p>
           </CardContent>
         </Card>
@@ -184,7 +184,7 @@ export function DashboardOverview() {
           <CardContent>
             <div className="text-2xl font-bold text-primary font-mono">{stats.activeSources}</div>
             <p className="text-xs text-muted-foreground font-mono">
-              Out of {stats.totalSources} total
+              {stats.leakcheckDatabases} LeakCheck + 1 internal
             </p>
           </CardContent>
         </Card>
@@ -273,16 +273,16 @@ export function DashboardOverview() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-mono text-muted-foreground">ACTIVE</span>
-              <span className="text-2xl font-bold text-primary font-mono">{stats.activeSources}</span>
+              <span className="text-sm font-mono text-muted-foreground">LEAKCHECK</span>
+              <span className="text-2xl font-bold text-primary font-mono">{stats.leakcheckDatabases}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm font-mono text-muted-foreground">PROCESSING</span>
-              <span className="text-2xl font-bold text-primary font-mono">{dataSources.filter(ds => ds.status === 'PROCESSING').length}</span>
+              <span className="text-sm font-mono text-muted-foreground">INTERNAL</span>
+              <span className="text-2xl font-bold text-primary font-mono">1</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm font-mono text-muted-foreground">ERROR</span>
-              <span className="text-2xl font-bold text-primary font-mono">{dataSources.filter(ds => ds.status === 'ERROR').length}</span>
+              <span className="text-sm font-mono text-muted-foreground">TOTAL</span>
+              <span className="text-2xl font-bold text-primary font-mono">{stats.totalSources}</span>
             </div>
           </CardContent>
         </Card>
@@ -328,7 +328,7 @@ export function DashboardOverview() {
           </CardHeader>
           <CardContent className="space-y-4">
             {recentRecords.slice(0, 3).map((record, index) => (
-              <div key={record.id} className="flex justify-between items-center">
+              <div key={`${record.id}_${index}`} className="flex justify-between items-center">
                 <span className="text-sm font-mono text-muted-foreground">
                   {record.name || record.email || record.ip || 'Unknown'}
                 </span>

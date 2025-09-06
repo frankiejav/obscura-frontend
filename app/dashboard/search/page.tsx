@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight, Key } from 'lucide-react'
+import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight, Key, Download } from 'lucide-react'
 
 interface DataRecord {
   id: string
@@ -19,18 +19,67 @@ interface DataRecord {
   domain?: string
   source: string
   timestamp: string
+  url?: string
+  phone?: string
+  address?: string
+  country?: string
+  origin?: string
+  fields?: string[]
+  hostname?: string
+  language?: string
+  timezone?: string
+  os_version?: string
+  hwid?: string
+  cpu_name?: string
+  gpu?: string
+  ram_size?: string
+  account_type?: string
+  risk_score?: number
+  risk_category?: string
+  is_privileged?: boolean
+  breach_impact?: string
   additionalData?: any
+}
+
+interface CookieRecord {
+  id: string
+  domain: string
+  cookie_name: string
+  cookie_path: string
+  cookie_value?: string
+  cookie_value_length: number
+  secure: boolean
+  cookie_type: string
+  risk_level: string
+  browser_source: string
+  hostname?: string
+  ip?: string
+  country?: string
+  timestamp: string
 }
 
 interface SearchResult {
   results: DataRecord[]
   profileResults?: DataRecord[]
+  profileCookies?: CookieRecord[]
+  breachResults?: BreachSearchResult
   pagination: {
     total: number
     pages: number
     current: number
   }
+  profilePagination?: {
+    total: number
+    pages: number
+    current: number
+  }
+  cookiePagination?: {
+    total: number
+    pages: number
+    current: number
+  }
   profilesEnabled?: boolean
+  cookiesEnabled?: boolean
 }
 
 interface BreachResult {
@@ -73,7 +122,10 @@ export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchType, setSearchType] = useState('auto')
   const [profilesEnabled, setProfilesEnabled] = useState(false)
+  const [cookiesEnabled, setCookiesEnabled] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
+  const [profileCurrentPage, setProfileCurrentPage] = useState(1)
+  const [cookieCurrentPage, setCookieCurrentPage] = useState(1)
   const [results, setResults] = useState<SearchResult | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -123,45 +175,42 @@ export default function SearchPage() {
     setResults(null)
     setBreachResults(null)
     setCurrentPage(1)
+    setProfileCurrentPage(1)
+    setCookieCurrentPage(1)
     setBreachCurrentPage(1)
 
     try {
-      // Search internal data
+      // Search internal data (includes leak check API call)
       const response = await fetch('/api/search', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-                                     body: JSON.stringify({
-             term: searchTerm,
-             type: searchType === 'auto' ? 'ALL' : searchType,
-             page: currentPage,
-             limit: 10,
-             profilesEnabled: profilesEnabled,
-           }),
+        body: JSON.stringify({
+          term: searchTerm,
+          type: searchType === 'auto' ? 'ALL' : searchType,
+          page: currentPage,
+          limit: 10,
+          profilesEnabled: profilesEnabled,
+          cookiesEnabled: cookiesEnabled,
+          profilePage: profileCurrentPage,
+          profileLimit: 10,
+          cookiePage: cookieCurrentPage,
+          cookieLimit: 10,
+        }),
       })
 
       if (response.ok) {
         const data = await response.json()
+        console.log('Search API response:', data)
         setResults(data)
-      }
-
-      // Search breach data if enabled
-      if (breachSearchEnabled) {
-        const breachResponse = await fetch('/api/database-search', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            query: searchTerm,
-            type: searchType,
-          }),
-        })
-
-        if (breachResponse.ok) {
-          const data = await breachResponse.json()
-          setBreachResults(data)
+        
+        // Set breach results from the integrated response
+        if (data.breachResults) {
+          console.log('Breach results found:', data.breachResults.found, 'records')
+          setBreachResults(data.breachResults)
+        } else {
+          console.log('No breach results in response')
         }
       }
     } catch (error) {
@@ -245,13 +294,65 @@ export default function SearchPage() {
   const totalBreachPages = breachResults ? Math.ceil(breachResults.result.length / breachResultsPerPage) : 0
   const totalResults = (results?.pagination.total || 0) + (breachResults?.found || 0) + (results?.profileResults?.length || 0)
 
+  const handleSaveToJson = () => {
+    const exportData = {
+      searchTerm,
+      searchType,
+      timestamp: new Date().toISOString(),
+      internalResults: results?.results || [],
+      profileResults: results?.profileResults || [],
+      profileCookies: results?.profileCookies || [],
+      breachResults: breachResults?.result || [],
+      totalResults,
+      systemInfo: (() => {
+        if (results?.profileResults) {
+          const firstRecordWithSystemInfo = results.profileResults.find(r => 
+            r.hostname || r.os_version || r.cpu_name || r.gpu || r.ram_size || r.hwid || r.language || r.timezone || r.ip
+          );
+          if (firstRecordWithSystemInfo) {
+            return {
+              ip: firstRecordWithSystemInfo.ip,
+              hostname: firstRecordWithSystemInfo.hostname,
+              os_version: firstRecordWithSystemInfo.os_version,
+              cpu_name: firstRecordWithSystemInfo.cpu_name,
+              gpu: firstRecordWithSystemInfo.gpu,
+              ram_size: firstRecordWithSystemInfo.ram_size,
+              hwid: firstRecordWithSystemInfo.hwid,
+              language: firstRecordWithSystemInfo.language,
+              timezone: firstRecordWithSystemInfo.timezone,
+            }
+          }
+        }
+        return null;
+      })()
+    }
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `search_results_${searchTerm}_${new Date().toISOString().split('T')[0]}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Data Search</h1>
-        <Badge variant="secondary">
-          {totalResults} total records found
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary">
+            {totalResults} total records found
+          </Badge>
+          {(results || breachResults) && totalResults > 0 && (
+            <Button onClick={handleSaveToJson} variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Save to JSON
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Search Filters */}
@@ -305,6 +406,21 @@ export default function SearchPage() {
                 </label>
               </div>
             </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Cookies</label>
+              <div className="flex items-center space-x-2 h-10">
+                <Switch
+                  checked={cookiesEnabled}
+                  onCheckedChange={setCookiesEnabled}
+                  disabled={!profilesEnabled}
+                  id="cookies-toggle"
+                />
+                <label htmlFor="cookies-toggle" className="text-sm text-muted-foreground">
+                  {!profilesEnabled ? 'Enable Profiles first' : cookiesEnabled ? 'ON' : 'OFF'}
+                </label>
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-center">
@@ -313,11 +429,18 @@ export default function SearchPage() {
             </Button>
           </div>
 
-          {breachSearchEnabled && breachResults?.quota && (
+          {breachResults && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Badge variant="outline">
-                {breachResults.quota} queries remaining
-              </Badge>
+              {breachResults.quota !== undefined && (
+                <Badge variant="outline">
+                  {breachResults.quota} queries remaining
+                </Badge>
+              )}
+              {(breachResults as any).error && (
+                <Badge variant="destructive">
+                  {(breachResults as any).error}
+                </Badge>
+              )}
             </div>
           )}
         </CardContent>
@@ -340,8 +463,8 @@ export default function SearchPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {results.results.map((record) => (
-                    <Card key={record.id} className="p-4 hover:shadow-md transition-shadow">
+                  {results.results.map((record, index) => (
+                    <Card key={`${record.id}_${index}_${Date.now()}`} className="p-4 hover:shadow-md transition-shadow">
                       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-3">
@@ -380,16 +503,10 @@ export default function SearchPage() {
                                 <span className="break-words font-mono text-red-600">{record.password}</span>
                               </div>
                             )}
-                            {record.ip && (
+                            {record.url && (
                               <div className="flex flex-col">
-                                <span className="font-medium text-xs text-muted-foreground">IP Address</span>
-                                <span className="break-words">{record.ip}</span>
-                              </div>
-                            )}
-                            {record.domain && (
-                              <div className="flex flex-col">
-                                <span className="font-medium text-xs text-muted-foreground">Domain</span>
-                                <span className="break-words">{record.domain}</span>
+                                <span className="font-medium text-xs text-muted-foreground">URL</span>
+                                <span className="break-words">{record.url}</span>
                               </div>
                             )}
                           </div>
@@ -479,58 +596,380 @@ export default function SearchPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {/* Group by victim ID */}
-                  {Object.entries(
-                    results.profileResults.reduce((groups: Record<string, DataRecord[]>, record) => {
-                      if (!groups[record.id]) groups[record.id] = []
-                      groups[record.id].push(record)
-                      return groups
-                    }, {})
-                  ).map(([victimId, profileRecords]) => (
-                    <Card key={victimId} className="p-4 border-l-4 border-l-blue-500">
-                      <div className="mb-3">
-                        <h4 className="font-semibold text-sm text-blue-600">Profile: {victimId}</h4>
-                        <Badge variant="outline" className="text-xs">
-                          {profileRecords.length} credentials
-                        </Badge>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        {profileRecords.map((record, index) => (
-                          <div key={`${record.id}-${index}`} className="bg-gray-50 p-3 rounded">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Globe className="w-4 h-4" />
-                              <span className="font-medium">{record.domain}</span>
-                            </div>
-                            
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm">
-                              {record.email && (
-                                <div className="flex flex-col">
-                                  <span className="font-medium text-xs text-muted-foreground">Email</span>
-                                  <span className="break-words">{record.email}</span>
-                                </div>
-                              )}
-                              {record.username && (
-                                <div className="flex flex-col">
-                                  <span className="font-medium text-xs text-muted-foreground">Username</span>
-                                  <span className="break-words">{record.username}</span>
-                                </div>
-                              )}
-                              {record.password && (
-                                <div className="flex flex-col">
-                                  <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
-                                    <Key className="w-3 h-3" />
-                                    Password
-                                  </span>
-                                  <span className="break-words font-mono text-red-600">{record.password}</span>
-                                </div>
-                              )}
-                            </div>
+                  {/* System Information Summary - Display Once */}
+                  {(() => {
+                    const firstRecordWithSystemInfo = results.profileResults.find(r => 
+                      r.hostname || r.os_version || r.cpu_name || r.gpu || r.ram_size || r.hwid || r.language || r.timezone || r.ip
+                    );
+                    
+                    if (firstRecordWithSystemInfo) {
+                      return (
+                        <Card className="p-4 hover:shadow-md transition-shadow">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Globe className="w-4 h-4" />
+                            <h3 className="font-semibold">System Information</h3>
+                            <Badge variant="secondary" className="flex-shrink-0">System</Badge>
                           </div>
-                        ))}
+                          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 text-sm">
+                            {firstRecordWithSystemInfo.ip && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">IP Address</span>
+                                <span className="break-words">{firstRecordWithSystemInfo.ip}</span>
+                              </div>
+                            )}
+                            {firstRecordWithSystemInfo.hostname && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Hostname</span>
+                                <span className="break-words">{firstRecordWithSystemInfo.hostname}</span>
+                              </div>
+                            )}
+                            {firstRecordWithSystemInfo.os_version && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">OS Version</span>
+                                <span className="break-words">{firstRecordWithSystemInfo.os_version}</span>
+                              </div>
+                            )}
+                            {firstRecordWithSystemInfo.cpu_name && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">CPU</span>
+                                <span className="break-words">{firstRecordWithSystemInfo.cpu_name}</span>
+                              </div>
+                            )}
+                            {firstRecordWithSystemInfo.gpu && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">GPU</span>
+                                <span className="break-words">{firstRecordWithSystemInfo.gpu}</span>
+                              </div>
+                            )}
+                            {firstRecordWithSystemInfo.ram_size && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">RAM</span>
+                                <span className="break-words">{firstRecordWithSystemInfo.ram_size}</span>
+                              </div>
+                            )}
+                            {firstRecordWithSystemInfo.hwid && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">HWID</span>
+                                <span className="break-words font-mono text-xs">{firstRecordWithSystemInfo.hwid}</span>
+                              </div>
+                            )}
+                            {firstRecordWithSystemInfo.language && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Language</span>
+                                <span className="break-words">{firstRecordWithSystemInfo.language}</span>
+                              </div>
+                            )}
+                            {firstRecordWithSystemInfo.timezone && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Timezone</span>
+                                <span className="break-words">{firstRecordWithSystemInfo.timezone}</span>
+                              </div>
+                            )}
+                          </div>
+                        </Card>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  {/* Profile Credentials Cards */}
+                  {results.profileResults.map((record, index) => (
+                    <Card key={`${record.id}-${index}`} className="p-4 hover:shadow-md transition-shadow">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-3">
+                            {getSearchTypeIcon(searchType)}
+                            <h3 className="font-semibold break-words">
+                              {record.name || record.email || record.ip || 'Unknown'}
+                            </h3>
+                            <Badge variant="secondary" className="flex-shrink-0">{record.source}</Badge>
+                            <Badge variant="outline" className="text-xs">
+                              Profile: {record.id}
+                            </Badge>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 text-sm">
+                            {record.name && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Name</span>
+                                <span className="break-words">{record.name}</span>
+                              </div>
+                            )}
+                            {record.email && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Email</span>
+                                <span className="break-words">{record.email}</span>
+                              </div>
+                            )}
+                            {record.username && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Username</span>
+                                <span className="break-words">{record.username}</span>
+                              </div>
+                            )}
+                            {record.password && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
+                                  <Key className="w-3 h-3" />
+                                  Password
+                                </span>
+                                <span className="break-words font-mono text-red-600">{record.password}</span>
+                              </div>
+                            )}
+                            {record.url && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">URL</span>
+                                <span className="break-words">{record.url}</span>
+                              </div>
+                            )}
+                            {record.country && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Country</span>
+                                <span className="break-words">{record.country}</span>
+                              </div>
+                            )}
+                            {record.phone && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Phone</span>
+                                <span className="break-words">{record.phone}</span>
+                              </div>
+                            )}
+                            {record.address && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Address</span>
+                                <span className="break-words">{record.address}</span>
+                              </div>
+                            )}
+                            {record.origin && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Origin</span>
+                                <span className="break-words">{record.origin}</span>
+                              </div>
+                            )}
+                            {record.account_type && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Account Type</span>
+                                <Badge variant={record.account_type === 'business' ? 'default' : 'secondary'} className="text-xs">
+                                  {record.account_type}
+                                </Badge>
+                              </div>
+                            )}
+                            {record.risk_category && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Risk Level</span>
+                                <Badge variant={record.risk_category === 'high' ? 'destructive' : record.risk_category === 'medium' ? 'default' : 'secondary'} className="text-xs">
+                                  {record.risk_category} ({record.risk_score || 0})
+                                </Badge>
+                              </div>
+                            )}
+                            {record.is_privileged && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Privileged</span>
+                                <Badge variant="destructive" className="text-xs">Yes</Badge>
+                              </div>
+                            )}
+                          </div>
+
+                          {record.additionalData && (
+                            <div className="mt-3">
+                              <span className="font-medium text-sm">Additional Data:</span>
+                              <pre className="text-xs bg-gray-100 p-2 rounded mt-1 overflow-x-auto max-w-full">
+                                {JSON.stringify(record.additionalData, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="text-right text-sm text-gray-500 flex-shrink-0">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {formatDate(record.timestamp)}
+                          </div>
+                        </div>
                       </div>
                     </Card>
                   ))}
+
+                  {/* Profile Pagination */}
+                  {results.profilePagination && results.profilePagination.pages > 1 && (
+                    <div className="flex justify-center mt-6">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setProfileCurrentPage(Math.max(1, profileCurrentPage - 1))}
+                          disabled={profileCurrentPage === 1}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                          Previous
+                        </Button>
+                        
+                        <div className="flex gap-1">
+                          {Array.from({ length: Math.min(5, results.profilePagination.pages) }, (_, i) => {
+                            const page = i + 1
+                            return (
+                              <Button
+                                key={page}
+                                variant={page === profileCurrentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setProfileCurrentPage(page)}
+                                className="w-8 h-8 p-0"
+                              >
+                                {page}
+                              </Button>
+                            )
+                          })}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setProfileCurrentPage(Math.min(results.profilePagination!.pages, profileCurrentPage + 1))}
+                          disabled={profileCurrentPage === results.profilePagination.pages}
+                        >
+                          Next
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Profile Cookies */}
+          {results?.profileCookies && results.profileCookies.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="w-5 h-5" />
+                  Profile Cookies
+                  <Badge variant="outline">
+                    {results.profileCookies.length} cookies found
+                  </Badge>
+                  <Badge variant="secondary">
+                    {[...new Set(results.profileCookies.map(r => r.id))].length} profiles
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {results.profileCookies.map((record, index) => (
+                    <Card key={`${record.id}-${index}`} className="p-4 hover:shadow-md transition-shadow">
+                      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Globe className="w-4 h-4" />
+                            <h3 className="font-semibold break-words">
+                              {record.domain}
+                            </h3>
+                            <Badge variant="secondary" className="flex-shrink-0">{record.cookie_type}</Badge>
+                            <Badge variant={record.risk_level === 'high' ? 'destructive' : record.risk_level === 'medium' ? 'default' : 'secondary'} className="text-xs">
+                              {record.risk_level}
+                            </Badge>
+                            <Badge variant="outline" className="text-xs">
+                              Profile: {record.id}
+                            </Badge>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 text-sm">
+                            <div className="flex flex-col">
+                              <span className="font-medium text-xs text-muted-foreground">Cookie Name</span>
+                              <span className="break-words">{record.cookie_name}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-xs text-muted-foreground">Path</span>
+                              <span className="break-words">{record.cookie_path}</span>
+                            </div>
+                            {record.cookie_value && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Value</span>
+                                <span className="break-words font-mono text-xs">
+                                  {record.cookie_value.length > 50 ? `${record.cookie_value.substring(0, 50)}...` : record.cookie_value}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex flex-col">
+                              <span className="font-medium text-xs text-muted-foreground">Size</span>
+                              <span className="break-words">{record.cookie_value_length} bytes</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-xs text-muted-foreground">Browser</span>
+                              <span className="break-words">{record.browser_source}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-xs text-muted-foreground">Secure</span>
+                              <span className="break-words">{record.secure ? 'Yes' : 'No'}</span>
+                            </div>
+                            {record.hostname && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Hostname</span>
+                                <span className="break-words">{record.hostname}</span>
+                              </div>
+                            )}
+                            {record.country && (
+                              <div className="flex flex-col">
+                                <span className="font-medium text-xs text-muted-foreground">Country</span>
+                                <span className="break-words">{record.country}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        
+                        <div className="text-right text-sm text-gray-500 flex-shrink-0">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {formatDate(record.timestamp)}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+
+                  {/* Cookie Pagination */}
+                  {results.cookiePagination && results.cookiePagination.pages > 1 && (
+                    <div className="flex justify-center mt-6">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCookieCurrentPage(Math.max(1, cookieCurrentPage - 1))}
+                          disabled={cookieCurrentPage === 1}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                          Previous
+                        </Button>
+                        
+                        <div className="flex gap-1">
+                          {Array.from({ length: Math.min(5, results.cookiePagination.pages) }, (_, i) => {
+                            const page = i + 1
+                            return (
+                              <Button
+                                key={page}
+                                variant={page === cookieCurrentPage ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => setCookieCurrentPage(page)}
+                                className="w-8 h-8 p-0"
+                              >
+                                {page}
+                              </Button>
+                            )
+                          })}
+                        </div>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCookieCurrentPage(Math.min(results.cookiePagination!.pages, cookieCurrentPage + 1))}
+                          disabled={cookieCurrentPage === results.cookiePagination.pages}
+                        >
+                          Next
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useAuth } from "@/lib/auth-context"
+import { useUser } from "@auth0/nextjs-auth0"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
@@ -13,7 +13,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading } = useUser()
   const router = useRouter()
 
   useEffect(() => {
