@@ -29,6 +29,21 @@ interface DashboardStats {
 
 export async function GET() {
   try {
+    // Check if Auth0 is configured
+    if (!auth0) {
+      // Return default stats when auth is not configured
+      return NextResponse.json({
+        totalRecords: 0,
+        totalDatabases: 0,
+        latestBreach: null,
+        recentActivity: [],
+        breachTrend: [],
+        userCount: 0,
+        activeSessions: 0,
+        userTrend: []
+      })
+    }
+    
     // Check if user is authenticated
     const session = await auth0.getSession()
     if (!session) {

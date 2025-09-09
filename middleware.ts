@@ -1,6 +1,5 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { auth0 } from "./lib/auth0";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -13,6 +12,8 @@ export async function middleware(request: NextRequest) {
     '/terms-of-service',
     '/api/public',
     '/images',
+    '/favicon',
+    '/coming-soon',
   ];
   
   // Check if the current route is public
@@ -25,8 +26,23 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
+  // Check if Auth0 is configured
+  const isAuth0Configured = 
+    process.env.AUTH0_SECRET &&
+    process.env.AUTH0_BASE_URL &&
+    process.env.AUTH0_ISSUER_BASE_URL &&
+    process.env.AUTH0_CLIENT_ID &&
+    process.env.AUTH0_CLIENT_SECRET;
+  
+  if (!isAuth0Configured) {
+    console.warn('Auth0 environment variables not configured');
+    // Allow access for now but log the warning
+    return NextResponse.next();
+  }
+  
   // Apply Auth0 middleware only to protected routes
   try {
+    const { auth0 } = await import('./lib/auth0');
     return await auth0.middleware(request);
   } catch (error) {
     console.error('Auth0 middleware error:', error);

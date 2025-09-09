@@ -7,6 +7,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Check if Auth0 is configured
+    if (!auth0) {
+      return NextResponse.json({ error: 'Authentication not configured' }, { status: 503 })
+    }
+    
     // Get the Auth0 session
     const session = await auth0.getSession()
     if (!session) {

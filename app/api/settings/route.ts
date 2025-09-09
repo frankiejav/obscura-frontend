@@ -47,6 +47,14 @@ const getDefaultSettings = (email: string): Settings => ({
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if Auth0 is configured
+    if (!auth0) {
+      return NextResponse.json(
+        { error: 'Authentication not configured' },
+        { status: 503 }
+      )
+    }
+    
     const session = await auth0.getSession()
     
     if (!session?.user) {
@@ -92,6 +100,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if Auth0 is configured
+    if (!auth0) {
+      return NextResponse.json(
+        { error: 'Authentication not configured' },
+        { status: 503 }
+      )
+    }
+    
     const session = await auth0.getSession(request)
     
     if (!session?.user) {

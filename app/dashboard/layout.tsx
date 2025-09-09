@@ -10,6 +10,12 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Check if Auth0 is configured
+  if (!auth0) {
+    // Redirect to login if Auth0 is not configured
+    redirect("/login")
+  }
+  
   // Get the session on the server
   const session = await auth0.getSession()
   
