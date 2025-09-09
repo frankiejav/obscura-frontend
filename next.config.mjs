@@ -6,6 +6,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Transpile Auth0 package to fix build issues
+  transpilePackages: ['@auth0/nextjs-auth0'],
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
@@ -32,6 +34,20 @@ const nextConfig = {
       'date-fns',
       'recharts'
     ],
+  },
+  
+  // Webpack configuration to handle Auth0 package
+  webpack: (config, { isServer }) => {
+    // Fix for Auth0 package build issues
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    return config;
   },
   
   // Cache configuration

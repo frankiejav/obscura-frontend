@@ -4,7 +4,7 @@
   "private": true,
   "packageManager": "npm@10",
   "engines": {
-    "node": "20.x"
+    "node": ">=20"
   },
   "scripts": {
     "build": "next build",
@@ -19,7 +19,7 @@
   "dependencies": {
     "@ai-sdk/openai": "^0.0.66",
     "@ai-sdk/vercel": "^1.0.14",
-    "@auth0/nextjs-auth0": "^4.9.0",
+    "@auth0/nextjs-auth0": "4.0.1",
     "@clickhouse/client": "^1.12.0",
     "@hookform/resolvers": "^3.9.1",
     "@neondatabase/serverless": "latest",
