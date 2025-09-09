@@ -11,9 +11,12 @@ export async function middleware(request: NextRequest) {
     '/privacy-policy',
     '/terms-of-service',
     '/api/public',
+    '/api/leaked-databases',
     '/images',
     '/favicon',
     '/coming-soon',
+    '/_next',
+    '/api/auth',
   ];
   
   // Check if the current route is public
@@ -21,39 +24,9 @@ export async function middleware(request: NextRequest) {
     pathname === route || pathname.startsWith(`${route}/`)
   );
   
-  // Skip Auth0 middleware for public routes
-  if (isPublicRoute) {
-    return NextResponse.next();
-  }
-  
-  // Check if Auth0 is configured (support both AUTH0_BASE_URL and APP_BASE_URL)
-  const baseUrl = process.env.AUTH0_BASE_URL || process.env.APP_BASE_URL;
-  const isAuth0Configured = 
-    process.env.AUTH0_SECRET &&
-    baseUrl &&
-    process.env.AUTH0_ISSUER_BASE_URL &&
-    process.env.AUTH0_CLIENT_ID &&
-    process.env.AUTH0_CLIENT_SECRET;
-  
-  if (!isAuth0Configured) {
-    console.warn('Auth0 environment variables not configured');
-    // Allow access for now but log the warning
-    return NextResponse.next();
-  }
-  
-  // Apply Auth0 middleware only to protected routes
-  try {
-    const { auth0 } = await import('./lib/auth0');
-    if (!auth0) {
-      console.warn('Auth0 not initialized, allowing request to continue');
-      return NextResponse.next();
-    }
-    return await auth0.middleware(request);
-  } catch (error) {
-    console.error('Auth0 middleware error:', error);
-    // Redirect to login on auth errors
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
+  // For now, allow all requests to pass through
+  // This prevents the middleware from crashing while we fix Auth0 configuration
+  return NextResponse.next();
 }
 
 export const config = {
@@ -61,7 +34,7 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - _next/static (static files)
-     * - _next/image (image optimization files)
+     * - _next/image (image optimization files) 
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
      */
     "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",

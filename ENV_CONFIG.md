@@ -2,6 +2,7 @@
 
 ## Required Environment Variables
 
+### For Local Development (.env.local file)
 Create a `.env.local` file in the root directory with the following variables:
 
 ```env
@@ -9,17 +10,21 @@ Create a `.env.local` file in the root directory with the following variables:
 DATABASE_URL=your-neon-database-url
 
 # Auth0 Configuration
-AUTH0_SECRET='use-a-long-random-string-here'
-AUTH0_BASE_URL='http://localhost:3000'
-AUTH0_ISSUER_BASE_URL='https://your-tenant.auth0.com'
-AUTH0_CLIENT_ID='your-client-id'
-AUTH0_CLIENT_SECRET='your-client-secret'
-AUTH0_DOMAIN='your-tenant.auth0.com'
-AUTH0_CONNECTION='Username-Password-Authentication'
+AUTH0_SECRET=use-a-long-random-string-here
+AUTH0_BASE_URL=http://localhost:3000
+AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com
+AUTH0_CLIENT_ID=your-client-id
+AUTH0_CLIENT_SECRET=your-client-secret
+AUTH0_DOMAIN=your-tenant.auth0.com
+AUTH0_CONNECTION=Username-Password-Authentication
 
 # Optional: Auth0 Audience (for API access)
-AUTH0_AUDIENCE='your-api-identifier'
-AUTH0_SCOPE='openid profile email'
+AUTH0_AUDIENCE=your-api-identifier
+AUTH0_SCOPE=openid profile email
+```
+
+### For Vercel/Production (Environment Variables UI)
+**IMPORTANT:** When setting these in Vercel, Netlify, or other hosting platforms, **DO NOT include quotes** around the values
 
 # Application Settings
 NEXT_PUBLIC_APP_URL='http://localhost:3000'
