@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server"
+import { auth0 } from "@/lib/auth0"
 import clickhouse from "@/lib/clickhouse"
 
 interface LeakCheckDatabase {
   id: number
   name: string
   count: number
-  date: string
+  breach_date: string | null
   unverified: number
   passwordless: number
   compilation: number
 }
 
 interface LeakCheckResponse {
-  success: boolean
-  databases: LeakCheckDatabase[]
+  data: LeakCheckDatabase[]
 }
 
 interface DashboardStats {
@@ -29,106 +29,145 @@ interface DashboardStats {
 
 export async function GET() {
   try {
-    // Fetch ClickHouse data for credentials and cookies using direct table queries
-    const [credsResult, cookiesResult] = await Promise.all([
-      clickhouse.query({
-        query: 'SELECT COUNT(*) as count FROM vault.creds',
-        format: 'JSONEachRow'
-      }),
-      clickhouse.query({
-        query: 'SELECT COUNT(*) as count FROM vault.cookies',
-        format: 'JSONEachRow'
-      })
-    ])
-    
-    const credsData = await credsResult.json() as Array<{ count: string }>
-    const cookiesData = await cookiesResult.json() as Array<{ count: string }>
-    
-    // Parse ClickHouse results
-    const credentialsCount = credsData.length > 0 ? parseInt(credsData[0].count) : 0
-    const cookiesCount = cookiesData.length > 0 ? parseInt(cookiesData[0].count) : 0
+    // Check if user is authenticated
+    const session = await auth0.getSession()
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
 
-    // Get recent activity from last 24 hours using proper ts column
-    let last24hActivity = 0
+    // Initialize stats with default values
+    const stats: DashboardStats = {
+      totalRecords: 0,
+      totalSources: 0,
+      activeSources: 0,
+      recentRecords: 0,
+      leakcheckDatabases: 0,
+      credentialsCount: 0,
+      cookiesCount: 0,
+      last24hActivity: 0,
+    }
+
+    let leakcheckTotalRecords = 0
+    let leakcheckDatabaseCount = 0
+
+    // Fetch LeakCheck databases info (no API key needed for databases-list)
     try {
-      const twentyFourHoursAgo = new Date()
-      twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
-      
-      const recentActivityResult = await clickhouse.query({
-        query: `
-          SELECT 
-            (SELECT COUNT(*) FROM vault.creds WHERE ts >= '${twentyFourHoursAgo.toISOString()}') +
-            (SELECT COUNT(*) FROM vault.cookies WHERE ts >= '${twentyFourHoursAgo.toISOString()}') as recent_count
-        `,
-        format: 'JSONEachRow'
-      })
-      
-      const activityData = await recentActivityResult.json() as Array<{ recent_count: string }>
-      last24hActivity = activityData.length > 0 ? parseInt(activityData[0].recent_count) : 0
-      
-      // If no recent activity, estimate based on total records for demo purposes
-      if (last24hActivity === 0) {
-        last24hActivity = Math.floor((credentialsCount + cookiesCount) * 0.0001) // 0.01% as daily activity
-        if (last24hActivity < 1000) {
-          last24hActivity = Math.floor(Math.random() * 5000) + 1000 // Random between 1000-6000
+      const leakcheckResponse = await fetch("https://leakcheck.io/databases-list")
+
+      if (leakcheckResponse.ok) {
+        const leakcheckData: LeakCheckResponse = await leakcheckResponse.json()
+        if (leakcheckData.data && Array.isArray(leakcheckData.data)) {
+          // Count total records from all LeakCheck databases
+          leakcheckTotalRecords = leakcheckData.data.reduce((sum, db) => sum + (db.count || 0), 0)
+          
+          // Count number of LeakCheck databases
+          leakcheckDatabaseCount = leakcheckData.data.length
+          stats.leakcheckDatabases = leakcheckDatabaseCount
         }
       }
-    } catch (error) {
-      console.error("Error fetching recent activity:", error)
-      // Fallback to showing some recent activity based on total records
-      last24hActivity = Math.floor((credentialsCount + cookiesCount) * 0.0001) + 1000
+    } catch (leakcheckError) {
+      console.error("LeakCheck API error:", leakcheckError)
+      // Continue with default values if LeakCheck fails
     }
 
-    // Fetch LeakCheck databases using existing API route
-    let leakcheckCount = 0
-    let leakcheckTotalRecords = 0
-    
+    // Get ClickHouse stats
+    let clickhouseCredsCount = 0
+    let clickhouseCookiesCount = 0
+    let recentActivityCount = 0
+
     try {
-      const leakcheckResponse = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/leaked-databases`)
-      if (leakcheckResponse.ok) {
-        const leakcheckData = await leakcheckResponse.json()
-        leakcheckCount = leakcheckData.totalDatabases || 0
-        leakcheckTotalRecords = leakcheckData.totalCount || 0
+      // Get total credentials count from ClickHouse
+      const credsCountResult = await clickhouse.query({
+        query: "SELECT count() as count FROM vault.creds",
+        format: "JSONEachRow",
+      })
+      const credsCountData = await credsCountResult.json()
+      if (credsCountData && credsCountData[0]) {
+        clickhouseCredsCount = parseInt(credsCountData[0].count)
+        stats.credentialsCount = clickhouseCredsCount
       }
-    } catch (error) {
-      console.error("Error fetching LeakCheck data:", error)
+
+      // Get total cookies count from ClickHouse
+      const cookiesCountResult = await clickhouse.query({
+        query: "SELECT count() as count FROM vault.cookies",
+        format: "JSONEachRow",
+      })
+      const cookiesCountData = await cookiesCountResult.json()
+      if (cookiesCountData && cookiesCountData[0]) {
+        clickhouseCookiesCount = parseInt(cookiesCountData[0].count)
+        stats.cookiesCount = clickhouseCookiesCount
+      }
+
+      // Get records from last 7 days (recent activity) - combining both tables
+      const recentCredsResult = await clickhouse.query({
+        query: `
+          SELECT count() as count 
+          FROM vault.creds 
+          WHERE ts >= now() - INTERVAL 7 DAY
+        `,
+        format: "JSONEachRow",
+      })
+      const recentCredsData = await recentCredsResult.json()
+      let recentCreds = 0
+      if (recentCredsData && recentCredsData[0]) {
+        recentCreds = parseInt(recentCredsData[0].count)
+      }
+
+      const recentCookiesResult = await clickhouse.query({
+        query: `
+          SELECT count() as count 
+          FROM vault.cookies 
+          WHERE ts >= now() - INTERVAL 7 DAY
+        `,
+        format: "JSONEachRow",
+      })
+      const recentCookiesData = await recentCookiesResult.json()
+      let recentCookies = 0
+      if (recentCookiesData && recentCookiesData[0]) {
+        recentCookies = parseInt(recentCookiesData[0].count)
+      }
+
+      // Recent activity = records from last 7 days
+      recentActivityCount = recentCreds + recentCookies
+      stats.recentRecords = recentActivityCount
+      stats.last24hActivity = recentActivityCount // Using same value for compatibility
+
+      // Get unique sources count from ClickHouse credentials
+      const sourcesResult = await clickhouse.query({
+        query: "SELECT count(DISTINCT source_name) as count FROM vault.creds",
+        format: "JSONEachRow",
+      })
+      const sourcesData = await sourcesResult.json()
+      let clickhouseSourcesCount = 0
+      if (sourcesData && sourcesData[0]) {
+        clickhouseSourcesCount = parseInt(sourcesData[0].count)
+      }
+      
+      // Data sources = LeakCheck databases count + 1 (for ClickHouse data)
+      stats.totalSources = leakcheckDatabaseCount + 1
+      stats.activeSources = stats.totalSources // All sources considered active
+      
+    } catch (clickhouseError) {
+      console.error("ClickHouse query error:", clickhouseError)
+      // Continue with partial values if ClickHouse fails
     }
 
-    // Calculate totals
-    const totalRecords = credentialsCount + cookiesCount + leakcheckTotalRecords
-    const totalSources = leakcheckCount + 1 // LeakCheck databases + 1 for our internal sources
-    const activeSources = totalSources // Assume all sources are active for now
-
-    const stats: DashboardStats = {
-      totalRecords,
-      totalSources,
-      activeSources,
-      recentRecords: last24hActivity,
-      leakcheckDatabases: leakcheckCount,
-      credentialsCount,
-      cookiesCount,
-      last24hActivity
-    }
+    // Total records = LeakCheck total + ClickHouse (creds + cookies)
+    stats.totalRecords = leakcheckTotalRecords + clickhouseCredsCount + clickhouseCookiesCount
 
     return NextResponse.json(stats)
   } catch (error) {
-    console.error("Dashboard stats API error:", error)
-    
-    // Return fallback data if there's an error
-    const fallbackStats: DashboardStats = {
-      totalRecords: 1725762 + 44204833, // Fallback from existing stats
-      totalSources: 1,
-      activeSources: 1,
+    console.error("Dashboard stats error:", error)
+    // Return default stats on error
+    return NextResponse.json({
+      totalRecords: 0,
+      totalSources: 0,
+      activeSources: 0,
       recentRecords: 0,
       leakcheckDatabases: 0,
-      credentialsCount: 1725762,
-      cookiesCount: 44204833,
-      last24hActivity: 0
-    }
-    
-    return NextResponse.json(fallbackStats)
+      credentialsCount: 0,
+      cookiesCount: 0,
+      last24hActivity: 0,
+    })
   }
 }
-
-// Cache for 2 minutes to balance freshness with performance
-export const revalidate = 120

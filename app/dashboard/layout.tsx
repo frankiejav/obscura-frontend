@@ -1,70 +1,24 @@
-"use client"
-
 import type React from "react"
-import { useUser } from "@auth0/nextjs-auth0"
-import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { auth0 } from "@/lib/auth0"
+import { redirect } from "next/navigation"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { user, isLoading } = useUser()
-  const router = useRouter()
-
-  useEffect(() => {
-    console.log("Dashboard layout - user:", user, "isLoading:", isLoading)
-    if (!isLoading && !user) {
-      console.log("No user found, redirecting to login...")
-      router.push("/")
-    }
-  }, [user, isLoading, router])
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black tactical-grid flex items-center justify-center">
-        <div className="tactical-card p-8 max-w-md">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <div className="status-indicator status-processing"></div>
-              <p className="text-primary font-mono tracking-wider text-sm">AUTHENTICATING...</p>
-            </div>
-            <p className="text-muted-foreground font-mono text-xs">
-              VERIFYING CREDENTIALS
-            </p>
-          </div>
-        </div>
-      </div>
-    )
+  // Get the session on the server
+  const session = await auth0.getSession()
+  
+  // If no session, redirect to login
+  if (!session) {
+    redirect("/auth/login?returnTo=/dashboard")
   }
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-black tactical-grid flex items-center justify-center">
-        <div className="tactical-card p-8 max-w-md">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <div className="status-indicator status-processing"></div>
-              <p className="text-primary font-mono tracking-wider text-sm">REDIRECTING TO LOGIN...</p>
-            </div>
-            <p className="text-muted-foreground font-mono text-xs">
-              INITIALIZING SECURE ACCESS
-            </p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+  const user = session.user
 
   return (
     <div className="min-h-screen bg-black tactical-grid">

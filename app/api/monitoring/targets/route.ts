@@ -1,28 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/clickhouse'
-import { v4 as uuidv4 } from 'uuid'
-
-// In-memory storage for demo purposes - in production, use a database
-let monitoringTargets: any[] = []
-let scanResults: any[] = []
+import { auth0 } from '@/lib/auth0'
+import { 
+  getUserMonitoringTargets, 
+  getUserScanResults, 
+  addMonitoringTarget,
+  updateTargetStatus,
+  addScanResult,
+  addMonitoringNotification
+} from '@/lib/neon-db'
+import { searchDataRecords, searchCookieRecords } from '@/lib/data-ingestion'
 
 export async function GET(request: NextRequest) {
   try {
-    // For demo purposes, using a default user
-    // In production, integrate with Auth0
-    const userEmail = 'demo@example.com'
+    // Get the Auth0 session
+    const session = await auth0.getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
-    // Filter targets and results based on user
-    const userTargets = monitoringTargets.filter(
-      target => target.userId === userEmail
-    )
-    const userResults = scanResults.filter(
-      result => userTargets.some(t => t.id === result.targetId)
-    )
+    const userId = session.user.sub || session.user.id
+
+    // Get user's monitoring targets and scan results from Neon
+    const [targets, results] = await Promise.all([
+      getUserMonitoringTargets(userId),
+      getUserScanResults(userId)
+    ])
 
     return NextResponse.json({
-      targets: userTargets,
-      results: userResults
+      targets,
+      results
     })
   } catch (error) {
     console.error('Error fetching monitoring data:', error)
@@ -35,9 +41,14 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // For demo purposes, using a default user
-    // In production, integrate with Auth0
-    const userEmail = 'demo@example.com'
+    // Get the Auth0 session
+    const session = await auth0.getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const userId = session.user.sub || session.user.id
+    const userEmail = session.user.email
 
     const body = await request.json()
     const { type, value, autoScan } = body
@@ -50,37 +61,33 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if target already exists for this user
-    const existing = monitoringTargets.find(
-      t => t.value === value && t.userId === userEmail
-    )
-
-    if (existing) {
+    // Validate type
+    const validTypes = ['email', 'domain', 'phone', 'username', 'ip']
+    if (!validTypes.includes(type)) {
       return NextResponse.json(
-        { error: 'Target already exists' },
+        { error: 'Invalid type. Must be one of: ' + validTypes.join(', ') },
         { status: 400 }
       )
     }
 
-    // Create new monitoring target
-    const newTarget = {
-      id: uuidv4(),
-      type,
-      value: value.toLowerCase().trim(),
-      userId: userEmail,
-      lastScanned: null,
-      status: 'pending',
-      breachCount: 0,
-      addedAt: new Date().toISOString(),
-      autoScan: autoScan !== false
+    // Add the monitoring target to Neon database
+    const newTarget = await addMonitoringTarget(userId, type, value, autoScan !== false)
+
+    if (!newTarget) {
+      return NextResponse.json(
+        { error: 'Target already exists or could not be added' },
+        { status: 400 }
+      )
     }
 
-    monitoringTargets.push(newTarget)
-
     // If autoScan is enabled, trigger an immediate scan
-    if (newTarget.autoScan) {
-      // In production, this would trigger a background job
-      setTimeout(() => scanTarget(newTarget), 1000)
+    if (autoScan !== false) {
+      // Trigger scan in background (don't await)
+      setTimeout(() => {
+        scanTarget(newTarget, userId, userEmail).catch(error => {
+          console.error('Background scan error:', error)
+        })
+      }, 1000) // Small delay to ensure the target is properly saved
     }
 
     return NextResponse.json(newTarget)
@@ -93,88 +100,222 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function scanTarget(target: any) {
+export async function scanTarget(target: any, userId: string, userEmail: string) {
   try {
     // Update status to scanning
-    const targetIndex = monitoringTargets.findIndex(t => t.id === target.id)
-    if (targetIndex !== -1) {
-      monitoringTargets[targetIndex].status = 'scanning'
-    }
+    await updateTargetStatus(target.id, 'scanning')
 
-    // Simulate scanning with LeakCheck API and ClickHouse
-    // In production, you would make actual API calls here
-    
-    // Search in ClickHouse database
-    const clickhouse = createClient()
-    let query = ''
-    
+    let breachesFound = 0
+    const foundBreaches: any[] = []
+
+    // Search in ClickHouse database based on target type
     if (target.type === 'email') {
-      query = `
-        SELECT DISTINCT database_name, breach_date, COUNT(*) as count
-        FROM breaches
-        WHERE email = '${target.value}'
-        GROUP BY database_name, breach_date
-        LIMIT 100
-      `
+      // Search for email in credentials
+      const credsResult = await searchDataRecords({
+        term: target.value,
+        type: 'EMAIL',
+        limit: 100
+      })
+
+      if (credsResult.results.length > 0) {
+        // Group by source/domain
+        const breachesBySource = new Map<string, any[]>()
+        
+        credsResult.results.forEach(record => {
+          const key = record.source || record.domain || 'Unknown'
+          if (!breachesBySource.has(key)) {
+            breachesBySource.set(key, [])
+          }
+          breachesBySource.get(key)!.push(record)
+        })
+
+        // Create scan results for each breach
+        for (const [source, records] of breachesBySource) {
+          const breach = {
+            source: 'database',
+            breachName: source,
+            breachDate: records[0].timestamp ? new Date(records[0].timestamp) : null,
+            dataTypes: extractDataTypes(records[0]),
+            severity: calculateSeverity(records[0]),
+            details: {
+              recordCount: records.length,
+              sampleRecord: records[0]
+            }
+          }
+          foundBreaches.push(breach)
+          breachesFound++
+        }
+      }
     } else if (target.type === 'domain') {
-      query = `
-        SELECT DISTINCT database_name, breach_date, COUNT(*) as count
-        FROM breaches
-        WHERE email LIKE '%@${target.value}'
-        GROUP BY database_name, breach_date
-        LIMIT 100
-      `
-    } else if (target.type === 'phone') {
-      query = `
-        SELECT DISTINCT database_name, breach_date, COUNT(*) as count
-        FROM breaches
-        WHERE phone = '${target.value}'
-        GROUP BY database_name, breach_date
-        LIMIT 100
-      `
+      // Search for domain in credentials
+      const credsResult = await searchDataRecords({
+        term: target.value,
+        type: 'DOMAIN',
+        limit: 100
+      })
+
+      if (credsResult.results.length > 0) {
+        const breach = {
+          source: 'database',
+          breachName: `${target.value} breach`,
+          breachDate: null,
+          dataTypes: ['email', 'password'],
+          severity: 'high',
+          details: {
+            affectedAccounts: credsResult.results.length,
+            uniqueEmails: new Set(credsResult.results.map(r => r.email)).size
+          }
+        }
+        foundBreaches.push(breach)
+        breachesFound = credsResult.results.length
+      }
+
+      // Also search in cookies
+      const cookiesResult = await searchCookieRecords({
+        term: target.value,
+        type: 'DOMAIN',
+        limit: 100
+      })
+
+      if (cookiesResult.results.length > 0) {
+        const breach = {
+          source: 'database',
+          breachName: `${target.value} cookies`,
+          breachDate: null,
+          dataTypes: ['cookies'],
+          severity: 'critical',
+          details: {
+            cookieCount: cookiesResult.results.length,
+            uniqueVictims: new Set(cookiesResult.results.map(r => r.id)).size
+          }
+        }
+        foundBreaches.push(breach)
+        breachesFound += cookiesResult.results.length
+      }
+    } else if (target.type === 'username') {
+      // Search for username in credentials
+      const credsResult = await searchDataRecords({
+        term: target.value,
+        type: 'ALL',
+        limit: 100
+      })
+
+      const usernameMatches = credsResult.results.filter(
+        r => r.username?.toLowerCase() === target.value.toLowerCase()
+      )
+
+      if (usernameMatches.length > 0) {
+        // Group by domain
+        const breachesByDomain = new Map<string, any[]>()
+        
+        usernameMatches.forEach(record => {
+          const key = record.domain || record.source || 'Unknown'
+          if (!breachesByDomain.has(key)) {
+            breachesByDomain.set(key, [])
+          }
+          breachesByDomain.get(key)!.push(record)
+        })
+
+        for (const [domain, records] of breachesByDomain) {
+          const breach = {
+            source: 'database',
+            breachName: domain,
+            breachDate: null,
+            dataTypes: extractDataTypes(records[0]),
+            severity: calculateSeverity(records[0]),
+            details: {
+              recordCount: records.length
+            }
+          }
+          foundBreaches.push(breach)
+          breachesFound++
+        }
+      }
     }
 
-    // For demo purposes, simulate finding some breaches randomly
-    const hasBreaches = Math.random() > 0.6
-    
-    if (hasBreaches) {
-      const breachCount = Math.floor(Math.random() * 5) + 1
-      
-      for (let i = 0; i < breachCount; i++) {
-        const breachNames = ['LinkedIn', 'Adobe', 'Dropbox', 'Twitter', 'Facebook', 'Yahoo', 'Uber']
-        const result = {
-          id: uuidv4(),
-          targetId: target.id,
-          targetValue: target.value,
-          source: Math.random() > 0.5 ? 'leakcheck' : 'database',
-          breachName: breachNames[Math.floor(Math.random() * breachNames.length)],
-          breachDate: new Date(2020 + Math.floor(Math.random() * 4), Math.floor(Math.random() * 12)).toISOString(),
-          dataTypes: ['email', 'password', 'name'].slice(0, Math.floor(Math.random() * 3) + 1),
-          severity: ['low', 'medium', 'high', 'critical'][Math.floor(Math.random() * 4)],
-          foundAt: new Date().toISOString()
+    // Check LeakCheck API if configured (optional)
+    if (process.env.LEAKCHECK_API_KEY && target.type === 'email') {
+      try {
+        const leakcheckResponse = await fetch(`https://leakcheck.io/api/public?check=${target.value}`, {
+          headers: {
+            'X-API-Key': process.env.LEAKCHECK_API_KEY
+          }
+        })
+
+        if (leakcheckResponse.ok) {
+          const leakcheckData = await leakcheckResponse.json()
+          if (leakcheckData.found && leakcheckData.sources) {
+            leakcheckData.sources.forEach((source: any) => {
+              const breach = {
+                source: 'leakcheck',
+                breachName: source.name,
+                breachDate: source.breach_date ? new Date(source.breach_date) : null,
+                dataTypes: ['email', 'password'],
+                severity: 'high',
+                details: source
+              }
+              foundBreaches.push(breach)
+              breachesFound++
+            })
+          }
         }
-        scanResults.push(result)
-      }
-      
-      // Update target status and breach count
-      if (targetIndex !== -1) {
-        monitoringTargets[targetIndex].status = 'found'
-        monitoringTargets[targetIndex].breachCount = breachCount
-        monitoringTargets[targetIndex].lastScanned = new Date().toISOString()
-      }
-    } else {
-      // No breaches found
-      if (targetIndex !== -1) {
-        monitoringTargets[targetIndex].status = 'clean'
-        monitoringTargets[targetIndex].breachCount = 0
-        monitoringTargets[targetIndex].lastScanned = new Date().toISOString()
+      } catch (leakcheckError) {
+        console.error('LeakCheck API error:', leakcheckError)
       }
     }
+
+    // Save scan results to database
+    for (const breach of foundBreaches) {
+      await addScanResult(
+        target.id,
+        breach.source,
+        breach.breachName,
+        breach.breachDate,
+        breach.dataTypes,
+        breach.severity,
+        breach.details
+      )
+    }
+
+    // Update target status
+    const finalStatus = breachesFound > 0 ? 'found' : 'clean'
+    await updateTargetStatus(target.id, finalStatus, breachesFound)
+
+    // Create notification if breaches were found
+    if (breachesFound > 0) {
+      await addMonitoringNotification(
+        userId,
+        target.id,
+        'breach_found',
+        `Breaches found for ${target.value}`,
+        `We found ${breachesFound} breach${breachesFound > 1 ? 'es' : ''} for ${target.type}: ${target.value}`,
+        foundBreaches[0].severity
+      )
+    }
+
+    return { breachesFound, foundBreaches }
   } catch (error) {
     console.error('Error scanning target:', error)
-    const targetIndex = monitoringTargets.findIndex(t => t.id === target.id)
-    if (targetIndex !== -1) {
-      monitoringTargets[targetIndex].status = 'error'
-    }
+    await updateTargetStatus(target.id, 'error')
+    throw error
   }
+}
+
+function extractDataTypes(record: any): string[] {
+  const types = []
+  if (record.email) types.push('email')
+  if (record.password) types.push('password')
+  if (record.name) types.push('name')
+  if (record.phone) types.push('phone')
+  if (record.address) types.push('address')
+  if (record.ip) types.push('ip_address')
+  if (types.length === 0) types.push('unknown')
+  return types
+}
+
+function calculateSeverity(record: any): string {
+  if (record.is_privileged) return 'critical'
+  if (record.password && record.email) return 'high'
+  if (record.password || record.email) return 'medium'
+  return 'low'
 }

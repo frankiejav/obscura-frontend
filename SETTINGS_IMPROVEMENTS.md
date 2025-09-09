@@ -138,3 +138,4 @@ To test the improvements:
 - Auth0 Management API requires proper permissions in your Auth0 application
 - All UI components follow the monochrome design system
 - Performance optimizations are production-ready
+

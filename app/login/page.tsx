@@ -20,7 +20,7 @@ export default function LoginPage() {
   }, [user, isLoading, router])
 
   const handleLogin = () => {
-    router.push('/auth/login')
+    router.push('/auth/login?returnTo=/dashboard')
   }
 
 

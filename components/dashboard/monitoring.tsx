@@ -108,7 +108,13 @@ export function Monitoring() {
   const fetchMonitoringData = async () => {
     try {
       const response = await fetch('/api/monitoring/targets')
-      if (response.ok) {
+      if (!response.ok) {
+        const error = await response.json()
+        console.error('Failed to fetch monitoring data:', error)
+        if (response.status === 401) {
+          console.error('User not authenticated')
+        }
+      } else {
         const data = await response.json()
         setMonitoringTargets(data.targets || [])
         setScanResults(data.results || [])
@@ -145,12 +151,17 @@ export function Monitoring() {
         })
       })
 
-      if (response.ok) {
+      if (!response.ok) {
+        const error = await response.json()
+        console.error('API Error:', error)
+        alert(`Failed to add target: ${error.error || 'Unknown error'}`)
+      } else {
         await fetchMonitoringData()
         setNewTarget({ type: "email", value: "" })
       }
     } catch (error) {
       console.error('Error adding target:', error)
+      alert(`Error adding target: ${error}`)
     } finally {
       setLoading(false)
     }
@@ -253,11 +264,11 @@ export function Monitoring() {
   }
 
   const getTargetsByType = (type: "email" | "domain" | "phone") => {
-    return monitoringTargets.filter(target => target.type === type)
+    return (monitoringTargets || []).filter(target => target.type === type)
   }
 
   const getRecentBreaches = () => {
-    return scanResults
+    return (scanResults || [])
       .sort((a, b) => new Date(b.foundAt).getTime() - new Date(a.foundAt).getTime())
       .slice(0, 10)
   }
@@ -321,7 +332,7 @@ export function Monitoring() {
             <Shield className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{monitoringTargets.length}</div>
+            <div className="text-2xl font-bold">{(monitoringTargets || []).length}</div>
             <p className="text-xs text-muted-foreground">
               Active monitoring targets
             </p>
@@ -765,12 +776,12 @@ export function Monitoring() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {scanResults.map((result) => (
+                  {(scanResults || []).map((result) => (
                     <TableRow key={result.id}>
                       <TableCell className="font-medium">{result.targetValue}</TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {monitoringTargets.find(t => t.id === result.targetId)?.type || "unknown"}
+                          {(monitoringTargets || []).find(t => t.id === result.targetId)?.type || "unknown"}
                         </Badge>
                       </TableCell>
                       <TableCell>{result.breachName}</TableCell>
@@ -786,7 +797,7 @@ export function Monitoring() {
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-1 flex-wrap">
-                          {result.dataTypes.map((type, idx) => (
+                          {(result.dataTypes || []).map((type, idx) => (
                             <Badge key={idx} variant="outline" className="text-xs">
                               {type}
                             </Badge>
@@ -799,7 +810,7 @@ export function Monitoring() {
                 </TableBody>
               </Table>
               
-              {scanResults.length === 0 && (
+              {(!scanResults || scanResults.length === 0) && (
                 <div className="text-center py-8 text-muted-foreground">
                   No breaches detected yet. Run a scan to check for breaches.
                 </div>

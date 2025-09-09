@@ -1,5 +1,30 @@
 import { executeQuery, insertData } from './clickhouse'
 
+export interface ParsedDataRecord {
+  victim_id?: string
+  source_name?: string
+  domain?: string
+  email?: string
+  username?: string
+  password?: string
+  phone?: string
+  name?: string
+  address?: string
+  country?: string
+  origin?: string
+  fields?: string[]
+  hostname?: string
+  ip_address?: string
+  language?: string
+  timezone?: string
+  os_version?: string
+  hwid?: string
+  cpu_name?: string
+  gpu?: string
+  ram_size?: string
+  ts?: Date
+}
+
 interface DataRecord {
   id?: string
   victim_id?: string
@@ -107,6 +132,53 @@ function transformCookieRecord(record: CookieRecord) {
 }
 
 /**
+ * Ingest data records (general purpose function for API)
+ */
+export async function ingestDataRecords(records: ParsedDataRecord[], sourceName: string) {
+  try {
+    if (!records || records.length === 0) {
+      return { success: false, error: 'No records provided' }
+    }
+
+    // Transform ParsedDataRecord to DataRecord format
+    const dataRecords: DataRecord[] = records.map(record => ({
+      victim_id: record.victim_id,
+      name: record.name,
+      email: record.email,
+      username: record.username,
+      password: record.password,
+      ip_address: record.ip_address,
+      domain: record.domain,
+      source_name: record.source_name || sourceName,
+      url: '',
+      phone: record.phone,
+      address: record.address,
+      country: record.country,
+      origin: record.origin,
+      fields: record.fields,
+      hostname: record.hostname,
+      language: record.language,
+      timezone: record.timezone,
+      os_version: record.os_version,
+      hwid: record.hwid,
+      cpu_name: record.cpu_name,
+      gpu: record.gpu,
+      ram_size: record.ram_size,
+      account_type: 'personal',
+      risk_score: 0,
+      risk_category: 'low',
+      is_privileged: false,
+      breach_impact: 'low',
+    }))
+
+    return await insertCredentialsData(dataRecords)
+  } catch (error) {
+    console.error('Error ingesting data records:', error)
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
+  }
+}
+
+/**
  * Insert credentials data into ClickHouse
  */
 export async function insertCredentialsData(records: DataRecord[]) {
@@ -118,7 +190,7 @@ export async function insertCredentialsData(records: DataRecord[]) {
     const transformedRecords = records.map(transformCredentialsRecord)
     const result = await insertData('vault.creds', transformedRecords)
     
-    return result
+    return { ...result, count: transformedRecords.length }
   } catch (error) {
     console.error('Error inserting credentials data:', error)
     return { success: false, error: error instanceof Error ? error.message : String(error) }
@@ -625,6 +697,37 @@ export async function searchCookieRecords(options: {
       results: [],
       pagination: { total: 0, pages: 0, current: options.page || 1 },
     }
+  }
+}
+
+/**
+ * Get data source statistics
+ */
+export async function getDataSourceStats() {
+  try {
+    // Get unique sources and their counts
+    const sourcesQuery = `
+      SELECT 
+        source_name as name,
+        count() as recordCount,
+        max(ts) as lastUpdated
+      FROM vault.creds 
+      GROUP BY source_name 
+      ORDER BY recordCount DESC
+    `
+    
+    const results = await executeQuery(sourcesQuery) as any[]
+    
+    return results.map((row: any) => ({
+      id: row.name,
+      name: row.name,
+      recordCount: parseInt(row.recordCount),
+      lastUpdated: row.lastUpdated,
+      status: 'ACTIVE'
+    }))
+  } catch (error) {
+    console.error('Error getting data source stats:', error)
+    return []
   }
 }
 

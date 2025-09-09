@@ -47,7 +47,7 @@ const getDb = () => {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth0.getSession(request)
+    const session = await auth0.getSession()
     
     if (!session?.user) {
       return NextResponse.json(

@@ -1,57 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// Import the shared storage (in production, use a database)
-let monitoringTargets: any[] = []
-let scanResults: any[] = []
-
-// This is a workaround for the demo - in production, use a proper database
-if (typeof global !== 'undefined') {
-  if (!global.monitoringTargets) {
-    global.monitoringTargets = []
-  }
-  if (!global.scanResults) {
-    global.scanResults = []
-  }
-  monitoringTargets = global.monitoringTargets
-  scanResults = global.scanResults
-}
+import { auth0 } from '@/lib/auth0'
+import { deleteMonitoringTarget } from '@/lib/neon-db'
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // For demo purposes, using a default user
-    // In production, integrate with Auth0
-    const userEmail = 'demo@example.com'
+    // Get the Auth0 session
+    const session = await auth0.getSession()
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
 
+    const userId = session.user.sub || session.user.id
     const targetId = params.id
 
-    // Find the target
-    const targetIndex = monitoringTargets.findIndex(
-      t => t.id === targetId && t.userId === userEmail
-    )
+    // Delete the monitoring target from Neon database
+    const deleted = await deleteMonitoringTarget(targetId, userId)
 
-    if (targetIndex === -1) {
+    if (!deleted) {
       return NextResponse.json(
-        { error: 'Target not found' },
+        { error: 'Target not found or you do not have permission to delete it' },
         { status: 404 }
       )
     }
 
-    // Remove the target
-    monitoringTargets.splice(targetIndex, 1)
-
-    // Remove associated scan results
-    scanResults = scanResults.filter(r => r.targetId !== targetId)
-    
-    // Update global storage
-    if (typeof global !== 'undefined') {
-      global.monitoringTargets = monitoringTargets
-      global.scanResults = scanResults
-    }
-
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Monitoring target deleted successfully' 
+    })
   } catch (error) {
     console.error('Error deleting monitoring target:', error)
     return NextResponse.json(

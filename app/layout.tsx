@@ -1,5 +1,6 @@
 import type React from "react"
 import { Inter, JetBrains_Mono } from "next/font/google"
+import { Auth0Provider } from '@auth0/nextjs-auth0'
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
@@ -38,10 +39,12 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetBrains.variable} font-mono`} suppressHydrationWarning>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
-          <Toaster />
-        </ThemeProvider>
+        <Auth0Provider>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+            {children}
+            <Toaster />
+          </ThemeProvider>
+        </Auth0Provider>
       </body>
     </html>
   )

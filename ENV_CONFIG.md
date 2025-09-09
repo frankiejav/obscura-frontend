@@ -127,3 +127,4 @@ For production:
 3. Set `NODE_ENV=production`
 4. Generate a secure `AUTH0_SECRET` (at least 32 characters)
 5. Configure Auth0 production settings
+

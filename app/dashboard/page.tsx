@@ -208,10 +208,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {breachData ? breachData.totalCount.toLocaleString() : stats.totalRecords.toLocaleString()}
+              {stats.totalRecords.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">
-              {breachData ? 'Across all databases' : 'Across all data sources'}
+              Leaked Databases + Infostealer Data
             </p>
           </CardContent>
         </Card>
@@ -222,9 +222,9 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{breachData?.totalDatabases || stats.totalSources}</div>
+            <div className="text-2xl font-bold">{stats.totalSources}</div>
             <p className="text-xs text-muted-foreground">
-              {breachData ? 'Active sources' : `${stats.activeSources} active sources`}
+              Across all Databases
             </p>
           </CardContent>
         </Card>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.last24hActivity.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              {breachData ? 'Records added recently' : 'Records added recently'}
+              Records added in last 7 days
             </p>
           </CardContent>
         </Card>
