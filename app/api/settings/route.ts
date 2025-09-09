@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth0 } from '@/lib/auth0'
 import { neon } from '@neondatabase/serverless'
 
+// Lazy load database connection
+function getDb() {
+  if (!process.env.DATABASE_URL) {
+    console.warn('DATABASE_URL is not set. Database operations will fail.')
+    return async () => []
+  }
+  return neon(process.env.DATABASE_URL)
+}
+
 // Settings structure
 interface Settings {
   profile: {
@@ -35,15 +44,6 @@ const getDefaultSettings = (email: string): Settings => ({
     compactView: false,
   },
 })
-
-// Get database connection
-const getDb = () => {
-  const databaseUrl = process.env.DATABASE_URL || process.env.NEON
-  if (!databaseUrl) {
-    throw new Error('Database URL not configured')
-  }
-  return neon(databaseUrl)
-}
 
 export async function GET(request: NextRequest) {
   try {

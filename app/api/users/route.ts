@@ -3,7 +3,14 @@ import { neon } from "@neondatabase/serverless"
 import { verifyJWT } from "@/lib/jwt"
 import bcrypt from "bcryptjs"
 
-const sql = neon(process.env.DATABASE_URL!)
+// Lazy load database connection
+function getDb() {
+  if (!process.env.DATABASE_URL) {
+    console.warn('DATABASE_URL is not set. Database operations will fail.')
+    return async () => []
+  }
+  return neon(process.env.DATABASE_URL)
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,6 +30,9 @@ export async function GET(request: NextRequest) {
     if (payload.role !== "admin") {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 })
     }
+
+    // Get database connection
+    const sql = getDb()
 
     // Fetch all users
     const users = await sql`
@@ -62,6 +72,9 @@ export async function POST(request: NextRequest) {
     if (!name || !email || !password || !role) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 })
     }
+
+    // Get database connection
+    const sql = getDb()
 
     // Check if user already exists
     const existingUser = await sql`

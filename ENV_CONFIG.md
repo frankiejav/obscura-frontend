@@ -7,8 +7,6 @@ Create a `.env.local` file in the root directory with the following variables:
 ```env
 # Neon Database Configuration
 DATABASE_URL=your-neon-database-url
-# or
-NEON=your-neon-database-url
 
 # Auth0 Configuration
 AUTH0_SECRET='use-a-long-random-string-here'
@@ -40,7 +38,7 @@ The application now supports Neon database for persistent storage. The settings 
 1. Create a Neon account at https://neon.tech
 2. Create a new database
 3. Copy your connection string
-4. Add it to `.env.local` as `DATABASE_URL` or `NEON`
+4. Add it to `.env.local` as `DATABASE_URL`
 
 ### Database Schema
 
