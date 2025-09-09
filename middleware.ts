@@ -26,10 +26,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Check if Auth0 is configured
+  // Check if Auth0 is configured (support both AUTH0_BASE_URL and APP_BASE_URL)
+  const baseUrl = process.env.AUTH0_BASE_URL || process.env.APP_BASE_URL;
   const isAuth0Configured = 
     process.env.AUTH0_SECRET &&
-    process.env.AUTH0_BASE_URL &&
+    baseUrl &&
     process.env.AUTH0_ISSUER_BASE_URL &&
     process.env.AUTH0_CLIENT_ID &&
     process.env.AUTH0_CLIENT_SECRET;
@@ -43,6 +44,10 @@ export async function middleware(request: NextRequest) {
   // Apply Auth0 middleware only to protected routes
   try {
     const { auth0 } = await import('./lib/auth0');
+    if (!auth0) {
+      console.warn('Auth0 not initialized, allowing request to continue');
+      return NextResponse.next();
+    }
     return await auth0.middleware(request);
   } catch (error) {
     console.error('Auth0 middleware error:', error);
