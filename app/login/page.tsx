@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from 'react'
-import { useUser } from '@auth0/nextjs-auth0'
+import { useUser } from '@auth0/nextjs-auth0/client'
 import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import Image from "next/image"

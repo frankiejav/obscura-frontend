@@ -2,12 +2,15 @@ import { neon } from '@neondatabase/serverless'
 
 // Create Neon database connection lazily
 function getDb() {
-  if (!process.env.DATABASE_URL) {
-    console.warn('DATABASE_URL is not set. Database operations will fail.')
+  // Check for NEON env var (from .env) or DATABASE_URL (common Vercel convention)
+  const connectionString = process.env.NEON || process.env.DATABASE_URL;
+  
+  if (!connectionString) {
+    console.warn('NEON/DATABASE_URL is not set. Database operations will fail.')
     // Return a mock function during build time
     return async () => []
   }
-  return neon(process.env.DATABASE_URL)
+  return neon(connectionString)
 }
 
 // Monitoring targets functions
