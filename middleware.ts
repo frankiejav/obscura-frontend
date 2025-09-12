@@ -2,6 +2,8 @@ import type { NextRequest } from "next/server";
 import { auth0 } from "./lib/auth0";
 
 export async function middleware(request: NextRequest) {
+  // The Auth0 middleware handles authentication routes automatically
+  // Routes like /auth/login, /auth/logout, /auth/callback are handled internally
   return await auth0.middleware(request);
 }
 
