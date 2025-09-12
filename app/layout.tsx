@@ -1,6 +1,6 @@
 import type React from "react"
 import { Inter, JetBrains_Mono } from "next/font/google"
-import { UserProvider } from '@auth0/nextjs-auth0/client'
+import { UserProvider } from '@auth0/nextjs-auth0'
 import { Toaster } from "@/components/ui/toaster"
 import { ThemeProvider } from "@/components/theme-provider"
 import "./globals.css"
