@@ -226,6 +226,29 @@
   user-select: none;
 }
 
+/* Touch-friendly button styles */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobile-optimized tap targets (minimum 44x44px for iOS) */
+@media (max-width: 640px) {
+  button, 
+  [role="button"],
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent text selection on double tap */
+@media (pointer: coarse) {
+  * {
+    -webkit-touch-callout: none;
+  }
+}
+
 /* Focus visible for accessibility */
 .focus-visible:focus-visible {
   @apply outline-2 outline-offset-2 outline-primary;

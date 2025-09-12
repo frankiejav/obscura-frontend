@@ -17,6 +17,17 @@ const jetBrains = JetBrains_Mono({
 export const metadata = {
   title: "Obscura Labs - Identity Threat Intelligence Platform",
   description: "Obscura Labs is an identity threat intelligence platform that provides real-time intelligence on stolen credentials, cookies, and other identity-related data.",
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: 'cover',
+  },
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0a0a' },
+  ],
   icons: {
     icon: [
       {
