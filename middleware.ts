@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// Routes that require IP check
-const PROTECTED_AUTH_ROUTES = ['/login', '/auth/login', '/auth/signup', '/signup']
+// Routes that require IP check (login/signup pages, not the API routes)
+const IP_RESTRICTED_ROUTES = ['/login', '/signup']
 
 // Parse allowed IPs from environment variable
 function getAllowedIPs(): Set<string> {
@@ -40,12 +40,17 @@ function getClientIP(request: NextRequest): string | null {
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   
-  // Check if this is a protected auth route
-  const isProtectedAuthRoute = PROTECTED_AUTH_ROUTES.some(route => 
-    pathname.startsWith(route)
+  // Allow Auth0 API routes to work without IP restriction
+  if (pathname.startsWith('/auth/')) {
+    return NextResponse.next()
+  }
+  
+  // Check if this is an IP-restricted route (login/signup pages)
+  const isIPRestrictedRoute = IP_RESTRICTED_ROUTES.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
   )
   
-  if (isProtectedAuthRoute) {
+  if (isIPRestrictedRoute) {
     const allowedIPs = getAllowedIPs()
     
     // If no IPs are configured, allow all (for development)
@@ -78,11 +83,7 @@ export function middleware(request: NextRequest) {
 // Configure which routes the middleware should run on
 export const config = {
   matcher: [
-    // Match auth routes that need IP checking
-    '/login',
-    '/signup', 
-    '/auth/login',
-    '/auth/signup',
-    '/auth/callback',
+    // Match all routes except static files and images
+    '/((?!_next/static|_next/image|favicon.ico|images).*)',
   ]
 }
