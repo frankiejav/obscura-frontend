@@ -538,6 +538,11 @@ export function SettingsPage() {
             </>
           )}
         </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   )
