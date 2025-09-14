@@ -40,8 +40,8 @@ function getClientIP(request: NextRequest): string | null {
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   
-  // ALWAYS allow Auth0 API routes to work without ANY restriction
-  if (pathname.startsWith('/api/auth/')) {
+  // ALWAYS allow Auth0 routes to work without ANY restriction
+  if (pathname.startsWith('/auth/') || pathname.startsWith('/api/auth/')) {
     return NextResponse.next()
   }
   

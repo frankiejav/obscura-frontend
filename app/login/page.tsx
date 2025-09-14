@@ -19,7 +19,7 @@ export default function LoginPage() {
   }, [user, isLoading, router])
 
   const handleLogin = () => {
-    router.push('/api/auth/login?returnTo=/dashboard')
+    router.push('/auth/login?returnTo=/dashboard')
   }
 
   if (isLoading) {
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 </div>
 
                 <Button 
-                  onClick={() => router.push('/api/auth/login?screen_hint=signup')}
+                  onClick={() => router.push('/auth/login?screen_hint=signup')}
                   variant="outline"
                   className="w-full py-4 text-base font-semibold border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-300"
                   size="lg"

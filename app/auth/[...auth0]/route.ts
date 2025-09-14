@@ -15,16 +15,29 @@ export async function GET(
       const returnTo = request.nextUrl.searchParams.get('returnTo') || '/dashboard';
       const screenHint = request.nextUrl.searchParams.get('screen_hint');
       
-      const loginUrl = new URL('/authorize', process.env.AUTH0_ISSUER_BASE_URL!);
+      // Get the base URL from the request if AUTH0_BASE_URL is not set
+      const baseUrl = process.env.AUTH0_BASE_URL || 
+                      process.env.APP_BASE_URL || 
+                      `https://${request.headers.get('host')}`;
+      
+      // Ensure AUTH0_ISSUER_BASE_URL is properly formatted
+      const issuerUrl = process.env.AUTH0_ISSUER_BASE_URL?.startsWith('http') 
+        ? process.env.AUTH0_ISSUER_BASE_URL
+        : `https://${process.env.AUTH0_ISSUER_BASE_URL || 'auth0.obscuralabs.io'}`;
+        
+      const loginUrl = new URL('/authorize', issuerUrl);
       loginUrl.searchParams.set('response_type', 'code');
       loginUrl.searchParams.set('client_id', process.env.AUTH0_CLIENT_ID!);
-      loginUrl.searchParams.set('redirect_uri', `${process.env.AUTH0_BASE_URL}/api/auth/callback`);
+      loginUrl.searchParams.set('redirect_uri', `${baseUrl}/auth/callback`);
       loginUrl.searchParams.set('scope', 'openid profile email');
       loginUrl.searchParams.set('state', Buffer.from(JSON.stringify({ returnTo })).toString('base64'));
       
       if (screenHint) {
         loginUrl.searchParams.set('screen_hint', screenHint);
       }
+      
+      console.log('Login redirect URL:', loginUrl.toString());
+      console.log('Callback URL:', `${baseUrl}/auth/callback`);
       
       return NextResponse.redirect(loginUrl.toString());
     }
@@ -36,9 +49,19 @@ export async function GET(
     }
     
     if (action === 'logout') {
-      const logoutUrl = new URL('/v2/logout', process.env.AUTH0_ISSUER_BASE_URL!);
+      // Get the base URL from the request if AUTH0_BASE_URL is not set
+      const baseUrl = process.env.AUTH0_BASE_URL || 
+                      process.env.APP_BASE_URL || 
+                      `https://${request.headers.get('host')}`;
+                      
+      // Ensure AUTH0_ISSUER_BASE_URL is properly formatted
+      const issuerUrl = process.env.AUTH0_ISSUER_BASE_URL?.startsWith('http') 
+        ? process.env.AUTH0_ISSUER_BASE_URL
+        : `https://${process.env.AUTH0_ISSUER_BASE_URL || 'auth0.obscuralabs.io'}`;
+        
+      const logoutUrl = new URL('/v2/logout', issuerUrl);
       logoutUrl.searchParams.set('client_id', process.env.AUTH0_CLIENT_ID!);
-      logoutUrl.searchParams.set('returnTo', process.env.AUTH0_BASE_URL!);
+      logoutUrl.searchParams.set('returnTo', baseUrl);
       
       const response = NextResponse.redirect(logoutUrl.toString());
       // Clear the session cookie
