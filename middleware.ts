@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import { auth0 } from "./lib/auth0";
 
-// Routes that require IP check (login/signup pages, not the API routes)
+// Routes that require IP check (login/signup pages)
 const IP_RESTRICTED_ROUTES = ['/login', '/signup']
 
 // Parse allowed IPs from environment variable
@@ -37,13 +38,8 @@ function getClientIP(request: NextRequest): string | null {
   return request.ip || null
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
-  
-  // ALWAYS allow Auth0 routes to work without ANY restriction
-  if (pathname.startsWith('/auth/') || pathname.startsWith('/api/auth/')) {
-    return NextResponse.next()
-  }
   
   // Check if this is an IP-restricted route (login/signup pages ONLY)
   const isIPRestrictedRoute = IP_RESTRICTED_ROUTES.some(route => 
@@ -77,13 +73,18 @@ export function middleware(request: NextRequest) {
     console.log(`Access granted for IP: ${clientIP}`)
   }
   
-  return NextResponse.next()
+  // Apply Auth0 middleware for authentication
+  return await auth0.middleware(request);
 }
 
-// Configure which routes the middleware should run on
 export const config = {
   matcher: [
-    // Match all routes except static files and images
-    '/((?!_next/static|_next/image|favicon.ico|images).*)',
-  ]
-}
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+  ],
+};

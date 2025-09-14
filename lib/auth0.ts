@@ -1,11 +1,16 @@
 import { Auth0Client } from "@auth0/nextjs-auth0/server";
 
-// Map APP_BASE_URL to AUTH0_BASE_URL if needed
-if (process.env.APP_BASE_URL && !process.env.AUTH0_BASE_URL) {
-  process.env.AUTH0_BASE_URL = process.env.APP_BASE_URL;
-}
-
-// Create and export the auth0 instance for server-side usage
-export const auth0 = new Auth0Client();
+// Initialize the Auth0 client 
+export const auth0 = new Auth0Client({
+  // Options are loaded from environment variables by default
+  // The SDK will automatically use these env vars:
+  // AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_CLIENT_SECRET, APP_BASE_URL, AUTH0_SECRET
+  
+  authorizationParameters: {
+    // In v4, these need to be provided explicitly if you use them
+    scope: process.env.AUTH0_SCOPE || 'openid profile email',
+    audience: process.env.AUTH0_AUDIENCE,
+  }
+});
 
 
