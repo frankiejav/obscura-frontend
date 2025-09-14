@@ -8,7 +8,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
 import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight, Key, Download, Sparkles } from 'lucide-react'
-import Header from '@/components/navigation/header'
 
 interface DataRecord {
   id: string
@@ -341,7 +340,6 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      <Header />
       <div className="container mx-auto px-4 sm:px-6 py-8 space-y-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>

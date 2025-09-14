@@ -24,7 +24,6 @@ import {
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import Header from "@/components/navigation/header"
 
 interface Settings {
   profile: {
@@ -201,7 +200,6 @@ export function SettingsPage() {
   if (loading || userLoading) {
     return (
       <div className="min-h-screen bg-neutral-950">
-        <Header />
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="relative">
@@ -218,7 +216,6 @@ export function SettingsPage() {
   if (!user || !settings) {
     return (
       <div className="min-h-screen bg-neutral-950">
-        <Header />
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <Alert className="bg-neutral-900/60 border-white/10 text-white">
             <AlertCircle className="h-4 w-4" />
@@ -233,12 +230,10 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      <Header />
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-6xl">
         <div className="space-y-2 mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-white">Settings</h1>
           <p className="text-neutral-400">Manage your account and application preferences</p>
-        </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
@@ -520,25 +515,26 @@ export function SettingsPage() {
         </TabsContent>
       </Tabs>
 
-      {/* Save Button */}
-      <div className="flex justify-end pt-4">
-        <Button
-          onClick={handleSaveSettings}
-          disabled={saving}
-          className="bg-black hover:bg-gray-800 text-white"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Save Changes
-            </>
-          )}
-        </Button>
+        {/* Save Button */}
+        <div className="flex justify-end pt-4">
+          <Button
+            onClick={handleSaveSettings}
+            disabled={saving}
+            className="bg-black hover:bg-gray-800 text-white"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   )

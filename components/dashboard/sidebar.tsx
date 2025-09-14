@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Search, Users, Settings, LogOut, Shield } from "lucide-react"
+import { Home, Search, Users, Settings, LogOut, Shield, Zap } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
@@ -45,7 +45,7 @@ const navigationItems = [
   },
   {
     title: "Monitoring",
-    url: "/dashboard/data",
+    url: "/dashboard/monitoring",
     icon: Shield,
     roles: ["admin", "client"],
   },
@@ -59,6 +59,12 @@ const navigationItems = [
     title: "Settings",
     url: "/dashboard/settings",
     icon: Settings,
+    roles: ["admin", "client"],
+  },
+  {
+    title: "API Access",
+    url: "/api-docs",
+    icon: Zap,
     roles: ["admin", "client"],
   },
 ]

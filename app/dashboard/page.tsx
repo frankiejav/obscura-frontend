@@ -1,12 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Database, Users, Search, Activity, Shield, TrendingUp, Globe, Zap } from 'lucide-react'
-import Link from 'next/link'
-import Header from '@/components/navigation/header'
-import Footer from '@/components/navigation/footer'
+import { Database, Activity, TrendingUp, Globe, Search, Zap, Shield } from 'lucide-react'
 
 interface DataSource {
   id: string
@@ -178,7 +176,6 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-950">
-        <Header />
         <div className="container mx-auto p-6">
           <div className="flex items-center justify-center h-[60vh]">
             <div className="text-center">
@@ -196,8 +193,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      <Header />
-      
       <div className="container mx-auto px-4 sm:px-6 py-8 space-y-8">
         {/* Header Section */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -399,53 +394,6 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Link href="/dashboard/search">
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative p-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-xl hover:border-white/20 transition-all duration-300 cursor-pointer">
-                <Search className="h-5 w-5 text-white mb-2" />
-                <p className="text-sm font-medium text-white">Search Database</p>
-                <p className="text-xs text-neutral-400">Query exposed credentials</p>
-              </div>
-            </div>
-          </Link>
-          
-          <Link href="/dashboard/monitoring">
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative p-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-xl hover:border-white/20 transition-all duration-300 cursor-pointer">
-                <Shield className="h-5 w-5 text-white mb-2" />
-                <p className="text-sm font-medium text-white">Monitoring</p>
-                <p className="text-xs text-neutral-400">Track identity exposures</p>
-              </div>
-            </div>
-          </Link>
-          
-          <Link href="/dashboard/settings">
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative p-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-xl hover:border-white/20 transition-all duration-300 cursor-pointer">
-                <Users className="h-5 w-5 text-white mb-2" />
-                <p className="text-sm font-medium text-white">Settings</p>
-                <p className="text-xs text-neutral-400">Manage account</p>
-              </div>
-            </div>
-          </Link>
-          
-          <Link href="/api-docs">
-            <div className="group relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <div className="relative p-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-xl hover:border-white/20 transition-all duration-300 cursor-pointer">
-                <Zap className="h-5 w-5 text-white mb-2" />
-                <p className="text-sm font-medium text-white">API Access</p>
-                <p className="text-xs text-neutral-400">Developer resources</p>
-              </div>
-            </div>
-          </Link>
-        </div>
       </div>
     </div>
   )
