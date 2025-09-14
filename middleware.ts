@@ -40,12 +40,12 @@ function getClientIP(request: NextRequest): string | null {
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   
-  // Allow Auth0 API routes to work without IP restriction
-  if (pathname.startsWith('/auth/')) {
+  // ALWAYS allow Auth0 API routes to work without ANY restriction
+  if (pathname.startsWith('/api/auth/')) {
     return NextResponse.next()
   }
   
-  // Check if this is an IP-restricted route (login/signup pages)
+  // Check if this is an IP-restricted route (login/signup pages ONLY)
   const isIPRestrictedRoute = IP_RESTRICTED_ROUTES.some(route => 
     pathname === route || pathname.startsWith(route + '/')
   )
