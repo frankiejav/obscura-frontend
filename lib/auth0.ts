@@ -5,7 +5,7 @@ if (process.env.APP_BASE_URL && !process.env.AUTH0_BASE_URL) {
   process.env.AUTH0_BASE_URL = process.env.APP_BASE_URL;
 }
 
-// Create the Auth0 client - it will use environment variables automatically
+// Create and export the auth0 instance for server-side usage
 export const auth0 = new Auth0Client();
 
 
