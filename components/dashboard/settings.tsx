@@ -19,10 +19,12 @@ import {
   Mail,
   Lock,
   Palette,
-  AlertCircle
+  AlertCircle,
+  Settings
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import Header from "@/components/navigation/header"
 
 interface Settings {
   profile: {
@@ -198,10 +200,16 @@ export function SettingsPage() {
 
   if (loading || userLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center space-y-3">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-gray-500" />
-          <p className="text-sm text-gray-500">Loading settings...</p>
+      <div className="min-h-screen bg-neutral-950">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
+              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-white/30 rounded-full animate-spin animation-delay-150 mx-auto"></div>
+            </div>
+            <p className="mt-4 text-white/60 text-sm tracking-wide">Loading settings...</p>
+          </div>
         </div>
       </div>
     )
@@ -209,48 +217,57 @@ export function SettingsPage() {
 
   if (!user || !settings) {
     return (
-      <Alert className="border-gray-200">
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          Please log in to access settings
-        </AlertDescription>
-      </Alert>
+      <div className="min-h-screen bg-neutral-950">
+        <Header />
+        <div className="container mx-auto px-4 sm:px-6 py-8">
+          <Alert className="bg-neutral-900/60 border-white/10 text-white">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Please log in to access settings
+            </AlertDescription>
+          </Alert>
+        </div>
+      </div>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-6">
-      {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500">Manage your account and application preferences</p>
-      </div>
+    <div className="min-h-screen bg-neutral-950">
+      <Header />
+      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-6xl">
+        {/* Header */}
+        <div className="space-y-2 mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-white">Settings</h1>
+          <p className="text-neutral-400">Manage your account and application preferences</p>
+        </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3 bg-gray-100">
-          <TabsTrigger value="profile" className="data-[state=active]:bg-white">
-            <User className="h-4 w-4 mr-2" />
-            Profile
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="data-[state=active]:bg-white">
-            <Bell className="h-4 w-4 mr-2" />
-            Notifications
-          </TabsTrigger>
-          <TabsTrigger value="display" className="data-[state=active]:bg-white">
-            <Monitor className="h-4 w-4 mr-2" />
-            Display
-          </TabsTrigger>
-        </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+          <TabsList className="grid w-full grid-cols-3 bg-neutral-900/60 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
+              <User className="h-4 w-4 mr-2" />
+              Profile
+            </TabsTrigger>
+            <TabsTrigger value="notifications" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
+              <Bell className="h-4 w-4 mr-2" />
+              Notifications
+            </TabsTrigger>
+            <TabsTrigger value="display" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
+              <Monitor className="h-4 w-4 mr-2" />
+              Display
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Profile Tab */}
-        <TabsContent value="profile" className="space-y-4">
-          <Card className="border-gray-200">
-            <CardHeader>
-              <CardTitle className="text-xl">Profile Settings</CardTitle>
-              <CardDescription>
-                Manage your account information and authentication [[memory:8159793]]
-              </CardDescription>
-            </CardHeader>
+          {/* Profile Tab */}
+          <TabsContent value="profile" className="space-y-4">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <Card className="relative bg-neutral-900/60 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all duration-500">
+                <CardHeader className="border-b border-white/10">
+                  <CardTitle className="text-xl text-white">Profile Settings</CardTitle>
+                  <CardDescription className="text-neutral-400">
+                    Manage your account information and authentication [[memory:8159793]]
+                  </CardDescription>
+                </CardHeader>
             <CardContent className="space-y-6">
               {/* Display Name */}
               <div className="space-y-2">

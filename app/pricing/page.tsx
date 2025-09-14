@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import Header from "@/components/navigation/header"
+import Footer from "@/components/navigation/footer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -26,7 +28,7 @@ const pricingPlans = [
     ],
     icon: <Clock className="h-6 w-6" />,
     popular: false,
-    cta: "Get Started",
+    cta: "Get Daily Access",
   },
   {
     name: "Monthly Plan",
@@ -83,7 +85,7 @@ const pricingPlans = [
     ],
     icon: <Briefcase className="h-6 w-6" />,
     popular: false,
-    cta: "Get Started",
+    cta: "Get Professional",
   },
   {
     name: "Enterprise",
@@ -187,33 +189,8 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-black/90 backdrop-blur-lg border-b border-white/10">
-        <div className="container mx-auto px-4 py-4">
-          <nav className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2">
-              <div className="h-8 w-8 bg-white rounded" />
-              <span className="text-xl font-bold">OBSCURA</span>
-            </Link>
-            <div className="flex items-center space-x-6">
-              <Link href="/" className="text-gray-300 hover:text-white transition-colors">
-                Home
-              </Link>
-              <Link href="/login" className="text-gray-300 hover:text-white transition-colors">
-                Login
-              </Link>
-              <Button 
-                variant="outline" 
-                className="border-white/20 text-white hover:bg-white hover:text-black transition-all"
-                onClick={() => router.push('/login')}
-              >
-                Get Started
-              </Button>
-            </div>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen bg-neutral-950 text-white">
+      <Header />
 
       {/* Hero Section */}
       <section className="py-20 px-4">
@@ -420,31 +397,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-8 px-4 border-t border-gray-800">
-        <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="h-8 w-8 bg-white rounded" />
-              <span className="text-xl font-bold">OBSCURA</span>
-            </div>
-            <div className="flex space-x-6 text-sm text-gray-400">
-              <Link href="/privacy-policy" className="hover:text-white transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms-of-service" className="hover:text-white transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="/contact" className="hover:text-white transition-colors">
-                Contact
-              </Link>
-            </div>
-          </div>
-          <div className="mt-8 text-center text-sm text-gray-500">
-            © 2025 Obscura Labs. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

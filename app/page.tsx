@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import Header from "@/components/navigation/header"
+import Footer from "@/components/navigation/footer"
 import Image from "next/image"
 import Link from "next/link"
 import { Eye, Target, Users, ArrowRight, Database, Bell, Key, BarChart3, Settings, Search, Monitor, Shield, Lock, AlertTriangle, Globe, Zap, TrendingUp, CheckCircle, Download, DollarSign } from "lucide-react"
@@ -10,29 +12,22 @@ import "./animations.css"
 
 export default function LandingPage() {
   const router = useRouter()
-  const [isScrolled, setIsScrolled] = useState(false)
   const [visibleSections, setVisibleSections] = useState(new Set())
   
   const [liveStats, setLiveStats] = useState([
     {
       icon: <Key className="h-8 w-8 text-white" />,
-      number: "1,725,762",
-      label: "Total Credentials"
+      number: "6,480,000",
+      label: "Total Credentials",
+      description: "Leaked Databases + Stealer Logs"
     },
     {
       icon: <Database className="h-8 w-8 text-white" />,
-      number: "44,204,833",
-      label: "Total Cookies"
+      number: "125,175,000",
+      label: "Total Cookies",
+      description: "Active Session Data"
     }
   ])
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   // Intersection Observer for scroll animations
   useEffect(() => {
@@ -74,12 +69,14 @@ export default function LandingPage() {
             {
               icon: <Key className="h-8 w-8 text-white" />,
               number: data.credentials_24h.toLocaleString(),
-              label: "Total Credentials"
+              label: "Total Credentials",
+              description: "Leaked Databases + Stealer Logs"
             },
             {
               icon: <Database className="h-8 w-8 text-white" />,
               number: data.cookies_24h.toLocaleString(),
-              label: "Total Cookies"
+              label: "Total Cookies",
+              description: "Active Session Data"
             }
           ])
         }
@@ -139,29 +136,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-neutral-950">
-      <header className={`sticky top-0 z-50 transition-all duration-500 ${
-        isScrolled 
-          ? 'bg-neutral-900/90 backdrop-blur-xl border-b border-white/10 shadow-lg shadow-black/50' 
-          : 'bg-transparent'
-      }`}>
-        <div className="container mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3 group cursor-pointer">
-            <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={32} height={32} priority className="group-hover:scale-110 transition-transform duration-300" />
-            <span className="text-lg font-semibold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all duration-300">OBSCURA LABS</span>
-          </div>
-                      <Link href="/login">
-              <Button 
-                type="button"
-                variant="outline"
-                size="sm"
-                className="relative border border-white/20 hover:border-white/40 text-white hover:bg-white/10 transition-all duration-500 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] group overflow-hidden touch-manipulation text-sm sm:text-base px-3 sm:px-4 py-2"
-              >
-                <span className="relative z-10">Access Dashboard</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-              </Button>
-            </Link>
-        </div>
-      </header>
+      <Header />
 
       <section id="hero" className="relative py-20 md:py-32 px-4 sm:px-6 bg-gradient-to-b from-neutral-900 to-neutral-950 overflow-hidden min-h-screen flex items-center">
         {/* Animated background pattern */}
@@ -348,6 +323,9 @@ export default function LandingPage() {
                   </div>
                   <div className="text-3xl font-bold text-white mb-2 group-hover:scale-105 transition-transform duration-300">{stat.number}</div>
                   <div className="text-lg font-medium text-neutral-200">{stat.label}</div>
+                  {stat.description && (
+                    <div className="text-sm text-neutral-400 mt-1">{stat.description}</div>
+                  )}
                 </div>
               </div>
             ))}
@@ -409,34 +387,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <footer className="border-t border-white/10 bg-neutral-950 py-8 sm:py-10 md:py-12">
-        <div className="container mx-auto px-4 sm:px-6 text-center">
-          <div className="flex items-center justify-center gap-3 mb-6 group cursor-pointer">
-            <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={24} height={24} className="group-hover:scale-110 transition-transform duration-300" />
-            <span className="text-lg font-semibold text-white group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-400 transition-all duration-300">OBSCURA LABS</span>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 mb-4 sm:mb-6">
-            <Link 
-              href="/privacy-policy" 
-              className="text-neutral-300 hover:text-white transition-colors duration-200 text-sm font-medium"
-            >
-              Privacy Policy
-            </Link>
-            <div className="hidden sm:block w-1 h-1 bg-neutral-500 rounded-full"></div>
-            <Link 
-              href="/terms-of-service" 
-              className="text-neutral-300 hover:text-white transition-colors duration-200 text-sm font-medium"
-            >
-              Terms of Service
-            </Link>
-          </div>
-          
-          <p className="text-sm text-neutral-300">
-            © {new Date().getFullYear()} Obscura Labs LLC. Identity threat intelligence platform.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Database, Users, Search, Activity, Shield } from 'lucide-react'
+import { Database, Users, Search, Activity, Shield, TrendingUp, Globe, Zap } from 'lucide-react'
 import Link from 'next/link'
+import Header from '@/components/navigation/header'
+import Footer from '@/components/navigation/footer'
 
 interface DataSource {
   id: string
@@ -176,11 +177,17 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading dashboard...</p>
+      <div className="min-h-screen bg-neutral-950">
+        <Header />
+        <div className="container mx-auto p-6">
+          <div className="flex items-center justify-center h-[60vh]">
+            <div className="text-center">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
+                <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-white/30 rounded-full animate-spin animation-delay-150 mx-auto"></div>
+              </div>
+              <p className="mt-4 text-white/60 text-sm tracking-wide">Loading dashboard...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -188,134 +195,258 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Link href="/dashboard/search">
-          <Button>
-            <Search className="w-4 h-4 mr-2" />
-            Search Data
-          </Button>
-        </Link>
-      </div>
+    <div className="min-h-screen bg-neutral-950">
+      <Header />
+      
+      <div className="container mx-auto px-4 sm:px-6 py-8 space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">Dashboard</h1>
+            <p className="text-neutral-400 mt-1">Real-time threat intelligence overview</p>
+          </div>
+          <Link href="/dashboard/search">
+            <Button 
+              size="lg"
+              className="group bg-white text-black hover:bg-neutral-200 shadow-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] transition-all duration-500"
+            >
+              <Search className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+              Search Database
+            </Button>
+          </Link>
+        </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Records</CardTitle>
-            <Database className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {stats.totalRecords.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Leaked Databases + Infostealer Data
-            </p>
-          </CardContent>
-        </Card>
+        {/* Statistics Cards with Glow Effect */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <Card className="relative bg-neutral-900/60 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-neutral-300">Total Records</CardTitle>
+                <div className="p-2 bg-white/10 rounded-lg">
+                  <Database className="h-5 w-5 text-white" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-white mb-1">
+                  {stats.totalRecords.toLocaleString()}
+                </div>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-3 w-3 text-green-400" />
+                  <p className="text-xs text-neutral-400">
+                    Leaked Databases + Stealer Logs
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Data Sources</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSources}</div>
-            <p className="text-xs text-muted-foreground">
-              Across all Databases
-            </p>
-          </CardContent>
-        </Card>
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-emerald-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <Card className="relative bg-neutral-900/60 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-neutral-300">Data Sources</CardTitle>
+                <div className="p-2 bg-white/10 rounded-lg">
+                  <Globe className="h-5 w-5 text-white" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-white mb-1">
+                  {stats.totalSources}
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <p className="text-xs text-neutral-400">
+                    {stats.activeSources} Active Sources
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.last24hActivity.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              Records added in last 7 days
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <Card className="relative bg-neutral-900/60 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-neutral-300">Recent Activity</CardTitle>
+                <div className="p-2 bg-white/10 rounded-lg">
+                  <Activity className="h-5 w-5 text-white" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-white mb-1">
+                  {stats.last24hActivity.toLocaleString()}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Zap className="h-3 w-3 text-yellow-400" />
+                  <p className="text-xs text-neutral-400">
+                    Records in last 7 days
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Breach Search Status */}
-      {breachSearchEnabled && (
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-green-800">
-              <Shield className="w-5 h-5" />
-              Breach Search API Active
+          <div className="group relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-2xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <Card className="relative bg-neutral-900/60 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.1)] overflow-hidden">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-neutral-300">API Status</CardTitle>
+                <div className="p-2 bg-white/10 rounded-lg">
+                  <Shield className="h-5 w-5 text-white" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-white mb-1">
+                  Active
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <p className="text-xs text-neutral-400">
+                    All systems operational
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Breach Search Status - Enhanced */}
+        {breachSearchEnabled && (
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl blur-xl"></div>
+            <Card className="relative bg-neutral-900/60 backdrop-blur-sm border-green-500/30 hover:border-green-500/50 transition-all duration-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-white">
+                  <div className="p-2 bg-green-500/20 rounded-lg">
+                    <Shield className="w-5 h-5 text-green-400" />
+                  </div>
+                  Breach Search API Active
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-300">
+                  Data breach search functionality is enabled and available to users.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Recent Records - Enhanced with Apple-like design */}
+        <Card className="bg-neutral-900/60 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all duration-500 overflow-hidden">
+          <CardHeader className="border-b border-white/10">
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-white/10 rounded-lg">
+                  <Activity className="w-5 h-5 text-white" />
+                </div>
+                <span className="text-xl text-white">Recent Records</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="relative flex items-center gap-2 px-3 py-1 bg-green-500/10 rounded-full">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-xs font-medium text-green-400 uppercase tracking-wider">Live</span>
+                </div>
+              </div>
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-green-700">
-              Data breach search functionality is enabled and available to users.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Recent Records */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              Recent Records
-            </div>
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              LIVE
-            </div>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {recentRecords.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No recent records found
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {recentRecords.map((record, index) => (
-                <div
-                  key={`${record.id}_${index}_${record.timestamp}`}
-                  className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
-                    <div className="font-mono text-sm">
-                      <span className="text-xs text-gray-500 block">VICTIM ID</span>
-                      <span className="font-semibold text-primary truncate block">{record.id}</span>
-                    </div>
-                    <div className="font-mono text-sm">
-                      <span className="text-xs text-gray-500 block">EMAIL/USERNAME</span>
-                      <span className="font-semibold truncate block max-w-[200px]" title={record.email || record.username || 'N/A'}>
-                        {record.email || record.username || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="font-mono text-sm">
-                      <span className="text-xs text-gray-500 block">DOMAIN</span>
-                      <span className="font-semibold truncate block max-w-[200px]" title={record.domain || 'N/A'}>
-                        {record.domain || 'N/A'}
-                      </span>
-                    </div>
-                    <div className="font-mono text-sm text-right">
-                      <span className="text-xs text-gray-500 block">DATE</span>
-                      <span className="font-semibold text-gray-700">
-                        {formatDate(record.timestamp)}
-                      </span>
+          <CardContent className="p-0">
+            {recentRecords.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-white/5 rounded-2xl mb-4">
+                  <Database className="w-8 h-8 text-white/40" />
+                </div>
+                <p className="text-neutral-400">No recent records found</p>
+                <p className="text-sm text-neutral-500 mt-1">Data will appear here as it's processed</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/5">
+                {recentRecords.map((record, index) => (
+                  <div
+                    key={`${record.id}_${index}_${record.timestamp}`}
+                    className="group px-6 py-4 hover:bg-white/5 transition-all duration-300"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+                      <div>
+                        <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Victim ID</span>
+                        <span className="font-mono text-sm text-white font-medium truncate block">
+                          {record.id}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Identity</span>
+                        <span className="font-mono text-sm text-white truncate block" title={record.email || record.username || 'N/A'}>
+                          {record.email || record.username || 'N/A'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Domain</span>
+                        <span className="font-mono text-sm text-white truncate block" title={record.domain || 'N/A'}>
+                          {record.domain || 'N/A'}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-xs text-neutral-500 uppercase tracking-wider block mb-1">Timestamp</span>
+                        <span className="font-mono text-sm text-neutral-300">
+                          {formatDate(record.timestamp)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link href="/dashboard/search">
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="relative p-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-xl hover:border-white/20 transition-all duration-300 cursor-pointer">
+                <Search className="h-5 w-5 text-white mb-2" />
+                <p className="text-sm font-medium text-white">Search Database</p>
+                <p className="text-xs text-neutral-400">Query exposed credentials</p>
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </Link>
+          
+          <Link href="/dashboard/monitoring">
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="relative p-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-xl hover:border-white/20 transition-all duration-300 cursor-pointer">
+                <Shield className="h-5 w-5 text-white mb-2" />
+                <p className="text-sm font-medium text-white">Monitoring</p>
+                <p className="text-xs text-neutral-400">Track identity exposures</p>
+              </div>
+            </div>
+          </Link>
+          
+          <Link href="/dashboard/settings">
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-red-500/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="relative p-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-xl hover:border-white/20 transition-all duration-300 cursor-pointer">
+                <Users className="h-5 w-5 text-white mb-2" />
+                <p className="text-sm font-medium text-white">Settings</p>
+                <p className="text-xs text-neutral-400">Manage account</p>
+              </div>
+            </div>
+          </Link>
+          
+          <Link href="/api-docs">
+            <div className="group relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div className="relative p-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 rounded-xl hover:border-white/20 transition-all duration-300 cursor-pointer">
+                <Zap className="h-5 w-5 text-white mb-2" />
+                <p className="text-sm font-medium text-white">API Access</p>
+                <p className="text-xs text-neutral-400">Developer resources</p>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

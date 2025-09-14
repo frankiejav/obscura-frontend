@@ -1,41 +1,12 @@
 "use client"
 
-import Image from "next/image"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { useRouter } from "next/navigation"
+import Header from "@/components/navigation/header"
+import Footer from "@/components/navigation/footer"
 
 export default function TermsOfServicePage() {
-  const router = useRouter()
-  
   return (
     <div className="min-h-screen bg-neutral-950">
-      <header className="bg-neutral-900/80 backdrop-blur-md border-b border-white/10">
-        <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={32} height={32} priority />
-            <span className="text-lg font-semibold text-white">OBSCURA LABS</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link 
-              href="/" 
-              className="flex items-center gap-2 text-neutral-300 hover:text-white transition-colors duration-200"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Link>
-            <Button 
-              variant="outline"
-              size="sm"
-              className="border border-white/20 hover:border-white/40 text-white hover:bg-white/5 transition-all duration-300"
-              onClick={() => router.push('/login')}
-            >
-              Access Dashboard
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       <main className="py-16 px-6">
         <div className="container mx-auto max-w-4xl">
@@ -98,17 +69,7 @@ export default function TermsOfServicePage() {
         </div>
       </main>
 
-      <footer className="border-t border-white/10 bg-neutral-950 py-8">
-        <div className="container mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <Image src="/images/symbolwhite.png" alt="Obscura Labs" width={20} height={20} />
-            <span className="text-sm font-semibold text-white">OBSCURA LABS</span>
-          </div>
-          <p className="text-xs text-neutral-400">
-            © {new Date().getFullYear()} Obscura Labs LLC. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

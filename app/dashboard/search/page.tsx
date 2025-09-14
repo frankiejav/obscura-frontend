@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight, Key, Download } from 'lucide-react'
+import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight, Key, Download, Sparkles } from 'lucide-react'
+import Header from '@/components/navigation/header'
 
 interface DataRecord {
   id: string
@@ -339,13 +340,20 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Data Search</h1>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary">
-            {totalResults} total records found
-          </Badge>
+    <div className="min-h-screen bg-neutral-950">
+      <Header />
+      <div className="container mx-auto px-4 sm:px-6 py-8 space-y-8">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">Data Search</h1>
+            <p className="text-neutral-400 mt-1">Query exposed credentials and session data</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
+              <span className="text-sm font-medium text-white">
+                {totalResults.toLocaleString()} records found
+              </span>
+            </div>
           {(results || breachResults) && totalResults > 0 && (
             <Button onClick={handleSaveToJson} variant="outline" size="sm">
               <Download className="w-4 h-4 mr-2" />
@@ -355,32 +363,37 @@ export default function SearchPage() {
         </div>
       </div>
 
-      {/* Search Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="w-5 h-5" />
-            Search Filters
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        {/* Search Filters with Glow */}
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
+          <Card className="relative bg-neutral-900/60 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all duration-500">
+            <CardHeader className="border-b border-white/10">
+              <CardTitle className="flex items-center gap-3 text-white">
+                <div className="p-2 bg-white/10 rounded-lg">
+                  <Filter className="w-5 h-5 text-white" />
+                </div>
+                Search Filters
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search Term</label>
-              <Input
-                placeholder="Enter search term..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyPress={handleKeyPress}
-              />
-            </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-neutral-300">Search Term</label>
+                <Input
+                  placeholder="Enter search term..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  className="bg-neutral-800/50 border-white/10 text-white placeholder:text-neutral-500 focus:border-white/30 focus:bg-neutral-800/70 transition-all"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Search Type</label>
-              <Select value={searchType} onValueChange={setSearchType}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-neutral-300">Search Type</label>
+                <Select value={searchType} onValueChange={setSearchType}>
+                  <SelectTrigger className="bg-neutral-800/50 border-white/10 text-white focus:border-white/30">
+                    <SelectValue />
+                  </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="auto">Auto-detect</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
@@ -393,41 +406,46 @@ export default function SearchPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Profiles</label>
-              <div className="flex items-center space-x-2 h-10">
-                <Switch
-                  checked={profilesEnabled}
-                  onCheckedChange={setProfilesEnabled}
-                  id="profiles-toggle"
-                />
-                <label htmlFor="profiles-toggle" className="text-sm">
-                  {profilesEnabled ? 'ON' : 'OFF'}
-                </label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-neutral-300">Profiles</label>
+                <div className="flex items-center space-x-2 h-10">
+                  <Switch
+                    checked={profilesEnabled}
+                    onCheckedChange={setProfilesEnabled}
+                    id="profiles-toggle"
+                  />
+                  <label htmlFor="profiles-toggle" className="text-sm text-neutral-400">
+                    {profilesEnabled ? 'ON' : 'OFF'}
+                  </label>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Cookies</label>
-              <div className="flex items-center space-x-2 h-10">
-                <Switch
-                  checked={cookiesEnabled}
-                  onCheckedChange={setCookiesEnabled}
-                  disabled={!profilesEnabled}
-                  id="cookies-toggle"
-                />
-                <label htmlFor="cookies-toggle" className="text-sm text-muted-foreground">
-                  {!profilesEnabled ? 'Enable Profiles first' : cookiesEnabled ? 'ON' : 'OFF'}
-                </label>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-neutral-300">Cookies</label>
+                <div className="flex items-center space-x-2 h-10">
+                  <Switch
+                    checked={cookiesEnabled}
+                    onCheckedChange={setCookiesEnabled}
+                    disabled={!profilesEnabled}
+                    id="cookies-toggle"
+                  />
+                  <label htmlFor="cookies-toggle" className="text-sm text-neutral-400">
+                    {!profilesEnabled ? 'Enable Profiles first' : cookiesEnabled ? 'ON' : 'OFF'}
+                  </label>
               </div>
             </div>
           </div>
 
-          <div className="flex justify-center">
-            <Button onClick={handleSearch} disabled={loading || breachLoading} className="px-8">
-              {loading || breachLoading ? 'Searching...' : 'Search All Sources'}
-            </Button>
-          </div>
+            <div className="flex justify-center">
+              <Button 
+                onClick={handleSearch} 
+                disabled={loading || breachLoading} 
+                className="px-8 bg-white text-black hover:bg-neutral-200 transition-all duration-300 shadow-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+              >
+                <Search className="w-4 h-4 mr-2" />
+                {loading || breachLoading ? 'Searching...' : 'Search All Sources'}
+              </Button>
+            </div>
 
           {breachResults && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -443,8 +461,9 @@ export default function SearchPage() {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
 
       {/* Search Results */}
       {(results || breachResults) && (
