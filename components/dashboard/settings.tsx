@@ -235,10 +235,10 @@ export function SettingsPage() {
     <div className="min-h-screen bg-neutral-950">
       <Header />
       <div className="container mx-auto px-4 sm:px-6 py-8 max-w-6xl">
-        {/* Header */}
         <div className="space-y-2 mb-8">
           <h1 className="text-3xl sm:text-4xl font-bold text-white">Settings</h1>
           <p className="text-neutral-400">Manage your account and application preferences</p>
+        </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
@@ -408,6 +408,7 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+            </div>
         </TabsContent>
 
         {/* Notifications Tab */}
@@ -538,11 +539,6 @@ export function SettingsPage() {
             </>
           )}
         </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-        </Tabs>
       </div>
     </div>
   )
