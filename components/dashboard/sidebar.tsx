@@ -30,7 +30,13 @@ interface DashboardSidebarProps {
   }
 }
 
-const navigationItems = [
+const navigationItems: Array<{
+  title: string
+  url: string
+  icon: any
+  roles: string[]
+  external?: boolean
+}> = [
   {
     title: "Overview",
     url: "/dashboard",
@@ -62,10 +68,11 @@ const navigationItems = [
     roles: ["admin", "client"],
   },
   {
-    title: "API Access",
-    url: "/api-docs",
+    title: "API",
+    url: "https://docs.obscuralabs.io/api",
     icon: Zap,
     roles: ["admin", "client"],
+    external: true,
   },
 ]
 
@@ -110,10 +117,17 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                     isActive={pathname === item.url}
                     className="font-mono text-sm hover:bg-white/10 hover:text-white data-[active=true]:bg-white/20 data-[active=true]:text-white"
                   >
-                    <Link href={item.url}>
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </Link>
+                    {item.external ? (
+                      <a href={item.url} target="_blank" rel="noopener noreferrer">
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </a>
+                    ) : (
+                      <Link href={item.url}>
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
