@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 import Header from "@/components/navigation/header"
@@ -9,7 +9,7 @@ import StripeCheckout from "@/components/payments/StripeCheckout"
 import CryptoCheckout from "@/components/payments/CryptoCheckout"
 import { Button } from "@/components/ui/button"
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   
@@ -135,5 +135,17 @@ export default function CheckoutPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
+        <div className="animate-pulse text-white">Loading checkout...</div>
+      </div>
+    }>
+      <CheckoutContent />
+    </Suspense>
   )
 }
