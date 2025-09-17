@@ -21,6 +21,9 @@ AUTH0_CONNECTION=Username-Password-Authentication
 # Optional: Auth0 Audience (for API access)
 AUTH0_AUDIENCE=your-api-identifier
 AUTH0_SCOPE=openid profile email
+
+# Admin Configuration
+ADMIN_EMAIL=your-admin-email@example.com  # Email allowed to self-upgrade account type
 ```
 
 ### For Vercel/Production (Environment Variables UI)
