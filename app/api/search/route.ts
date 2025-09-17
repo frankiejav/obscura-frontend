@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { searchDataRecords, searchProfileCredentials, searchProfileCookies } from '@/lib/data-ingestion'
+import { protectedRoute } from '@/lib/feature-guards'
+import { Feature } from '@/lib/account-types'
+import { getUserSubscription } from '@/lib/user-subscription'
+import { 
+  redactCredentialRecord, 
+  redactLeakCheckResult, 
+  redactCookieRecords,
+  addRedactionNotice 
+} from '@/lib/data-redaction'
 
-export async function POST(request: NextRequest) {
+async function handleSearch(request: NextRequest) {
   try {
     const body = await request.json()
     const { 
@@ -20,6 +29,10 @@ export async function POST(request: NextRequest) {
       cookieLimit = 10
     } = body
 
+    // Get user subscription to determine if redaction is needed
+    const subscription = await getUserSubscription(request)
+    const accountType = subscription?.accountType || 'free'
+
     // Convert date strings to Date objects if provided
     const from = fromDate ? new Date(fromDate) : undefined
     const to = toDate ? new Date(toDate) : undefined
@@ -35,6 +48,11 @@ export async function POST(request: NextRequest) {
       limit,
     })
 
+    // Apply redaction to ClickHouse results
+    const redactedResults = result.results.map((record: any) => 
+      redactCredentialRecord(record, accountType)
+    )
+
     let profileResults: any[] = []
     let profileCookies: any[] = []
     let profilePagination = { total: 0, pages: 0, current: profilePage }
@@ -46,13 +64,17 @@ export async function POST(request: NextRequest) {
       
       // Search credentials with pagination
       const credentialsResult = await searchProfileCredentials(victimIds, profilePage, profileLimit)
-      profileResults = credentialsResult.results
+      // Apply redaction to profile credentials
+      profileResults = credentialsResult.results.map((record: any) => 
+        redactCredentialRecord(record, accountType)
+      )
       profilePagination = credentialsResult.pagination
       
       // Search cookies only if enabled
       if (cookiesEnabled) {
         const cookiesResult = await searchProfileCookies(victimIds, cookiePage, cookieLimit)
-        profileCookies = cookiesResult.results
+        // Apply redaction to cookies
+        profileCookies = redactCookieRecords(cookiesResult.results, accountType)
         cookiePagination = cookiesResult.pagination
       }
     }
@@ -115,7 +137,9 @@ export async function POST(request: NextRequest) {
         })
 
         if (leakCheckResponse.ok) {
-          breachResults = await leakCheckResponse.json()
+          const rawBreachResults = await leakCheckResponse.json()
+          // Apply redaction to LeakCheck results
+          breachResults = redactLeakCheckResult(rawBreachResults, accountType)
           console.log('LeakCheck API returned:', breachResults?.found || 0, 'results')
         } else {
           const errorText = await leakCheckResponse.text()
@@ -145,8 +169,9 @@ export async function POST(request: NextRequest) {
       // Continue without breach results if API fails
     }
 
-    return NextResponse.json({
-      results: result.results,
+    // Build response with redacted data
+    const response = {
+      results: redactedResults,
       profileResults: profileResults,
       profileCookies: profileCookies,
       breachResults: breachResults,
@@ -156,7 +181,12 @@ export async function POST(request: NextRequest) {
       aggregations: result.aggregations,
       profilesEnabled,
       cookiesEnabled,
-    })
+    }
+
+    // Add redaction notice to response if applicable
+    const finalResponse = addRedactionNotice(response, accountType)
+
+    return NextResponse.json(finalResponse)
   } catch (error) {
     console.error('Error searching data:', error)
     return NextResponse.json({
@@ -188,3 +218,10 @@ export async function POST(request: NextRequest) {
     }, { status: 500 })
   }
 }
+
+// Export the protected route with feature checks
+export const POST = protectedRoute(handleSearch, {
+  feature: Feature.SEARCH,
+  checkLimit: 'lookups',
+  incrementUsage: 'lookups',
+})

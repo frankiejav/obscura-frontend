@@ -92,11 +92,11 @@ export default function LandingPage() {
     return () => clearInterval(interval)
   }, [])
 
-  const overviewBullets = [
-    "Continuous aggregation of database breaches, ransomware leaks, and stealer logs",
-    "Advanced normalization across emails, usernames, devices, and sessions",
-    "Real-time monitoring for domains and identity exposures",
-    "API access and bulk export capabilities for research"
+  const keyFeatures = [
+    "6.5B+ normalized records from breaches and stealer logs",
+    "Real-time monitoring with < 1 minute alert latency",
+    "API access and bulk export for security teams",
+    "Free access for law enforcement and researchers"
   ]
 
   const capabilities = [
@@ -163,12 +163,8 @@ export default function LandingPage() {
               </span>
             </h1>
             
-            <p className="text-lg sm:text-xl text-neutral-200 mb-4 md:mb-6 max-w-4xl mx-auto leading-relaxed animate-fade-in-up animation-delay-200 px-4">
-              Continuous aggregation of database breaches, ransomware leaks, and stealer logs. Real-time intelligence for cybersecurity research.
-            </p>
-            
-            <p className="text-base sm:text-lg text-neutral-300 mb-8 md:mb-12 max-w-3xl mx-auto animate-fade-in-up animation-delay-400 px-4">
-              Monitor any email address, phone number, username, or domain for exposed credentials and session data. Get instant alerts when identities you're tracking appear in newly collected threat data.
+            <p className="text-lg sm:text-xl text-neutral-200 mb-8 md:mb-12 max-w-4xl mx-auto leading-relaxed animate-fade-in-up animation-delay-200 px-4">
+              Real-time monitoring and alerts for exposed credentials and session data. Track any email, phone, username, or domain across billions of breach records.
             </p>
             
             {/* Key Features */}
@@ -232,19 +228,14 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="overview" className={`py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-neutral-950 transition-all duration-1000 ${
-        visibleSections.has('overview') ? 'opacity-100 translate-y-0' : 'opacity-100'
-      }`}>
+      <section id="overview" className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-neutral-950 transition-all duration-1000">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12 md:mb-16 px-4">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 md:mb-6 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-white hover:to-gray-400 transition-all duration-500 cursor-default animate-on-scroll">Platform Overview</h2>
-            <p className="text-base sm:text-lg text-neutral-200 max-w-4xl mx-auto leading-relaxed mb-8 md:mb-12 animate-on-scroll">
-              Obscura Labs continuously aggregates and normalizes database breaches, ransomware leaks, and stealer logs to provide comprehensive identity threat intelligence. Our platform continuously collects compromised credentials and session data, making it searchable and monitorable for cybersecurity research.
-            </p>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4 md:mb-6 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-white hover:to-gray-400 transition-all duration-500 cursor-default animate-on-scroll">Why Obscura Labs</h2>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto mb-12 md:mb-16 px-4">
-            {overviewBullets.map((bullet, index) => (
+            {keyFeatures.map((bullet, index) => (
               <div key={index} className="flex items-start gap-3 text-left">
                 <div className="w-2 h-2 bg-white rounded-full mt-2 flex-shrink-0"></div>
                 <span className="text-neutral-200">{bullet}</span>
@@ -258,10 +249,7 @@ export default function LandingPage() {
                 key={index} 
                 className="group p-6 sm:p-8 rounded-2xl bg-neutral-900/60 backdrop-blur-sm ring-1 ring-white/10 hover:ring-white/30 transition-all duration-500 hover:-translate-y-1 sm:hover:-translate-y-2 hover:shadow-[0_20px_60px_rgba(255,255,255,0.1)] relative overflow-hidden animate-on-scroll"
                 style={{
-                  animationDelay: `${index * 100}ms`,
-                  opacity: visibleSections.has('overview') ? 1 : 0.8,
-                  transform: visibleSections.has('overview') ? 'translateY(0)' : 'translateY(0)',
-                  transition: 'all 0.8s ease'
+                  animationDelay: `${index * 100}ms`
                 }}
               >
                 {/* Glow effect */}
@@ -285,9 +273,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="stats" className={`py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-neutral-950 transition-all duration-1000 ${
-        visibleSections.has('stats') ? 'opacity-100 translate-y-0' : 'opacity-100'
-      }`}>
+      <section id="stats" className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-neutral-950 transition-all duration-1000">
         <div className="container mx-auto max-w-6xl">
           <div className="text-center mb-12 md:mb-16 px-4">
             <div className="flex items-center justify-center gap-3 mb-4 md:mb-6">
@@ -305,10 +291,7 @@ export default function LandingPage() {
                 key={index} 
                 className="group bg-neutral-900/60 backdrop-blur-sm rounded-2xl ring-1 ring-white/10 p-6 text-center hover:ring-white/30 transition-all duration-500 hover:shadow-[0_0_60px_rgba(255,255,255,0.15)] hover:-translate-y-1 relative overflow-hidden animate-on-scroll"
                 style={{
-                  animationDelay: `${index * 200}ms`,
-                  opacity: visibleSections.has('stats') ? 1 : 0.8,
-                  transform: visibleSections.has('stats') ? 'translateY(0) scale(1)' : 'translateY(0) scale(1)',
-                  transition: 'all 0.8s ease'
+                  animationDelay: `${index * 200}ms`
                 }}
               >
                 {/* Animated background gradient */}
@@ -333,32 +316,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section id="law-enforcement" className={`py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-neutral-950 transition-all duration-1000 ${
-        visibleSections.has('law-enforcement') ? 'opacity-100 translate-y-0' : 'opacity-100'
-      }`}>
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-8 md:mb-12 px-4">
-            <div className="group bg-neutral-900/60 backdrop-blur-sm p-8 sm:p-10 md:p-12 rounded-2xl ring-1 ring-white/10 hover:ring-white/30 transition-all duration-700 hover:shadow-[0_0_80px_rgba(255,255,255,0.1)] relative overflow-hidden animate-on-scroll">
-              {/* Animated gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-              
-              <div className="relative z-10">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-6 group-hover:scale-110 group-hover:shadow-[0_0_40px_rgba(255,255,255,0.5)] transition-all duration-500">
-                  <Shield className="h-8 w-8 text-black" />
-                </div>
-                <h2 className="text-3xl font-bold text-white mb-6 group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-gray-300 transition-all duration-500">Law Enforcement & Research Access</h2>
-                <p className="text-neutral-200 text-lg leading-relaxed max-w-3xl mx-auto">
-                  We provide free full access to our database for vetted researchers and law enforcement agencies investigating cybercrime, identity theft, and data breaches.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <section id="cta" className={`py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-gradient-to-b from-neutral-900 to-neutral-950 relative overflow-hidden transition-all duration-1000 ${
-        visibleSections.has('cta') ? 'opacity-100 translate-y-0' : 'opacity-100'
-      }`}>
+      <section id="cta" className="py-16 sm:py-20 md:py-24 px-4 sm:px-6 bg-gradient-to-b from-neutral-900 to-neutral-950 relative overflow-hidden transition-all duration-1000">
         {/* Animated background elements */}
         <div className="absolute inset-0">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-white/5 rounded-full blur-3xl animate-pulse" />
@@ -366,9 +325,9 @@ export default function LandingPage() {
         
         <div className="container mx-auto max-w-4xl text-center relative z-10 px-4">
           <div className="text-white flex flex-col items-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4 md:mb-6 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-white hover:to-gray-400 transition-all duration-500 cursor-default animate-on-scroll">Start Monitoring Identities</h2>
+            <            h2 className="text-2xl sm:text-3xl font-bold mb-4 md:mb-6 hover:text-transparent hover:bg-clip-text hover:bg-gradient-to-r hover:from-white hover:to-gray-400 transition-all duration-500 cursor-default animate-on-scroll">Ready to Get Started?</h2>
             <p className="text-lg sm:text-xl text-neutral-200 mb-6 md:mb-8 max-w-2xl animate-on-scroll">
-              Search exposures, enable monitoring, and access our API for research.
+              Join security teams and researchers protecting millions from identity theft.
             </p>
             <Link href="/login">
               <Button 

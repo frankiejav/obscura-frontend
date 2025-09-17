@@ -9,8 +9,10 @@ import {
   addMonitoringNotification
 } from '@/lib/neon-db'
 import { searchDataRecords, searchCookieRecords } from '@/lib/data-ingestion'
+import { protectedRoute } from '@/lib/feature-guards'
+import { Feature } from '@/lib/account-types'
 
-export async function GET(request: NextRequest) {
+async function getMonitoringTargets(request: NextRequest) {
   try {
     // Check if Auth0 is configured
     if (!auth0) {
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+async function addTarget(request: NextRequest) {
   try {
     // Check if Auth0 is configured
     if (!auth0) {
@@ -109,6 +111,16 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
+// Export protected routes with feature checks
+export const GET = protectedRoute(getMonitoringTargets, {
+  feature: Feature.CREDENTIAL_MONITORING,
+})
+
+export const POST = protectedRoute(addTarget, {
+  feature: Feature.CREDENTIAL_MONITORING,
+  checkLimit: 'monitoringTargets',
+})
 
 export async function scanTarget(target: any, userId: string, userEmail: string) {
   try {

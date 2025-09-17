@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight, Key, Download, Sparkles } from 'lucide-react'
+import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight, Key, Download, Sparkles, Lock } from 'lucide-react'
+import { RedactionNotice, RedactedField, RedactedBadge } from '@/components/redaction/RedactionNotice'
 
 interface DataRecord {
   id: string
@@ -15,6 +16,9 @@ interface DataRecord {
   email?: string
   username?: string
   password?: string
+  password_redacted?: boolean
+  password_hash?: string
+  password_hash_redacted?: boolean
   ip?: string
   domain?: string
   source: string
@@ -47,6 +51,7 @@ interface CookieRecord {
   cookie_name: string
   cookie_path: string
   cookie_value?: string
+  cookies_redacted?: boolean
   cookie_value_length: number
   secure: boolean
   cookie_type: string
@@ -80,6 +85,12 @@ interface SearchResult {
   }
   profilesEnabled?: boolean
   cookiesEnabled?: boolean
+  redaction?: {
+    applied: boolean
+    message: string
+    upgrade_url: string
+    fields_redacted: string[]
+  }
 }
 
 interface BreachResult {
@@ -95,6 +106,11 @@ interface BreachResult {
   last_name?: string
   username?: string
   password?: string
+  password_redacted?: boolean
+  password_plain?: string
+  password_plain_redacted?: boolean
+  password_hash?: string
+  password_hash_redacted?: boolean
   name?: string
   dob?: string
   address?: string
@@ -467,6 +483,13 @@ export default function SearchPage() {
       {(results || breachResults) && (
         <div className="space-y-6">
           {/* Internal Data Results */}
+          {/* Redaction Notice */}
+          {results?.redaction?.applied && (
+            <div className="mb-4">
+              <RedactionNotice compact />
+            </div>
+          )}
+
           {results && results.results.length > 0 && (
             <Card>
               <CardHeader>
@@ -516,8 +539,20 @@ export default function SearchPage() {
                                 <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
                                   <Key className="w-3 h-3" />
                                   Password
+                                  {record.password_redacted && (
+                                    <Lock className="w-3 h-3 text-yellow-500" />
+                                  )}
                                 </span>
-                                <span className="break-words font-mono text-red-600">{record.password}</span>
+                                {record.password_redacted ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-neutral-500">••••••••</span>
+                                    <Badge variant="secondary" className="text-xs bg-yellow-900/30 text-yellow-400 border-yellow-500/30">
+                                      Redacted
+                                    </Badge>
+                                  </div>
+                                ) : (
+                                  <span className="break-words font-mono text-red-600">{record.password}</span>
+                                )}
                               </div>
                             )}
                             {record.url && (
@@ -729,8 +764,20 @@ export default function SearchPage() {
                                 <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
                                   <Key className="w-3 h-3" />
                                   Password
+                                  {record.password_redacted && (
+                                    <Lock className="w-3 h-3 text-yellow-500" />
+                                  )}
                                 </span>
-                                <span className="break-words font-mono text-red-600">{record.password}</span>
+                                {record.password_redacted ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-neutral-500">••••••••</span>
+                                    <Badge variant="secondary" className="text-xs bg-yellow-900/30 text-yellow-400 border-yellow-500/30">
+                                      Redacted
+                                    </Badge>
+                                  </div>
+                                ) : (
+                                  <span className="break-words font-mono text-red-600">{record.password}</span>
+                                )}
                               </div>
                             )}
                             {record.url && (
@@ -901,10 +948,24 @@ export default function SearchPage() {
                             </div>
                             {record.cookie_value && (
                               <div className="flex flex-col">
-                                <span className="font-medium text-xs text-muted-foreground">Value</span>
-                                <span className="break-words font-mono text-xs">
-                                  {record.cookie_value.length > 50 ? `${record.cookie_value.substring(0, 50)}...` : record.cookie_value}
+                                <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
+                                  Value
+                                  {record.cookies_redacted && (
+                                    <Lock className="w-3 h-3 text-yellow-500" />
+                                  )}
                                 </span>
+                                {record.cookies_redacted ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-xs text-neutral-500">••••••••••••</span>
+                                    <Badge variant="secondary" className="text-xs bg-yellow-900/30 text-yellow-400 border-yellow-500/30">
+                                      Redacted
+                                    </Badge>
+                                  </div>
+                                ) : (
+                                  <span className="break-words font-mono text-xs">
+                                    {record.cookie_value.length > 50 ? `${record.cookie_value.substring(0, 50)}...` : record.cookie_value}
+                                  </span>
+                                )}
                               </div>
                             )}
                             <div className="flex flex-col">
@@ -1037,8 +1098,22 @@ export default function SearchPage() {
                             )}
                             {breach.password && (
                               <div className="flex flex-col">
-                                <span className="font-medium text-xs text-muted-foreground">Password</span>
-                                <span className="break-words">{breach.password}</span>
+                                <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
+                                  Password
+                                  {breach.password_redacted && (
+                                    <Lock className="w-3 h-3 text-yellow-500" />
+                                  )}
+                                </span>
+                                {breach.password_redacted ? (
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-mono text-neutral-500">••••••••</span>
+                                    <Badge variant="secondary" className="text-xs bg-yellow-900/30 text-yellow-400 border-yellow-500/30">
+                                      Redacted
+                                    </Badge>
+                                  </div>
+                                ) : (
+                                  <span className="break-words font-mono text-red-600">{breach.password}</span>
+                                )}
                               </div>
                             )}
                             {breach.name && (

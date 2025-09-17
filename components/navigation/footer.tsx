@@ -5,15 +5,12 @@ const footerLinks = [
   { label: "Privacy Policy", href: "/privacy-policy" },
   { label: "Terms of Service", href: "/terms-of-service" },
   { label: "Compliance", href: "/compliance" },
-  { label: "Responsible Disclosure", href: "/responsible-disclosure" },
 ]
 
 const mainLinks = [
-  { label: "Solutions", href: "/solutions" },
-  { label: "Blog", href: "/blog" },
-  { label: "API Docs", href: "/api-docs" },
-  { label: "Pricing", href: "/pricing" },
   { label: "About", href: "/about" },
+  { label: "Pricing", href: "/pricing" },
+  { label: "API Docs", href: "/api-docs" },
   { label: "Contact", href: "/contact" },
 ]
 

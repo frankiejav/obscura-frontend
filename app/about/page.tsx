@@ -30,11 +30,6 @@ const values = [
     icon: <Target className="h-8 w-8 text-white" />,
     title: "Actionable Intelligence",
     description: "We provide normalized, deduplicated data that security teams can immediately act upon."
-  },
-  {
-    icon: <Lock className="h-8 w-8 text-white" />,
-    title: "Responsible Disclosure",
-    description: "We work with organizations to responsibly handle and protect sensitive exposure data."
   }
 ]
 

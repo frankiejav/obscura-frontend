@@ -113,11 +113,7 @@ export default function RestrictedPage() {
             <p className="text-xs text-neutral-500">
               Learn more about our{' '}
               <a href="/about" className="text-white/60 hover:text-white transition-colors">
-                mission
-              </a>{' '}
-              and{' '}
-              <a href="/solutions" className="text-white/60 hover:text-white transition-colors">
-                solutions
+                mission and solutions
               </a>
             </p>
           </div>

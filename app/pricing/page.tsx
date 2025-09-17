@@ -11,13 +11,13 @@ const pricingPlans = [
   {
     name: "Starter",
     description: "Perfect for individuals",
-    price: "$9.99",
+    price: "$19.99",
     period: "/month",
     features: [
       { name: "200 lookups per day", included: true },
-      { name: "Basic monitoring", included: true },
       { name: "Dashboard access", included: true },
       { name: "CSV/JSON exports", included: true },
+      { name: "Credential Monitoring", included: false },
       { name: "API access", included: false },
       { name: "Priority support", included: false },
     ],
@@ -29,13 +29,13 @@ const pricingPlans = [
     name: "Professional",
     description: "For security professionals",
     price: "$99",
-    period: "/month",
+    period: "/quarter",
     features: [
-      { name: "10,000 API credits", included: true },
-      { name: "Bulk lookups", included: true },
-      { name: "Advanced monitoring", included: true },
-      { name: "API access", included: true },
+      { name: "10,000 API credits /month", included: true },
+      { name: "Unlimited lookups", included: true },
       { name: "CSV/JSON exports", included: true },
+      { name: "Credential Monitoring", included: true },
+      { name: "API access", included: true },
       { name: "Priority support", included: true },
     ],
     icon: <Zap className="h-6 w-6" />,
@@ -64,11 +64,13 @@ const pricingPlans = [
 export default function PricingPage() {
   const router = useRouter()
 
-  const handlePlanSelect = (planName: string) => {
+  const handlePlanSelect = (planName: string, planPrice: string) => {
     if (planName === "Enterprise") {
       router.push("/contact")
     } else {
-      router.push("/login")
+      // Extract numeric price from string like "$99" or "$19.99"
+      const price = parseFloat(planPrice.replace(/[^0-9.]/g, ''))
+      router.push(`/checkout?plan=${planName}&price=${price}`)
     }
   }
 
@@ -84,7 +86,7 @@ export default function PricingPage() {
               Choose Your Plan
             </h1>
             <p className="text-neutral-400 text-lg">
-              Protect your digital identity with our comprehensive monitoring solutions
+              Flexible pricing for security teams and researchers
             </p>
           </div>
 
@@ -170,7 +172,7 @@ export default function PricingPage() {
 
                   {/* CTA Button */}
                   <Button 
-                    onClick={() => handlePlanSelect(plan.name)}
+                    onClick={() => handlePlanSelect(plan.name, plan.price)}
                     className={`group relative w-full py-4 text-base font-semibold ${
                       plan.popular 
                         ? 'bg-white text-black hover:bg-neutral-200' 

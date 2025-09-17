@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { searchDataRecords } from '@/lib/data-ingestion'
+import { protectedRoute } from '@/lib/feature-guards'
+import { Feature } from '@/lib/account-types'
 
-export async function GET(request: NextRequest) {
+async function getDataRecords(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const first = parseInt(searchParams.get('first') || '10')
@@ -51,4 +53,9 @@ export async function GET(request: NextRequest) {
       totalCount: 0,
     })
   }
-} 
+}
+
+// Export protected route with feature checks
+export const GET = protectedRoute(getDataRecords, {
+  feature: Feature.DATA_EXPORT,
+})
