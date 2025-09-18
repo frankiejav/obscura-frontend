@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
     }
     
     // Verify IPN signature
-    if (!verifyNowPaymentsSignature(payload, signature, process.env.NP_IPN_KEY!)) {
+    const isValidSignature = await verifyNowPaymentsSignature(payload, signature, process.env.NP_IPN_KEY!);
+    if (!isValidSignature) {
       console.error('Invalid NowPayments signature');
       return new NextResponse('Invalid signature', { status: 401 });
     }

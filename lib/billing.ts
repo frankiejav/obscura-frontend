@@ -115,28 +115,56 @@ export async function reactivateStripeSubscription(subscriptionId: string): Prom
 
 /**
  * Verify NowPayments IPN signature
+ * Note: This function needs to run in Node.js runtime, not Edge
  */
-export function verifyNowPaymentsSignature(
+export async function verifyNowPaymentsSignature(
   payload: any,
   signature: string,
   ipnSecret: string
-): boolean {
-  const crypto = require('crypto');
-  const sortedKeys = Object.keys(payload).sort();
-  const sortedPayload: any = {};
-  
-  for (const key of sortedKeys) {
-    if (key !== 'hmac') {
-      sortedPayload[key] = payload[key];
+): Promise<boolean> {
+  try {
+    // For Edge runtime compatibility, we'll use Web Crypto API
+    const encoder = new TextEncoder();
+    const sortedKeys = Object.keys(payload).sort();
+    const sortedPayload: any = {};
+    
+    for (const key of sortedKeys) {
+      if (key !== 'hmac') {
+        sortedPayload[key] = payload[key];
+      }
     }
+    
+    const paramString = JSON.stringify(sortedPayload);
+    const keyData = encoder.encode(ipnSecret);
+    const messageData = encoder.encode(paramString);
+    
+    // Import the key for HMAC
+    const cryptoKey = await crypto.subtle.importKey(
+      'raw',
+      keyData,
+      { name: 'HMAC', hash: 'SHA-512' },
+      false,
+      ['sign']
+    );
+    
+    // Generate the signature
+    const signatureBuffer = await crypto.subtle.sign(
+      'HMAC',
+      cryptoKey,
+      messageData
+    );
+    
+    // Convert to hex string
+    const hashArray = Array.from(new Uint8Array(signatureBuffer));
+    const calculatedSignature = hashArray
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    return calculatedSignature === signature;
+  } catch (error) {
+    console.error('Error verifying NowPayments signature:', error);
+    return false;
   }
-  
-  const paramString = JSON.stringify(sortedPayload);
-  const hmac = crypto.createHmac('sha512', ipnSecret);
-  hmac.update(paramString);
-  const calculatedSignature = hmac.digest('hex');
-  
-  return calculatedSignature === signature;
 }
 
 /**
