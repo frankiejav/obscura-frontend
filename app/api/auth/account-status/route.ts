@@ -82,17 +82,25 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    // Import the Management Client
-    const { ManagementClient } = require('auth0')
-    
-    const management = new ManagementClient({
-      domain: process.env.AUTH0_DOMAIN!,
-      clientId: process.env.AUTH0_CLIENT_ID!,
-      clientSecret: process.env.AUTH0_CLIENT_SECRET!,
-      scope: 'read:users update:users update:users_app_metadata',
+    // Get an access token for the Management API
+    const tokenResponse = await fetch(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        grant_type: 'client_credentials',
+        client_id: process.env.AUTH0_CLIENT_ID,
+        client_secret: process.env.AUTH0_CLIENT_SECRET,
+        audience: `https://${process.env.AUTH0_DOMAIN}/api/v2/`
+      })
     })
 
-    // Update the user's metadata
+    if (!tokenResponse.ok) {
+      throw new Error('Failed to get Management API token')
+    }
+
+    const { access_token } = await tokenResponse.json()
+
+    // Update the user's metadata using the Management API directly
     const updatedMetadata = {
       account_type: accountType,
       subscription: {
@@ -104,10 +112,24 @@ export async function POST(request: NextRequest) {
       },
     }
 
-    await management.updateAppMetadata(
-      { id: session.user.sub },
-      updatedMetadata
+    const updateResponse = await fetch(
+      `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${encodeURIComponent(session.user.sub)}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          app_metadata: updatedMetadata
+        })
+      }
     )
+
+    if (!updateResponse.ok) {
+      const errorText = await updateResponse.text()
+      throw new Error(`Failed to update user metadata: ${errorText}`)
+    }
 
     return NextResponse.json({
       success: true,
