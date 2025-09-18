@@ -5,11 +5,24 @@
 
 import Stripe from 'stripe';
 
-// Initialize Stripe
-export const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
-  apiVersion: '2024-11-20.acacia',
-  typescript: true,
-});
+// Lazy initialize Stripe to avoid build-time errors
+let stripeInstance: Stripe | null = null;
+
+export function getStripe(): Stripe {
+  if (!stripeInstance) {
+    if (!process.env.STRIPE_API_KEY) {
+      throw new Error('STRIPE_API_KEY is not configured');
+    }
+    stripeInstance = new Stripe(process.env.STRIPE_API_KEY, {
+      apiVersion: '2024-11-20.acacia',
+      typescript: true,
+    });
+  }
+  return stripeInstance;
+}
+
+// Export stripe getter for use in other files
+export { getStripe as stripe };
 
 // Pricing configuration
 export const PRICING = {
@@ -72,7 +85,7 @@ export async function ensureStripeCustomer(
     return existingCustomerId;
   }
 
-  const customer = await stripe.customers.create({
+  const customer = await getStripe().customers.create({
     email,
     metadata: {
       auth0_user_id: auth0UserId
@@ -86,7 +99,7 @@ export async function ensureStripeCustomer(
  * Get current subscription for a customer
  */
 export async function getStripeSubscription(customerId: string): Promise<Stripe.Subscription | null> {
-  const subscriptions = await stripe.subscriptions.list({
+  const subscriptions = await getStripe().subscriptions.list({
     customer: customerId,
     status: 'active',
     limit: 1
@@ -99,7 +112,7 @@ export async function getStripeSubscription(customerId: string): Promise<Stripe.
  * Cancel a subscription
  */
 export async function cancelStripeSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
-  return await stripe.subscriptions.update(subscriptionId, {
+  return await getStripe().subscriptions.update(subscriptionId, {
     cancel_at_period_end: true
   });
 }
@@ -108,7 +121,7 @@ export async function cancelStripeSubscription(subscriptionId: string): Promise<
  * Reactivate a subscription
  */
 export async function reactivateStripeSubscription(subscriptionId: string): Promise<Stripe.Subscription> {
-  return await stripe.subscriptions.update(subscriptionId, {
+  return await getStripe().subscriptions.update(subscriptionId, {
     cancel_at_period_end: false
   });
 }

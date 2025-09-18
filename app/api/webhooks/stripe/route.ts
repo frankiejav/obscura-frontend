@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     let event: any;
     
     try {
-      event = stripe.webhooks.constructEvent(
+      event = stripe().webhooks.constructEvent(
         body,
         sig,
         process.env.STRIPE_WEBHOOK_SECRET!
@@ -89,7 +89,7 @@ async function handleCheckoutComplete(session: any) {
   }
   
   // Get the subscription details
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await stripe().subscriptions.retrieve(subscriptionId);
   await handleSubscriptionChange(subscription);
 }
 
@@ -179,7 +179,7 @@ async function handleInvoicePaymentSucceeded(invoice: any) {
   if (!subscriptionId) return;
   
   // Update subscription status if needed
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await stripe().subscriptions.retrieve(subscriptionId);
   if (subscription.status === 'active') {
     await handleSubscriptionChange(subscription);
   }

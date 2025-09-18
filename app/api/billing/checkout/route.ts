@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Check for existing active subscription
-    const existingSubscriptions = await stripe.subscriptions.list({
+    const existingSubscriptions = await stripe().subscriptions.list({
       customer: customerId,
       status: 'active',
       limit: 1
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Create checkout session
-    const session = await stripe.checkout.sessions.create({
+    const session = await stripe().checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
       line_items: [
