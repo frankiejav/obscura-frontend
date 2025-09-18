@@ -20,10 +20,17 @@ import {
   Lock,
   Palette,
   AlertCircle,
-  Settings
+  Settings,
+  CreditCard
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import dynamic from 'next/dynamic'
+
+const SubscriptionManager = dynamic(
+  () => import('@/components/dashboard/SubscriptionManager'),
+  { ssr: false }
+)
 
 interface Settings {
   profile: {
@@ -237,10 +244,14 @@ export function SettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-3 bg-neutral-900/60 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
+          <TabsList className="grid w-full grid-cols-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
             <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
               <User className="h-4 w-4 mr-2" />
               Profile
+            </TabsTrigger>
+            <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Subscription
             </TabsTrigger>
             <TabsTrigger value="notifications" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
               <Bell className="h-4 w-4 mr-2" />
@@ -512,6 +523,11 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Subscription Tab */}
+        <TabsContent value="subscription" className="space-y-4">
+          <SubscriptionManager />
         </TabsContent>
       </Tabs>
 

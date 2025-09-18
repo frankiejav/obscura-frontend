@@ -6,10 +6,10 @@
 Create a `.env.local` file in the root directory with the following variables:
 
 ```env
-# Neon Database Configuration
-DATABASE_URL=your-neon-database-url
+# Neon Database Configuration (Required)
+DATABASE_URL=postgresql://user:pass@host/dbname?sslmode=require
 
-# Auth0 Configuration
+# Auth0 Configuration (Required)
 AUTH0_SECRET=use-a-long-random-string-here
 AUTH0_BASE_URL=http://localhost:3000
 AUTH0_ISSUER_BASE_URL=https://your-tenant.auth0.com
@@ -17,21 +17,47 @@ AUTH0_CLIENT_ID=your-client-id
 AUTH0_CLIENT_SECRET=your-client-secret
 AUTH0_DOMAIN=your-tenant.auth0.com
 AUTH0_CONNECTION=Username-Password-Authentication
-
-# Optional: Auth0 Audience (for API access)
-AUTH0_AUDIENCE=your-api-identifier
+AUTH0_MGMT_AUDIENCE=https://your-tenant.auth0.com/api/v2/
+AUTH0_AUDIENCE=https://api.obscura
 AUTH0_SCOPE=openid profile email
 
-# Admin Configuration
+# Personal Account Override (Required)
+PERSONAL_AUTH0_USER_ID=auth0|xxxxxxxx  # Your Auth0 user ID for enterprise override
+
+# Stripe Configuration (Required for payments)
+STRIPE_API_KEY=sk_test_xxxxx  # Use sk_live_xxxxx for production
+STRIPE_WEBHOOK_SECRET=whsec_xxxxx
+STRIPE_PRICE_PRO=price_xxxxx  # Pro plan price ID
+STRIPE_PRICE_ENTERPRISE=price_xxxxx  # Enterprise plan price ID
+
+# NowPayments Configuration (Optional - for crypto payments)
+NP_API_KEY=xxxxx
+NP_IPN_KEY=xxxxx
+
+# Application URLs
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Admin Configuration (Legacy - for bypass)
 ADMIN_EMAIL=your-admin-email@example.com  # Email allowed to self-upgrade account type
 ```
 
 ### For Vercel/Production (Environment Variables UI)
 **IMPORTANT:** When setting these in Vercel, Netlify, or other hosting platforms, **DO NOT include quotes** around the values
 
-# Application Settings
-NEXT_PUBLIC_APP_URL='http://localhost:3000'
-NODE_ENV='development'
+Add all the variables from the local development section above, with these production-specific values:
+
+```
+# Production URLs (no quotes!)
+AUTH0_BASE_URL=https://www.obscuralabs.io
+NEXT_PUBLIC_APP_URL=https://www.obscuralabs.io
+
+# Stripe Production (no quotes!)
+STRIPE_API_KEY=sk_live_xxxxx
+NEXT_PUBLIC_STRIPE_PRICE_PRO=price_xxxxx
+NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE=price_xxxxx
+
+# Set Node Environment
+NODE_ENV=production
 ```
 
 ## Database Setup
