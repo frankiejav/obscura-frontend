@@ -73,12 +73,29 @@ export async function POST(request: NextRequest) {
       // Add your admin email here
       process.env.ADMIN_EMAIL,
       // You can add more admin emails as needed
-    ].filter(Boolean)
+    ].filter(Boolean).map(email => email?.toLowerCase())
 
-    if (adminEmails.length === 0 || !adminEmails.includes(session.user.email)) {
+    const userEmail = session.user.email?.toLowerCase()
+
+    if (adminEmails.length === 0) {
+      return NextResponse.json({
+        error: 'No admin email configured',
+        message: 'ADMIN_EMAIL environment variable is not set',
+      }, { status: 500 })
+    }
+
+    if (!adminEmails.includes(userEmail)) {
       return NextResponse.json({
         error: 'Unauthorized',
-        message: 'Only admins can self-upgrade accounts. Set ADMIN_EMAIL in environment variables.',
+        message: `User email "${session.user.email}" does not match admin email(s)`,
+        yourEmail: session.user.email,
+        adminEmails: process.env.ADMIN_EMAIL,
+        hint: 'Make sure you are logged in with the correct email address',
+        debug: {
+          sessionEmail: session.user.email,
+          adminEmail: process.env.ADMIN_EMAIL,
+          match: userEmail === process.env.ADMIN_EMAIL?.toLowerCase()
+        }
       }, { status: 403 })
     }
 
