@@ -40,8 +40,17 @@ export async function getUserSubscription(request: NextRequest): Promise<UserSub
     const userMetadata = session.user.user_metadata || {}
     const appMetadata = session.user.app_metadata || {}
 
-    // Default to FREE if no subscription data
-    const accountType = (appMetadata.account_type as AccountType) || AccountType.FREE
+    // Check for bypass cookie FIRST
+    const bypassCookie = request.cookies.get('account_bypass')
+    let accountType: AccountType
+    
+    if (bypassCookie?.value === 'enterprise') {
+      console.log('BYPASS ACTIVE: Using enterprise account type')
+      accountType = AccountType.ENTERPRISE
+    } else {
+      // Default to FREE if no subscription data
+      accountType = (appMetadata.account_type as AccountType) || AccountType.FREE
+    }
     const subscriptionData = appMetadata.subscription || {}
     
     // Get feature list for the account type

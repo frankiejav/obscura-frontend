@@ -13,7 +13,21 @@ export async function GET(request: NextRequest) {
       }, { status: 401 })
     }
 
+    // Verify Auth0 configuration
+    if (!process.env.AUTH0_DOMAIN || !process.env.AUTH0_CLIENT_ID || !process.env.AUTH0_CLIENT_SECRET) {
+      return NextResponse.json({
+        error: 'Missing Auth0 configuration',
+        missing: {
+          domain: !process.env.AUTH0_DOMAIN,
+          clientId: !process.env.AUTH0_CLIENT_ID,
+          clientSecret: !process.env.AUTH0_CLIENT_SECRET,
+        }
+      }, { status: 500 })
+    }
+
     // Get an access token for the Management API
+    console.log('Getting Management API token from:', `https://${process.env.AUTH0_DOMAIN}/oauth/token`)
+    
     const tokenResponse = await fetch(`https://${process.env.AUTH0_DOMAIN}/oauth/token`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -25,14 +39,32 @@ export async function GET(request: NextRequest) {
       })
     })
 
+    const tokenText = await tokenResponse.text()
+    
     if (!tokenResponse.ok) {
+      console.error('Token request failed:', tokenText)
       return NextResponse.json({
         error: 'Failed to get Management API token',
-        details: 'Check AUTH0_CLIENT_ID and AUTH0_CLIENT_SECRET are set correctly'
+        status: tokenResponse.status,
+        response: tokenText,
+        hint: 'Ensure your Auth0 Machine-to-Machine app has the Management API authorized',
+        domain: process.env.AUTH0_DOMAIN
       }, { status: 500 })
     }
 
-    const { access_token } = await tokenResponse.json()
+    let access_token
+    try {
+      const tokenData = JSON.parse(tokenText)
+      access_token = tokenData.access_token
+      if (!access_token) {
+        throw new Error('No access token in response')
+      }
+    } catch (e) {
+      return NextResponse.json({
+        error: 'Invalid token response',
+        response: tokenText
+      }, { status: 500 })
+    }
 
     // Force upgrade to enterprise
     const updatedMetadata = {
