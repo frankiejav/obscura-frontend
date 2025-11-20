@@ -16,16 +16,10 @@ export default function LandingPage() {
   
   const [liveStats, setLiveStats] = useState([
     {
-      icon: <Key className="h-8 w-8 text-white" />,
-      number: "6,480,000",
-      label: "Total Credentials",
-      description: "Leaked Databases + Stealer Logs"
-    },
-    {
       icon: <Database className="h-8 w-8 text-white" />,
-      number: "125,175,000",
-      label: "Total Cookies",
-      description: "Active Session Data"
+      number: "131,655,000",
+      label: "Total Records",
+      description: "Credentials + Cookies Combined"
     }
   ])
 
@@ -67,16 +61,10 @@ export default function LandingPage() {
           const data = await response.json()
           setLiveStats([
             {
-              icon: <Key className="h-8 w-8 text-white" />,
-              number: data.credentials_24h.toLocaleString(),
-              label: "Total Credentials",
-              description: "Leaked Databases + Stealer Logs"
-            },
-            {
               icon: <Database className="h-8 w-8 text-white" />,
-              number: data.cookies_24h.toLocaleString(),
-              label: "Total Cookies",
-              description: "Active Session Data"
+              number: data.total_records.toLocaleString(),
+              label: "Total Records",
+              description: "Credentials + Cookies Combined"
             }
           ])
         }
@@ -86,10 +74,9 @@ export default function LandingPage() {
       }
     }
 
+    // Fetch once on page load - no polling to reduce database load
+    // The API is cached for 24 hours, so updates happen automatically
     fetchLiveStats()
-    // Refresh every 5 minutes
-    const interval = setInterval(fetchLiveStats, 5 * 60 * 1000)
-    return () => clearInterval(interval)
   }, [])
 
   const keyFeatures = [
@@ -285,11 +272,11 @@ export default function LandingPage() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto px-4">
+          <div className="flex justify-center max-w-2xl mx-auto px-4">
             {liveStats.map((stat, index) => (
               <div 
                 key={index} 
-                className="group bg-neutral-900/60 backdrop-blur-sm rounded-2xl ring-1 ring-white/10 p-6 text-center hover:ring-white/30 transition-all duration-500 hover:shadow-[0_0_60px_rgba(255,255,255,0.15)] hover:-translate-y-1 relative overflow-hidden animate-on-scroll"
+                className="group bg-neutral-900/60 backdrop-blur-sm rounded-2xl ring-1 ring-white/10 p-8 sm:p-10 text-center hover:ring-white/30 transition-all duration-500 hover:shadow-[0_0_60px_rgba(255,255,255,0.15)] hover:-translate-y-1 relative overflow-hidden animate-on-scroll w-full max-w-md"
                 style={{
                   animationDelay: `${index * 200}ms`
                 }}
@@ -304,10 +291,10 @@ export default function LandingPage() {
                       <div className="absolute inset-0 bg-white/30 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     </div>
                   </div>
-                  <div className="text-3xl font-bold text-white mb-2 group-hover:scale-105 transition-transform duration-300">{stat.number}</div>
-                  <div className="text-lg font-medium text-neutral-200">{stat.label}</div>
+                  <div className="text-4xl sm:text-5xl font-bold text-white mb-2 group-hover:scale-105 transition-transform duration-300">{stat.number}</div>
+                  <div className="text-lg sm:text-xl font-medium text-neutral-200">{stat.label}</div>
                   {stat.description && (
-                    <div className="text-sm text-neutral-400 mt-1">{stat.description}</div>
+                    <div className="text-sm text-neutral-400 mt-2">{stat.description}</div>
                   )}
                 </div>
               </div>

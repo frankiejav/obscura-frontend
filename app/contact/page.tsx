@@ -283,7 +283,7 @@ export default function ContactPage() {
       <section className="py-16 px-4 sm:px-6 bg-neutral-950">
         <div className="container mx-auto max-w-6xl">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Card className="bg-neutral-900/60 border-white/10">
+            <Card className="bg-neutral-900/60 border-white/10 flex flex-col h-full">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
                   <Shield className="h-6 w-6 text-white" />
@@ -293,40 +293,40 @@ export default function ContactPage() {
                   Free access for verified agencies
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex flex-col flex-1">
                 <p className="text-neutral-200 mb-4">
                   We provide complimentary access to verified law enforcement agencies for investigative purposes. 
-                  Please provide your agency credentials and case information when contacting us.
+                  Please provide your agency email address when contacting us.
                 </p>
                 <Button
                   variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10"
+                  className="border-white/20 text-white hover:bg-white/10 mt-auto"
                   onClick={() => window.location.href = 'mailto:law-enforcement@obscuralabs.io'}
                 >
-                  Request Law Enforcement Access
+                  Apply for Law Enforcement Access
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
             </Card>
 
-            <Card className="bg-neutral-900/60 border-white/10">
+            <Card className="bg-neutral-900/60 border-white/10 flex flex-col h-full">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-2">
                   <Users className="h-6 w-6 text-white" />
                   <CardTitle className="text-xl text-white">Research Partnership</CardTitle>
                 </div>
                 <CardDescription className="text-neutral-300">
-                  Free access for academic institutions
+                  Free access for independent researchers and academic institutions
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex flex-col flex-1">
                 <p className="text-neutral-200 mb-4">
                   Academic researchers and institutions can apply for free access to our platform for 
                   cybersecurity research. Please include your institutional affiliation and research proposal.
                 </p>
                 <Button
                   variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10"
+                  className="border-white/20 text-white hover:bg-white/10 mt-auto"
                   onClick={() => window.location.href = 'mailto:research@obscuralabs.io'}
                 >
                   Apply for Research Access

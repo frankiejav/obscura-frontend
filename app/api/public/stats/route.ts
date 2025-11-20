@@ -67,15 +67,24 @@ export async function GET() {
     // Total Cookies = ClickHouse cookies only
     const totalCredentials = leakcheckTotalRecords + clickhouseCredsCount
     const totalCookies = clickhouseCookiesCount
+    
+    // Combined total records (credentials + cookies)
+    const totalRecords = totalCredentials + totalCookies
 
-    // Return the live counts
+    // Return the live counts with explicit cache headers
+    // This ensures the response is cached at the server/CDN level for 24 hours
     return NextResponse.json({
+      total_records: totalRecords,
       credentials_24h: totalCredentials,
       cookies_24h: totalCookies,
       leakcheck_records: leakcheckTotalRecords,
       clickhouse_creds: clickhouseCredsCount,
       clickhouse_cookies: clickhouseCookiesCount,
       last_updated: new Date().toISOString()
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=3600'
+      }
     })
   } catch (error) {
     console.error("Public Stats API error:", error)
@@ -88,17 +97,27 @@ export async function GET() {
     })
     
     // Return fallback numbers if services are unavailable
+    const fallbackCredentials = 1725762
+    const fallbackCookies = 44204833
+    const fallbackTotal = fallbackCredentials + fallbackCookies
+    
     return NextResponse.json({
-      credentials_24h: 1725762,
-      cookies_24h: 44204833,
+      total_records: fallbackTotal,
+      credentials_24h: fallbackCredentials,
+      cookies_24h: fallbackCookies,
       leakcheck_records: 0,
       clickhouse_creds: 0,
       clickhouse_cookies: 0,
       last_updated: new Date().toISOString(),
       error: "Data sources unavailable"
+    }, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=86400, stale-while-revalidate=3600'
+      }
     })
   }
 }
 
-// Cache for 5 minutes to reduce database load
-export const revalidate = 300
+// Cache for 24 hours to significantly reduce database load and compute costs
+// The count changes slowly enough that daily updates are reasonable
+export const revalidate = 86400
