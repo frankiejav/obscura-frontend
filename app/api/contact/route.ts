@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
 
     // Use environment variable for from address, or default to verified domain
     const fromAddress = process.env.RESEND_FROM_ADDRESS || 'Obscura Labs <contact@obscuralabs.io>'
+    
+    // Get app URL for logo
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.obscuralabs.io'
+    const logoUrl = `${appUrl}/images/obscura-logo-white.png`
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
@@ -49,29 +53,133 @@ export async function POST(request: NextRequest) {
       replyTo: email,
       subject: `Contact Form: ${reasonLabel} - ${name}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333; border-bottom: 2px solid #666; padding-bottom: 10px;">
-            New Contact Form Submission
-          </h2>
-          
-          <div style="background: #f5f5f5; padding: 20px; border-radius: 5px; margin: 20px 0;">
-            <p style="margin: 10px 0;"><strong>Name:</strong> ${name}</p>
-            <p style="margin: 10px 0;"><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-            <p style="margin: 10px 0;"><strong>Organization:</strong> ${organization || 'N/A'}</p>
-            <p style="margin: 10px 0;"><strong>Reason:</strong> ${reasonLabel}</p>
-          </div>
-          
-          <div style="margin: 20px 0;">
-            <h3 style="color: #333;">Message:</h3>
-            <p style="white-space: pre-wrap; background: #fff; padding: 15px; border-left: 4px solid #666;">
-              ${message.replace(/\n/g, '<br>')}
-            </p>
-          </div>
-          
-          <p style="color: #666; font-size: 12px; margin-top: 30px;">
-            This email was sent from the Obscura Labs contact form.
-          </p>
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #0a0a0a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+          <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #0a0a0a;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" style="max-width: 600px; background-color: #171717; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);">
+                  
+                  <!-- Header with Logo -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #171717 0%, #262626 100%); padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #2a2a2a;">
+                      <img src="${logoUrl}" alt="Obscura Labs" style="max-width: 180px; height: auto; display: block; margin: 0 auto;" />
+                    </td>
+                  </tr>
+                  
+                  <!-- Title Section -->
+                  <tr>
+                    <td style="padding: 40px 40px 20px; text-align: center;">
+                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600; letter-spacing: -0.5px;">
+                        New Contact Form Submission
+                      </h1>
+                      <p style="margin: 12px 0 0; color: #a3a3a3; font-size: 16px; font-weight: 400;">
+                        ${reasonLabel}
+                      </p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Contact Information Card -->
+                  <tr>
+                    <td style="padding: 0 40px 30px;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #262626; border-radius: 8px; border: 1px solid #2a2a2a;">
+                        <tr>
+                          <td style="padding: 30px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                              <tr>
+                                <td style="padding-bottom: 16px; border-bottom: 1px solid #2a2a2a;">
+                                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                      <td style="color: #a3a3a3; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 8px;">Name</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="color: #ffffff; font-size: 16px; font-weight: 500; padding-top: 4px;">${name}</td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 16px 0; border-bottom: 1px solid #2a2a2a;">
+                                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                      <td style="color: #a3a3a3; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 8px;">Email</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="padding-top: 4px;">
+                                        <a href="mailto:${email}" style="color: #60a5fa; font-size: 16px; font-weight: 500; text-decoration: none;">${email}</a>
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 16px 0; border-bottom: 1px solid #2a2a2a;">
+                                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                      <td style="color: #a3a3a3; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 8px;">Organization</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="color: #ffffff; font-size: 16px; font-weight: 500; padding-top: 4px;">${organization || 'Not provided'}</td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="padding-top: 16px;">
+                                  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                                    <tr>
+                                      <td style="color: #a3a3a3; font-size: 13px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; padding-bottom: 8px;">Reason for Contact</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="color: #ffffff; font-size: 16px; font-weight: 500; padding-top: 4px;">${reasonLabel}</td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Message Section -->
+                  <tr>
+                    <td style="padding: 0 40px 30px;">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                        <tr>
+                          <td style="color: #ffffff; font-size: 18px; font-weight: 600; padding-bottom: 16px;">Message</td>
+                        </tr>
+                        <tr>
+                          <td style="background-color: #262626; border-left: 4px solid #60a5fa; border-radius: 6px; padding: 24px; border: 1px solid #2a2a2a;">
+                            <p style="margin: 0; color: #e5e5e5; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${message.replace(/\n/g, '<br>')}</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #171717; padding: 30px 40px; border-top: 1px solid #2a2a2a; text-align: center;">
+                      <p style="margin: 0; color: #737373; font-size: 12px; line-height: 1.5;">
+                        This email was sent from the Obscura Labs contact form.<br>
+                        <a href="${appUrl}" style="color: #60a5fa; text-decoration: none;">Visit Obscura Labs</a>
+                      </p>
+                    </td>
+                  </tr>
+                  
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
       `
     })
 
