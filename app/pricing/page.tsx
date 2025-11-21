@@ -66,11 +66,11 @@ export default function PricingPage() {
 
   const handlePlanSelect = (planName: string, planPrice: string) => {
     if (planName === "Enterprise") {
+      // Enterprise plan redirects to contact form
       router.push("/contact")
     } else {
-      // Extract numeric price from string like "$99" or "$19.99"
-      const price = parseFloat(planPrice.replace(/[^0-9.]/g, ''))
-      router.push(`/checkout?plan=${planName}&price=${price}`)
+      // Other plans redirect to login flow - subscription will be created when account is created
+      router.push("/login")
     }
   }
 

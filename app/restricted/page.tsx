@@ -1,15 +1,22 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import Header from '@/components/navigation/header'
 import { Shield, Lock, Mail, AlertCircle, Users, Clock } from "lucide-react"
 
 export default function RestrictedPage() {
+  const router = useRouter()
   const features = [
     { icon: <Shield className="h-5 w-5" />, text: "Early access to threat intelligence" },
     { icon: <Users className="h-5 w-5" />, text: "Join our beta testing program" },
     { icon: <Clock className="h-5 w-5" />, text: "Be notified when we launch" },
   ]
+
+  const handleBetaAccessClick = () => {
+    console.log('Button clicked, navigating to contact page...')
+    router.push('/contact?reason=beta')
+  }
 
   return (
     <div className="min-h-screen bg-neutral-950">
@@ -66,21 +73,18 @@ export default function RestrictedPage() {
                   </p>
                 </div>
 
-                <a 
-                  href="mailto:contact@obscuralabs.io?subject=Beta Access Request&body=I would like to request access to the Obscura Labs beta program."
-                  className="block"
+                <Button 
+                  type="button"
+                  onClick={handleBetaAccessClick}
+                  className="group relative w-full py-4 text-base sm:text-lg font-semibold bg-white text-black hover:bg-neutral-200 transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] overflow-hidden"
+                  size="lg"
                 >
-                  <Button 
-                    className="group relative w-full py-4 text-base sm:text-lg font-semibold bg-white text-black hover:bg-neutral-200 transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] overflow-hidden"
-                    size="lg"
-                  >
-                    <span className="relative z-10 flex items-center justify-center">
-                      <Mail className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
-                      contact@obscuralabs.io
-                    </span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                  </Button>
-                </a>
+                  <span className="relative z-10 flex items-center justify-center">
+                    <Mail className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
+                    Request Beta Access
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                </Button>
               </div>
 
               {/* Features list */}

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import Header from "@/components/navigation/header"
 import Footer from "@/components/navigation/footer"
 import { Button } from "@/components/ui/button"
@@ -49,16 +50,105 @@ const contactMethods = [
   }
 ]
 
-export default function ContactPage() {
+function ContactPageContent() {
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const formRef = useRef<HTMLDivElement>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string
+    email: string
+    organization: string
+    reason: string
+    message: string
+  }>({
     name: "",
     email: "",
     organization: "",
     reason: "",
     message: ""
   })
+  
+  // Ensure Select is always controlled by using undefined for empty string
+  const selectValue = formData.reason === "" ? undefined : formData.reason
+
+  const handleBetaAccessClick = () => {
+    setFormData(prev => ({
+      ...prev,
+      name: "",
+      email: "",
+      organization: "",
+      reason: "other",
+      message: "Dear Obscura Labs Team,\n\nI am writing to request beta access to your platform.\n\nI am interested in becoming a beta tester and would like to request early access to your identity intelligence platform.\n\nThank you for your consideration.\n\nBest regards,"
+    }))
+    
+    // Scroll to form
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      setTimeout(() => {
+        document.getElementById('name')?.focus()
+      }, 500)
+    }, 100)
+  }
+
+  // Check for query parameter on mount
+  useEffect(() => {
+    const reason = searchParams.get('reason')
+    if (reason === 'beta') {
+      // Set form data with functional update to ensure state is properly set
+      setFormData({
+        name: "",
+        email: "",
+        organization: "",
+        reason: "other",
+        message: "Dear Obscura Labs Team,\n\nI am writing to request beta access to your platform.\n\nI am interested in becoming a beta tester and would like to request early access to your identity intelligence platform.\n\nThank you for your consideration.\n\nBest regards"
+      })
+      
+      // Scroll to form after a delay to ensure state is updated
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        setTimeout(() => {
+          document.getElementById('name')?.focus()
+        }, 500)
+      }, 200)
+    }
+  }, [searchParams])
+
+  const handleLawEnforcementClick = () => {
+    setFormData({
+      name: "",
+      email: "",
+      organization: "",
+      reason: "law-enforcement",
+      message: "Dear Obscura Labs Team,\n\nI am writing to request access to your platform for law enforcement purposes.\n\nThank you for your consideration.\n\nBest regards"
+    })
+    
+    // Scroll to form
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    
+    // Focus on name field after a short delay
+    setTimeout(() => {
+      document.getElementById('name')?.focus()
+    }, 500)
+  }
+
+  const handleResearchClick = () => {
+    setFormData({
+      name: "",
+      email: "",
+      organization: "",
+      reason: "research",
+      message: "Dear Obscura Labs Team,\n\nI am writing to request access to your platform for academic research purposes.\n\nThank you for your consideration.\n\nBest regards"
+    })
+    
+    // Scroll to form
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    
+    // Focus on name field after a short delay
+    setTimeout(() => {
+      document.getElementById('name')?.focus()
+    }, 500)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -161,7 +251,7 @@ export default function ContactPage() {
       </section>
 
       {/* Contact Form Section */}
-      <section className="py-16 px-4 sm:px-6 bg-neutral-900/50">
+      <section ref={formRef} className="py-16 px-4 sm:px-6 bg-neutral-900/50">
         <div className="container mx-auto max-w-4xl">
           <Card className="bg-neutral-900/60 border-white/10">
             <CardHeader>
@@ -227,8 +317,10 @@ export default function ContactPage() {
                       Reason for Contact *
                     </Label>
                     <Select
-                      value={formData.reason}
-                      onValueChange={(value) => setFormData({ ...formData, reason: value })}
+                      value={selectValue}
+                      onValueChange={(value) => {
+                        setFormData(prev => ({ ...prev, reason: value }))
+                      }}
                       required
                     >
                       <SelectTrigger className="bg-neutral-800 border-white/10 text-white focus:border-white/30">
@@ -304,12 +396,12 @@ export default function ContactPage() {
               <CardContent className="flex flex-col flex-1">
                 <p className="text-neutral-200 mb-4">
                   We provide complimentary access to verified law enforcement agencies for investigative purposes. 
-                  Please provide your agency email address when contacting us.
+                  Access will be provided after a brief video or phone call to verify your credentials. Please use your agency email address when contacting us.
                 </p>
                 <Button
                   variant="outline"
                   className="border-white/20 text-white hover:bg-white/10 mt-auto"
-                  onClick={() => window.location.href = 'mailto:law-enforcement@obscuralabs.io'}
+                  onClick={handleLawEnforcementClick}
                 >
                   Apply for Law Enforcement Access
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -335,7 +427,7 @@ export default function ContactPage() {
                 <Button
                   variant="outline"
                   className="border-white/20 text-white hover:bg-white/10 mt-auto"
-                  onClick={() => window.location.href = 'mailto:research@obscuralabs.io'}
+                  onClick={handleResearchClick}
                 >
                   Apply for Research Access
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -348,5 +440,23 @@ export default function ContactPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-950">
+        <Header />
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <p className="text-white text-lg">Loading...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    }>
+      <ContactPageContent />
+    </Suspense>
   )
 }
