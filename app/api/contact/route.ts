@@ -1,7 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
+
+// Get base64 encoded logo
+function getLogoDataUri(): string {
+  try {
+    const logoPath = join(process.cwd(), 'public', 'images', 'obscura-logo-white.png')
+    const logoBuffer = readFileSync(logoPath)
+    const base64 = logoBuffer.toString('base64')
+    return `data:image/png;base64,${base64}`
+  } catch (error) {
+    // Fallback to empty string if logo can't be loaded
+    console.error('Error loading logo:', error)
+    return ''
+  }
+}
 
 const contactReasons = [
   { value: "enterprise", label: "Enterprise Sales" },
@@ -42,9 +58,8 @@ export async function POST(request: NextRequest) {
     // Use environment variable for from address, or default to verified domain
     const fromAddress = process.env.RESEND_FROM_ADDRESS || 'Obscura Labs <contact@obscuralabs.io>'
     
-    // Get app URL for logo
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.obscuralabs.io'
-    const logoUrl = `${appUrl}/images/obscura-logo-white.png`
+    // Get base64 encoded logo for email
+    const logoDataUri = getLogoDataUri()
 
     // Send email using Resend
     const { data, error } = await resend.emails.send({
@@ -68,7 +83,7 @@ export async function POST(request: NextRequest) {
                   <!-- Header with Logo -->
                   <tr>
                     <td style="background: linear-gradient(135deg, #171717 0%, #262626 100%); padding: 40px 40px 30px; text-align: center; border-bottom: 1px solid #2a2a2a;">
-                      <img src="${logoUrl}" alt="Obscura Labs" style="max-width: 180px; height: auto; display: block; margin: 0 auto;" />
+                      <img src="${logoDataUri}" alt="Obscura Labs" style="max-width: 180px; height: auto; display: block; margin: 0 auto;" />
                     </td>
                   </tr>
                   
@@ -169,7 +184,7 @@ export async function POST(request: NextRequest) {
                     <td style="background-color: #171717; padding: 30px 40px; border-top: 1px solid #2a2a2a; text-align: center;">
                       <p style="margin: 0; color: #737373; font-size: 12px; line-height: 1.5;">
                         This email was sent from the Obscura Labs contact form.<br>
-                        <a href="${appUrl}" style="color: #60a5fa; text-decoration: none;">Visit Obscura Labs</a>
+                        <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://www.obscuralabs.io'}" style="color: #60a5fa; text-decoration: none;">Visit Obscura Labs</a>
                       </p>
                     </td>
                   </tr>
