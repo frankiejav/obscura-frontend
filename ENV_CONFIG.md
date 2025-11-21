@@ -34,6 +34,10 @@ STRIPE_PRICE_ENTERPRISE=price_xxxxx  # Enterprise plan price ID
 NP_API_KEY=xxxxx
 NP_IPN_KEY=xxxxx
 
+# Resend Email Configuration (Required for contact form)
+RESEND_API_KEY=re_xxxxx  # Your Resend API key
+RESEND_FROM_ADDRESS=Obscura Labs <contact@obscuralabs.io>  # From address using your verified domain
+
 # Application URLs
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 

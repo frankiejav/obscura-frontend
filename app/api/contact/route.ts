@@ -39,9 +39,12 @@ export async function POST(request: NextRequest) {
     const recipient = recipientMap[reason] || 'contact@obscuralabs.io'
     const reasonLabel = contactReasons.find(r => r.value === reason)?.label || reason
 
+    // Use environment variable for from address, or default to verified domain
+    const fromAddress = process.env.RESEND_FROM_ADDRESS || 'Obscura Labs <contact@obscuralabs.io>'
+
     // Send email using Resend
     const { data, error } = await resend.emails.send({
-      from: 'Obscura Labs <onboarding@resend.dev>', // Use your verified domain later
+      from: fromAddress,
       to: recipient,
       replyTo: email,
       subject: `Contact Form: ${reasonLabel} - ${name}`,
