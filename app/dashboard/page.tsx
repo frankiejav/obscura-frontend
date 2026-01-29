@@ -293,29 +293,6 @@ export default function DashboardPage() {
         ))}
       </motion.div>
 
-      {/* Platform Stats */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.3 }}
-        className="grid grid-cols-3 gap-6 p-6 bg-[#1c1c1c] rounded-lg mb-10"
-      >
-        {[
-          { value: "6.5B+", label: "Total Records" },
-          { value: "<1min", label: "Alert Latency" },
-          { value: "500K+", label: "Daily Updates" }
-        ].map((stat, index) => (
-          <div key={stat.label} className="text-center">
-            <div className="text-[24px] sm:text-[32px] font-light text-white mb-1 font-mono tracking-tight">
-              {stat.value}
-            </div>
-            <div className="text-[10px] sm:text-xs text-[#868e96] uppercase tracking-wider">
-              {stat.label}
-            </div>
-          </div>
-        ))}
-      </motion.div>
-
       {/* Recent Records */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

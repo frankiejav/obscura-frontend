@@ -92,7 +92,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
     <Sidebar className="border-r border-[#e9ecef] bg-white">
       <SidebarHeader className="border-b border-[#e9ecef] p-5">
         <div className="flex items-center gap-3">
-          <Image src="/images/symbolblack.png" alt="Obscura Labs" width={40} height={40} className="w-10 h-10" />
+          <Image src="/symbol.svg" alt="Obscura Labs" width={40} height={40} className="w-10 h-10" />
           <div>
             <h2 className="text-[#1c1c1c] text-sm font-semibold tracking-[-0.01em]">Obscura Labs</h2>
             <p className="text-[#adb5bd] text-xs">Dashboard</p>
