@@ -15,7 +15,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { NotificationsPanel } from "./notifications-panel"
 import { AdminNotificationForm } from "./admin-notification-form"
 import { useNotifications } from "@/hooks/use-notifications"
-import { useEffect, useState } from "react"
 
 interface DashboardHeaderProps {
   user: {
@@ -34,16 +33,16 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   const { createNotification } = useNotifications(userId)
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/20 bg-black/90 backdrop-blur">
-      <div className="flex h-16 items-center justify-between px-6">
+    <header className="sticky top-0 z-40 border-b border-[#e9ecef] bg-white/95 backdrop-blur-sm">
+      <div className="flex h-14 items-center justify-between px-6">
         <div className="flex items-center gap-4">
-          <SidebarTrigger className="text-white hover:bg-white/10" />
+          <SidebarTrigger className="text-[#5a5a5a] hover:bg-[#f7f6f3] hover:text-[#1c1c1c] transition-colors" />
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {shouldShowClearance && (
-            <Badge variant="outline" className="border-white/30 text-white font-mono text-xs">
-              CLEARANCE: L{user.clearance_level}
+            <Badge variant="outline" className="border-[#dee2e6] text-[#868e96] text-xs font-medium bg-[#f7f6f3]">
+              Level {user.clearance_level}
             </Badge>
           )}
 
@@ -58,25 +57,25 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
+              <Button variant="ghost" size="icon" className="text-[#5a5a5a] hover:bg-[#f7f6f3] hover:text-[#1c1c1c]">
                 <BlueprintIcon icon="user" size={16} />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-black/95 border-white/20 text-white">
-              <DropdownMenuLabel className="font-mono text-xs text-white">USER PROFILE</DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-white/20" />
-              <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
-                <BlueprintIcon icon="user" size={12} className="mr-2" />
+            <DropdownMenuContent align="end" className="w-56 bg-white border-[#e9ecef] shadow-lg">
+              <DropdownMenuLabel className="text-xs text-[#e07a4a] font-semibold tracking-wide uppercase">Account</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-[#e9ecef]" />
+              <DropdownMenuItem className="text-sm text-[#5a5a5a] hover:bg-[#f7f6f3] hover:text-[#1c1c1c] cursor-pointer">
+                <BlueprintIcon icon="user" size={14} className="mr-2 text-[#868e96]" />
                 {user.email}
               </DropdownMenuItem>
-              <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
-                <BlueprintIcon icon="shield" size={12} className="mr-2" />
-                Role: {userRole.toUpperCase()}
+              <DropdownMenuItem className="text-sm text-[#5a5a5a] hover:bg-[#f7f6f3] hover:text-[#1c1c1c] cursor-pointer">
+                <BlueprintIcon icon="shield" size={14} className="mr-2 text-[#868e96]" />
+                Role: {userRole.charAt(0).toUpperCase() + userRole.slice(1)}
               </DropdownMenuItem>
               {shouldShowClearance && (
-                <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
-                  <BlueprintIcon icon="shield" size={12} className="mr-2" />
-                  Clearance: {user.clearance_level}
+                <DropdownMenuItem className="text-sm text-[#5a5a5a] hover:bg-[#f7f6f3] hover:text-[#1c1c1c] cursor-pointer">
+                  <BlueprintIcon icon="key" size={14} className="mr-2 text-[#868e96]" />
+                  Clearance: Level {user.clearance_level}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>

@@ -108,23 +108,23 @@ export function NotificationsPanel({ user }: NotificationsPanelProps) {
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/10">
+        <Button variant="ghost" size="icon" className="relative text-[#5a5a5a] hover:bg-[#f7f6f3] hover:text-[#1c1c1c]">
           <BlueprintIcon icon="notifications" size={16} />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+            <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#e07a4a] rounded-full"></span>
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent 
         align="end" 
-        className="w-96 p-0 bg-black/95 border-white/20 text-white max-h-[600px]"
+        className="w-96 p-0 bg-white border-[#e9ecef] shadow-lg max-h-[600px]"
       >
-        <div className="flex items-center justify-between p-4 border-b border-white/20">
+        <div className="flex items-center justify-between p-4 border-b border-[#e9ecef]">
           <div className="flex items-center gap-2">
-            <BlueprintIcon icon="notifications" size={16} />
-            <h3 className="font-mono text-sm font-bold">NOTIFICATIONS</h3>
+            <BlueprintIcon icon="notifications" size={16} className="text-[#5a5a5a]" />
+            <h3 className="text-sm font-semibold text-[#1c1c1c]">Notifications</h3>
             {unreadCount > 0 && (
-              <Badge variant="outline" className="border-red-500 text-red-500 text-xs">
+              <Badge className="bg-[#e07a4a]/10 text-[#e07a4a] border-[#e07a4a]/30 text-xs">
                 {unreadCount}
               </Badge>
             )}
@@ -135,7 +135,7 @@ export function NotificationsPanel({ user }: NotificationsPanelProps) {
                 variant="ghost"
                 size="sm"
                 onClick={markAllAsRead}
-                className="text-xs text-gray-400 hover:text-white hover:bg-white/10"
+                className="text-xs text-[#868e96] hover:text-[#1c1c1c] hover:bg-[#f7f6f3]"
               >
                 Mark all read
               </Button>
@@ -144,7 +144,7 @@ export function NotificationsPanel({ user }: NotificationsPanelProps) {
               variant="ghost"
               size="icon"
               onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-white hover:bg-white/10"
+              className="text-[#868e96] hover:text-[#1c1c1c] hover:bg-[#f7f6f3]"
             >
               <BlueprintIcon icon="cross" size={12} />
             </Button>
@@ -154,21 +154,21 @@ export function NotificationsPanel({ user }: NotificationsPanelProps) {
         <ScrollArea className="max-h-[500px]">
           <div className="p-2">
             {loading ? (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                <p className="font-mono text-sm mt-2">Loading notifications...</p>
+              <div className="flex flex-col items-center justify-center py-8 text-[#868e96]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e07a4a]"></div>
+                <p className="text-sm mt-2">Loading notifications...</p>
               </div>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                <BlueprintIcon icon="notifications" size={32} className="mb-2" />
-                <p className="font-mono text-sm">No notifications</p>
+              <div className="flex flex-col items-center justify-center py-8 text-[#868e96]">
+                <BlueprintIcon icon="notifications" size={32} className="mb-2 text-[#adb5bd]" />
+                <p className="text-sm">No notifications</p>
               </div>
             ) : (
               <>
                 {unreadNotifications.length > 0 && (
                   <>
                     <div className="mb-2">
-                      <h4 className="font-mono text-xs text-gray-400 px-2 py-1">UNREAD</h4>
+                      <h4 className="text-[10px] text-[#e07a4a] font-semibold tracking-[0.1em] uppercase px-2 py-1">UNREAD</h4>
                     </div>
                     {unreadNotifications.map((notification) => (
                       <NotificationItem

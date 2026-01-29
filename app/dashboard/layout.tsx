@@ -27,13 +27,13 @@ export default async function DashboardLayout({
   const user = session.user
 
   return (
-    <div className="min-h-screen bg-black tactical-grid">
+    <div className="min-h-screen bg-[#f7f6f3]">
       <SidebarProvider>
         <DashboardSidebar user={user} />
         <SidebarInset>
           <DashboardHeader user={user} />
-          <main className="flex-1 overflow-auto p-6 bg-black/50">
-            <div className="tactical-border p-6 bg-black/80">{children}</div>
+          <main className="flex-1 overflow-auto">
+            {children}
           </main>
         </SidebarInset>
       </SidebarProvider>

@@ -355,21 +355,23 @@ export default function SearchPage() {
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950">
-      <div className="container mx-auto px-4 sm:px-6 py-8 space-y-8">
+    <div className="p-6 lg:p-8 max-w-7xl mx-auto">
+      <div className="space-y-8">
+        {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white">Data Search</h1>
-            <p className="text-neutral-400 mt-1">Query exposed credentials and session data</p>
+            <p className="text-[#e07a4a] text-[11px] font-semibold tracking-[0.12em] uppercase mb-2">Search</p>
+            <h1 className="text-[28px] sm:text-[34px] font-light text-[#1c1c1c] leading-[1.1] tracking-[-0.02em]">Data Search</h1>
+            <p className="text-[#868e96] text-sm mt-2">Query exposed credentials and session data</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="px-4 py-2 bg-white/10 backdrop-blur-sm rounded-xl border border-white/20">
-              <span className="text-sm font-medium text-white">
+            <div className="px-4 py-2 bg-[#f7f6f3] rounded-lg border border-[#e9ecef]">
+              <span className="text-sm font-medium text-[#1c1c1c]">
                 {totalResults.toLocaleString()} records found
               </span>
             </div>
           {(results || breachResults) && totalResults > 0 && (
-            <Button onClick={handleSaveToJson} variant="outline" size="sm">
+            <Button onClick={handleSaveToJson} variant="outline" size="sm" className="border-[#dee2e6] text-[#5a5a5a] hover:border-[#e07a4a] hover:text-[#e07a4a]">
               <BlueprintIcon icon="download" size={16} className="mr-2" />
               Save to JSON
             </Button>
@@ -377,38 +379,34 @@ export default function SearchPage() {
         </div>
       </div>
 
-        {/* Search Filters with Glow */}
-        <div className="relative group">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
-          <Card className="relative bg-neutral-900/60 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all duration-500">
-            <CardHeader className="border-b border-white/10">
-              <CardTitle className="flex items-center gap-3 text-white">
-                <div className="p-2 bg-white/10 rounded-lg">
-                  <BlueprintIcon icon="filter" size={20} className="text-white" />
-                </div>
-                Search Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-6">
+        {/* Search Filters */}
+        <div className="bg-white border border-[#e9ecef] rounded-lg overflow-hidden">
+          <div className="px-6 py-4 border-b border-[#e9ecef] flex items-center gap-3">
+            <div className="p-2 bg-[#f7f6f3] rounded-md">
+              <BlueprintIcon icon="filter" size={16} className="text-[#5a5a5a]" />
+            </div>
+            <h2 className="text-lg font-medium text-[#1c1c1c]">Search Filters</h2>
+          </div>
+          <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-300">Search Term</label>
+                <label className="text-sm font-medium text-[#5a5a5a]">Search Term</label>
                 <Input
                   placeholder="Enter search term..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  className="bg-neutral-800/50 border-white/10 text-white placeholder:text-neutral-500 focus:border-white/30 focus:bg-neutral-800/70 transition-all"
+                  className="bg-white border-[#dee2e6] text-[#1c1c1c] placeholder:text-[#adb5bd] focus:border-[#e07a4a] focus:ring-[#e07a4a]/20 transition-all"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-300">Search Type</label>
+                <label className="text-sm font-medium text-[#5a5a5a]">Search Type</label>
                 <Select value={searchType} onValueChange={setSearchType}>
-                  <SelectTrigger className="bg-neutral-800/50 border-white/10 text-white focus:border-white/30">
+                  <SelectTrigger className="bg-white border-[#dee2e6] text-[#1c1c1c] focus:border-[#e07a4a]">
                     <SelectValue />
                   </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-white border-[#e9ecef]">
                   <SelectItem value="auto">Auto-detect</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
                   <SelectItem value="username">Username</SelectItem>
@@ -421,21 +419,21 @@ export default function SearchPage() {
             </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-300">Profiles</label>
+                <label className="text-sm font-medium text-[#5a5a5a]">Profiles</label>
                 <div className="flex items-center space-x-2 h-10">
                   <Switch
                     checked={profilesEnabled}
                     onCheckedChange={setProfilesEnabled}
                     id="profiles-toggle"
                   />
-                  <label htmlFor="profiles-toggle" className="text-sm text-neutral-400">
+                  <label htmlFor="profiles-toggle" className="text-sm text-[#868e96]">
                     {profilesEnabled ? 'ON' : 'OFF'}
                   </label>
               </div>
             </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-300">Cookies</label>
+                <label className="text-sm font-medium text-[#5a5a5a]">Cookies</label>
                 <div className="flex items-center space-x-2 h-10">
                   <Switch
                     checked={cookiesEnabled}
@@ -443,18 +441,18 @@ export default function SearchPage() {
                     disabled={!profilesEnabled}
                     id="cookies-toggle"
                   />
-                  <label htmlFor="cookies-toggle" className="text-sm text-neutral-400">
+                  <label htmlFor="cookies-toggle" className="text-sm text-[#868e96]">
                     {!profilesEnabled ? 'Enable Profiles first' : cookiesEnabled ? 'ON' : 'OFF'}
                   </label>
               </div>
             </div>
           </div>
 
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-2">
               <Button 
                 onClick={handleSearch} 
                 disabled={loading || breachLoading} 
-                className="px-8 bg-white text-black hover:bg-neutral-200 transition-all duration-300 shadow-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+                className="px-8 bg-[#1c1c1c] text-white hover:bg-[#2a2a2a] transition-all duration-200 shadow-sm"
               >
                 <BlueprintIcon icon="search" size={16} className="mr-2" />
                 {loading || breachLoading ? 'Searching...' : 'Search All Sources'}
@@ -462,9 +460,9 @@ export default function SearchPage() {
             </div>
 
           {breachResults && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 text-sm text-[#868e96]">
               {breachResults.quota !== undefined && (
-                <Badge variant="outline">
+                <Badge variant="outline" className="border-[#dee2e6] text-[#5a5a5a]">
                   {breachResults.quota} queries remaining
                 </Badge>
               )}
@@ -475,8 +473,7 @@ export default function SearchPage() {
               )}
             </div>
           )}
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
       {/* Search Results */}

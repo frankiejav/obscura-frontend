@@ -199,15 +199,10 @@ export function SettingsPage() {
 
   if (loading || userLoading) {
     return (
-      <div className="min-h-screen bg-neutral-950">
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="text-center">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
-              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-white/30 rounded-full animate-spin animation-delay-150 mx-auto"></div>
-            </div>
-            <p className="mt-4 text-white/60 text-sm tracking-wide">Loading settings...</p>
-          </div>
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-10 h-10 border-2 border-[#e9ecef] border-t-[#e07a4a] rounded-full animate-spin mx-auto"></div>
+          <p className="mt-4 text-[#868e96] text-sm">Loading settings...</p>
         </div>
       </div>
     )
@@ -215,62 +210,58 @@ export function SettingsPage() {
 
   if (!user || !settings) {
     return (
-      <div className="min-h-screen bg-neutral-950">
-        <div className="container mx-auto px-4 sm:px-6 py-8">
-          <Alert className="bg-neutral-900/60 border-white/10 text-white">
-            <BlueprintIcon icon="error" size={16} />
-            <AlertDescription>
-              Please log in to access settings
-            </AlertDescription>
-          </Alert>
-        </div>
+      <div className="p-6 lg:p-8 max-w-6xl mx-auto">
+        <Alert className="bg-[#f7f6f3] border-[#e9ecef]">
+          <BlueprintIcon icon="error" size={16} className="text-[#e07a4a]" />
+          <AlertDescription className="text-[#5a5a5a]">
+            Please log in to access settings
+          </AlertDescription>
+        </Alert>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950">
-      <div className="container mx-auto px-4 sm:px-6 py-8 max-w-6xl">
-        <div className="space-y-2 mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white">Settings</h1>
-          <p className="text-neutral-400">Manage your account and application preferences</p>
-        </div>
+    <div className="p-6 lg:p-8 max-w-6xl mx-auto">
+      <div className="mb-8">
+        <p className="text-[#e07a4a] text-[11px] font-semibold tracking-[0.12em] uppercase mb-3">Settings</p>
+        <h1 className="text-[28px] sm:text-[34px] font-light text-[#1c1c1c] leading-[1.1] tracking-[-0.02em]">Account Settings</h1>
+        <p className="text-[#868e96] text-sm mt-2">Manage your account and application preferences</p>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-5 bg-neutral-900/60 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
-            <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <BlueprintIcon icon="user" size={16} className="mr-2" />
-              Profile
-            </TabsTrigger>
-            <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <BlueprintIcon icon="shield" size={16} className="mr-2" />
-              Security
-            </TabsTrigger>
-            <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <BlueprintIcon icon="credit-card" size={16} className="mr-2" />
-              Subscription
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <BlueprintIcon icon="notifications" size={16} className="mr-2" />
-              Notifications
-            </TabsTrigger>
-            <TabsTrigger value="display" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <BlueprintIcon icon="desktop" size={16} className="mr-2" />
-              Display
-            </TabsTrigger>
-          </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+        <TabsList className="grid w-full grid-cols-5 bg-white border border-[#e9ecef] p-1 rounded-lg">
+          <TabsTrigger value="profile" className="data-[state=active]:bg-[#1c1c1c] data-[state=active]:text-white text-[#5a5a5a] hover:text-[#1c1c1c] transition-all duration-200 text-sm">
+            <BlueprintIcon icon="user" size={14} className="mr-2" />
+            Profile
+          </TabsTrigger>
+          <TabsTrigger value="security" className="data-[state=active]:bg-[#1c1c1c] data-[state=active]:text-white text-[#5a5a5a] hover:text-[#1c1c1c] transition-all duration-200 text-sm">
+            <BlueprintIcon icon="shield" size={14} className="mr-2" />
+            Security
+          </TabsTrigger>
+          <TabsTrigger value="subscription" className="data-[state=active]:bg-[#1c1c1c] data-[state=active]:text-white text-[#5a5a5a] hover:text-[#1c1c1c] transition-all duration-200 text-sm">
+            <BlueprintIcon icon="credit-card" size={14} className="mr-2" />
+            Subscription
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="data-[state=active]:bg-[#1c1c1c] data-[state=active]:text-white text-[#5a5a5a] hover:text-[#1c1c1c] transition-all duration-200 text-sm">
+            <BlueprintIcon icon="notifications" size={14} className="mr-2" />
+            Notifications
+          </TabsTrigger>
+          <TabsTrigger value="display" className="data-[state=active]:bg-[#1c1c1c] data-[state=active]:text-white text-[#5a5a5a] hover:text-[#1c1c1c] transition-all duration-200 text-sm">
+            <BlueprintIcon icon="desktop" size={14} className="mr-2" />
+            Display
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-4">
-            <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-2xl blur-xl opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
-              <Card className="relative bg-neutral-900/60 backdrop-blur-sm border-white/10 hover:border-white/20 transition-all duration-500">
-                <CardHeader className="border-b border-white/10">
-                  <CardTitle className="text-xl text-white">Profile Settings</CardTitle>
-                  <CardDescription className="text-neutral-400">
-                    Manage your account information and authentication [[memory:8159793]]
-                  </CardDescription>
-                </CardHeader>
+        {/* Profile Tab */}
+        <TabsContent value="profile" className="space-y-4">
+          <Card className="bg-white border-[#e9ecef] hover:border-[#dee2e6] transition-all duration-300">
+            <CardHeader className="border-b border-[#e9ecef]">
+              <CardTitle className="text-lg text-[#1c1c1c]">Profile Settings</CardTitle>
+              <CardDescription className="text-[#868e96]">
+                Manage your account information and authentication
+              </CardDescription>
+            </CardHeader>
             <CardContent className="space-y-6">
               {/* Display Name */}
               <div className="space-y-2">
