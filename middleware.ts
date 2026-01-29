@@ -13,31 +13,48 @@ function getAllowedIPs(): Set<string> {
   const ipList = process.env.IP_ADDRESS || ''
   if (!ipList) return new Set()
   
-  // Split by comma and trim whitespace
-  const ips = ipList.split(',').map(ip => ip.trim()).filter(ip => ip)
+  // Split by comma, newline, or space and trim whitespace
+  const ips = ipList
+    .split(/[,\n\s]+/)
+    .map(ip => ip.trim())
+    .filter(ip => ip && ip.length > 0)
+  
+  console.log('[IP Check] Allowed IPs from env:', ips)
   return new Set(ips)
 }
 
 // Get client IP from various headers
 function getClientIP(request: NextRequest): string | null {
-  // Check various headers in order of reliability
+  // Vercel-specific header (most reliable on Vercel)
+  const vercelForwardedFor = request.headers.get('x-vercel-forwarded-for')
+  if (vercelForwardedFor) {
+    const ip = vercelForwardedFor.split(',')[0].trim()
+    console.log('[IP Check] Got IP from x-vercel-forwarded-for:', ip)
+    return ip
+  }
+  
+  // Standard forwarded-for header
   const forwardedFor = request.headers.get('x-forwarded-for')
   if (forwardedFor) {
-    // x-forwarded-for can contain multiple IPs, take the first one
-    return forwardedFor.split(',')[0].trim()
+    const ip = forwardedFor.split(',')[0].trim()
+    console.log('[IP Check] Got IP from x-forwarded-for:', ip)
+    return ip
   }
   
   const realIP = request.headers.get('x-real-ip')
   if (realIP) {
+    console.log('[IP Check] Got IP from x-real-ip:', realIP.trim())
     return realIP.trim()
   }
   
   const cfConnectingIP = request.headers.get('cf-connecting-ip')
   if (cfConnectingIP) {
+    console.log('[IP Check] Got IP from cf-connecting-ip:', cfConnectingIP.trim())
     return cfConnectingIP.trim()
   }
   
   // Fallback to request IP (may not be accurate behind proxies)
+  console.log('[IP Check] Fallback to request.ip:', request.ip)
   return request.ip || null
 }
 
