@@ -3,16 +3,36 @@
 import { useEffect } from 'react'
 import { useUser } from '@auth0/nextjs-auth0'
 import { useRouter } from 'next/navigation'
-import { Button } from "@/components/ui/button"
+import { motion } from "motion/react"
 import Header from '@/components/navigation/header'
-import { Shield, Lock, ArrowRight, Fingerprint, Key, CheckCircle } from "lucide-react"
+
+function BlueprintIcon({ icon, size = 16, className = "" }: { icon: string; size?: number; className?: string }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 16 16" fill="currentColor">
+      {icon === "shield" && (
+        <path d="M8 0l7 3v4c0 3.53-2.61 6.74-7 8-4.39-1.26-7-4.47-7-8V3l7-3zm0 1.11L2 3.72V7c0 2.89 2.2 5.55 6 6.72 3.8-1.17 6-3.83 6-6.72V3.72L8 1.11z" fillRule="evenodd" />
+      )}
+      {icon === "lock" && (
+        <path d="M12 7V5c0-2.21-1.79-4-4-4S4 2.79 4 5v2H3v9h10V7h-1zm-5 6.72V12h2v1.72a1 1 0 0 1-.5.86.98.98 0 0 1-1 0 1 1 0 0 1-.5-.86zM5 5c0-1.66 1.34-3 3-3s3 1.34 3 3v2H5V5z" fillRule="evenodd" />
+      )}
+      {icon === "arrow-top-right" && (
+        <path d="M5 3h8v8l-1-1V4.41L4.41 12l-.7-.71L11.29 4H6L5 3z" fillRule="evenodd" />
+      )}
+      {icon === "id-number" && (
+        <path d="M14 3H2c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zm-6 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zM4 11c0-1.1 1.79-2 4-2s4 .9 4 2H4z" fillRule="evenodd" />
+      )}
+      {icon === "key" && (
+        <path d="M11 0a5 5 0 0 0-4.916 5.916L0 12v3a1 1 0 0 0 1 1h1v-2h2v-2h2v-2h2.084A5 5 0 1 0 11 0zm1 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" fillRule="evenodd" />
+      )}
+    </svg>
+  )
+}
 
 export default function LoginPage() {
   const { user, isLoading } = useUser()
   const router = useRouter()
 
   useEffect(() => {
-    // If user is already logged in, redirect to dashboard
     if (user && !isLoading) {
       router.push('/dashboard')
     }
@@ -24,126 +44,138 @@ export default function LoginPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
-            <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-white/30 rounded-full animate-spin animation-delay-150 mx-auto"></div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
+        >
+          <div className="relative w-8 h-8 mx-auto">
+            <div className="absolute inset-0 border border-[#e9ecef] rounded" />
+            <div className="absolute inset-0 border border-transparent border-t-[#e85d2d] rounded animate-spin" />
           </div>
-          <p className="mt-4 text-white/60 text-sm tracking-wide">Loading...</p>
-        </div>
+          <p className="mt-4 text-[#adb5bd] text-sm">Loading...</p>
+        </motion.div>
       </div>
     )
   }
 
   const features = [
-    { icon: <Shield className="h-5 w-5" />, text: "Enterprise-grade security" },
-    { icon: <Fingerprint className="h-5 w-5" />, text: "Multi-factor authentication" },
-    { icon: <Key className="h-5 w-5" />, text: "Secure API access" },
+    { icon: "shield", text: "Enterprise-grade security" },
+    { icon: "id-number", text: "Multi-factor authentication" },
+    { icon: "key", text: "Secure API access" },
   ]
 
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-[#f8f9fa]">
       <Header />
 
-      <main className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 sm:px-6 py-12">
-        <div className="w-full max-w-md">
-          {/* Glow effect container */}
-          <div className="relative">
-            {/* Background glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-3xl blur-3xl"></div>
-            
-            {/* Main card */}
-            <div className="relative bg-neutral-900/60 backdrop-blur-xl rounded-3xl ring-1 ring-white/10 p-8 sm:p-10 hover:ring-white/20 transition-all duration-500">
-              {/* Logo and title */}
-              <div className="text-center mb-8">
-                <div className="relative inline-flex items-center justify-center w-20 h-20 mb-6">
-                  <div className="absolute inset-0 bg-white rounded-2xl blur-xl opacity-30"></div>
-                  <div className="relative bg-white rounded-2xl p-4">
-                    <Shield className="h-10 w-10 text-black" />
-                  </div>
-                </div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-                  Welcome Back
-                </h1>
-                <p className="text-neutral-400 text-sm sm:text-base">
-                  Access your identity intelligence dashboard
-                </p>
+      <main className="flex items-center justify-center min-h-screen px-6 pt-24">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md py-24"
+        >
+          <div className="bg-white border border-[#e9ecef] rounded p-10">
+            <div className="text-center mb-10">
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.1, duration: 0.4 }}
+                className="inline-flex items-center justify-center w-14 h-14 bg-[#212529] rounded mb-6"
+              >
+                <BlueprintIcon icon="shield" size={24} className="text-white" />
+              </motion.div>
+              
+              <motion.h1 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+                className="text-[28px] font-light text-[#212529] mb-3"
+              >
+                Welcome back
+              </motion.h1>
+              <motion.p 
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.4 }}
+                className="text-[#868e96] text-sm"
+              >
+                Access your threat intelligence dashboard
+              </motion.p>
               </div>
 
-              {/* Login button with glow */}
-              <div className="space-y-4">
-                <Button 
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.4 }}
+              className="space-y-4"
+            >
+              <motion.button 
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
                   onClick={handleLogin}
-                  className="group relative w-full py-4 text-base sm:text-lg font-semibold bg-white text-black hover:bg-neutral-200 transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] overflow-hidden"
-                  size="lg"
+                className="pltr-btn-primary w-full py-3.5 text-sm flex items-center justify-center gap-2"
                 >
-                  <span className="relative z-10 flex items-center justify-center">
-                    <Lock className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
+                <BlueprintIcon icon="lock" size={14} />
                     Sign In with Auth0
-                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                </Button>
+                <BlueprintIcon icon="arrow-top-right" size={14} />
+              </motion.button>
 
-                <div className="relative">
+              <div className="relative py-6">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/10"></div>
+                  <div className="w-full h-px bg-[#e9ecef]" />
                   </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-neutral-900/60 px-4 text-neutral-500">Or</span>
+                <div className="relative flex justify-center">
+                  <span className="px-4 text-xs text-[#adb5bd] bg-white">or</span>
                   </div>
                 </div>
 
-                <Button 
+              <motion.button 
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
                   onClick={() => router.push('/auth/login?screen_hint=signup')}
-                  variant="outline"
-                  className="w-full py-4 text-base font-semibold border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-300"
-                  size="lg"
+                className="pltr-btn-secondary w-full py-3.5 text-sm"
                 >
                   Create New Account
-                </Button>
+              </motion.button>
+            </motion.div>
               </div>
 
-              {/* Features list */}
-              <div className="mt-8 space-y-3">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.4 }}
+            className="mt-8 space-y-3"
+          >
                 {features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3 text-neutral-400">
-                    <div className="p-1.5 bg-white/10 rounded-lg">
-                      {feature.icon}
-                    </div>
+              <div 
+                key={index}
+                className="flex items-center gap-3 text-[#adb5bd]"
+              >
+                <BlueprintIcon icon={feature.icon} size={14} className="text-[#ced4da]" />
                     <span className="text-sm">{feature.text}</span>
                   </div>
                 ))}
-              </div>
+          </motion.div>
 
-              {/* Demo notice */}
-              <div className="mt-8 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
-                <p className="text-sm text-blue-300 text-center">
-                  <span className="font-semibold">Demo Mode Available</span>
-                  <br />
-                  <span className="text-xs text-blue-300/80 mt-1 block">
-                    Explore with limited features before signing up
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom links */}
-          <div className="mt-8 text-center space-y-2">
-            <p className="text-xs text-neutral-500">
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6, duration: 0.4 }}
+            className="mt-8 text-center text-xs text-[#adb5bd]"
+          >
               By signing in, you agree to our{' '}
-              <a href="/terms-of-service" className="text-white/60 hover:text-white transition-colors">
-                Terms of Service
+            <a href="/terms-of-service" className="text-[#868e96] hover:text-[#e85d2d] transition-colors">
+              Terms
               </a>{' '}
               and{' '}
-              <a href="/privacy-policy" className="text-white/60 hover:text-white transition-colors">
+            <a href="/privacy-policy" className="text-[#868e96] hover:text-[#e85d2d] transition-colors">
                 Privacy Policy
               </a>
-            </p>
-          </div>
-        </div>
+          </motion.p>
+        </motion.div>
       </main>
     </div>
   )

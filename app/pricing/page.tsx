@@ -1,16 +1,46 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { motion } from "motion/react"
 import Header from "@/components/navigation/header"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Check, X, Shield, ArrowRight, Zap, Users, Building2 } from "lucide-react"
+import Footer from "@/components/navigation/footer"
+
+function BlueprintIcon({ icon, size = 16, className = "" }: { icon: string; size?: number; className?: string }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 16 16" fill="currentColor">
+      {icon === "tick" && (
+        <path d="M14 3c-.28 0-.53.11-.71.29L6 10.59l-3.29-3.3a1.003 1.003 0 0 0-1.42 1.42l4 4c.18.18.43.29.71.29s.53-.11.71-.29l8-8A1.003 1.003 0 0 0 14 3z" fillRule="evenodd" />
+      )}
+      {icon === "cross" && (
+        <path d="M8.7 8l3.15-3.15-.7-.7L8 7.29 4.85 4.15l-.7.7L7.29 8l-3.14 3.15.7.7L8 8.71l3.15 3.14.7-.7L8.71 8z" fillRule="evenodd" />
+      )}
+      {icon === "arrow-top-right" && (
+        <path d="M5 3h8v8l-1-1V4.41L4.41 12l-.7-.71L11.29 4H6L5 3z" fillRule="evenodd" />
+      )}
+    </svg>
+  )
+}
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0 }
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1
+    }
+  }
+}
 
 const pricingPlans = [
   {
     name: "Starter",
-    description: "Perfect for individuals",
+    description: "For individuals",
     price: "$19.99",
     period: "/month",
     features: [
@@ -21,13 +51,12 @@ const pricingPlans = [
       { name: "API access", included: false },
       { name: "Priority support", included: false },
     ],
-    icon: <Shield className="h-6 w-6" />,
     popular: false,
     cta: "Get Started",
   },
   {
     name: "Professional",
-    description: "For security professionals",
+    description: "For security teams",
     price: "$99",
     period: "/quarter",
     features: [
@@ -38,7 +67,6 @@ const pricingPlans = [
       { name: "API access", included: true },
       { name: "Priority support", included: true },
     ],
-    icon: <Zap className="h-6 w-6" />,
     popular: true,
     cta: "Try Professional",
   },
@@ -46,7 +74,7 @@ const pricingPlans = [
     name: "Enterprise",
     description: "Custom solutions",
     price: "Custom",
-    period: "pricing",
+    period: "",
     features: [
       { name: "Unlimited API credits", included: true },
       { name: "Real-time feeds", included: true },
@@ -55,7 +83,6 @@ const pricingPlans = [
       { name: "24/7 support", included: true },
       { name: "SLA guarantees", included: true },
     ],
-    icon: <Building2 className="h-6 w-6" />,
     popular: false,
     cta: "Contact Sales",
   },
@@ -64,175 +91,221 @@ const pricingPlans = [
 export default function PricingPage() {
   const router = useRouter()
 
-  const handlePlanSelect = (planName: string, planPrice: string) => {
+  const handlePlanSelect = (planName: string) => {
     if (planName === "Enterprise") {
-      // Enterprise plan redirects to contact form
       router.push("/contact")
     } else {
-      // Other plans redirect to login flow - subscription will be created when account is created
       router.push("/login")
     }
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-[#f7f6f3]">
       <Header />
       
-      <main className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 sm:px-6 py-12">
-        <div className="w-full max-w-6xl">
-          {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-              Choose Your Plan
-            </h1>
-            <p className="text-neutral-400 text-lg">
-              Flexible pricing for security teams and researchers
-            </p>
-          </div>
+      <section className="relative pt-32 pb-20 sm:pb-24 lg:pb-32 px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="mb-12 sm:mb-16"
+          >
+            <motion.p 
+              variants={fadeInUp}
+              transition={{ duration: 0.6 }}
+              className="pltr-label mb-5"
+            >
+              PRICING
+            </motion.p>
+            <motion.h1 
+              variants={fadeInUp}
+              transition={{ duration: 0.6 }}
+              className="text-[32px] sm:text-[40px] lg:text-[52px] font-light text-[#1c1c1c] leading-[1.08] tracking-[-0.03em] mb-5"
+            >
+              Choose your plan
+            </motion.h1>
+            <motion.p 
+              variants={fadeInUp}
+              transition={{ duration: 0.6 }}
+              className="text-[#5a5a5a] text-base sm:text-lg max-w-xl"
+            >
+              Flexible pricing for security teams and researchers.
+            </motion.p>
+          </motion.div>
 
-          {/* Pricing Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#dee2e6] rounded-lg overflow-hidden">
             {pricingPlans.map((plan, index) => (
-              <div key={index} className="relative">
-                {/* Background glow */}
-                <div className={`absolute inset-0 ${
-                  plan.popular 
-                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20' 
-                    : 'bg-gradient-to-r from-neutral-500/10 to-neutral-600/10'
-                } rounded-3xl blur-3xl`}></div>
-                
-                {/* Main card */}
-                <div className={`relative bg-neutral-900/60 backdrop-blur-xl rounded-3xl ring-1 ${
-                  plan.popular 
-                    ? 'ring-white/20 hover:ring-white/30' 
-                    : 'ring-white/10 hover:ring-white/20'
-                } p-8 transition-all duration-500 h-full flex flex-col`}>
+              <motion.div 
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+                className={`p-8 lg:p-10 flex flex-col relative ${
+                  plan.popular ? 'bg-[#ffffff]' : 'bg-[#fafafa]'
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#e07a4a]" />
+                )}
                   
-                  {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                      <Badge className="bg-white text-black px-4 py-1">
-                        MOST POPULAR
-                      </Badge>
-                    </div>
-                  )}
-                  
-                  {/* Icon and title */}
-                  <div className="text-center mb-6">
-                    <div className="relative inline-flex items-center justify-center w-16 h-16 mb-4">
-                      <div className={`absolute inset-0 ${
-                        plan.popular ? 'bg-white' : 'bg-white/20'
-                      } rounded-2xl blur-xl opacity-30`}></div>
-                      <div className={`relative ${
-                        plan.popular ? 'bg-white' : 'bg-white/10'
-                      } rounded-2xl p-3`}>
-                        <div className={plan.popular ? 'text-black' : 'text-white'}>
-                          {plan.icon}
-                        </div>
-                      </div>
-                    </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
-                      {plan.name}
-                    </h2>
-                    <p className="text-neutral-400 text-sm">
-                      {plan.description}
-                    </p>
-                  </div>
-
-                  {/* Price */}
-                  <div className="text-center mb-6">
-                    <span className="text-4xl font-bold text-white">
-                      {plan.price}
-                    </span>
-                    <span className="text-neutral-400 ml-2">
-                      {plan.period}
-                    </span>
-                  </div>
-
-                  {/* Features */}
-                  <ul className="space-y-3 mb-8 flex-grow">
-                    {plan.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center">
-                        {feature.included ? (
-                          <div className="p-1 bg-green-500/20 rounded-lg mr-3">
-                            <Check className="h-4 w-4 text-green-400" />
-                          </div>
-                        ) : (
-                          <div className="p-1 bg-neutral-800 rounded-lg mr-3">
-                            <X className="h-4 w-4 text-neutral-600" />
-                          </div>
-                        )}
-                        <span className={
-                          feature.included ? "text-neutral-300" : "text-neutral-600"
-                        }>
-                          {feature.name}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* CTA Button */}
-                  <Button 
-                    onClick={() => handlePlanSelect(plan.name, plan.price)}
-                    className={`group relative w-full py-4 text-base font-semibold ${
-                      plan.popular 
-                        ? 'bg-white text-black hover:bg-neutral-200' 
-                        : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                    } transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.3)] overflow-hidden`}
-                    size="lg"
-                  >
-                    <span className="relative z-10 flex items-center justify-center">
-                      {plan.cta}
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                    </span>
-                    {plan.popular && (
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                    )}
-                  </Button>
+                <div className="mb-8">
+                  <p className="text-xs text-[#adb5bd] uppercase tracking-wider mb-2">
+                    {plan.description}
+                  </p>
+                  <h2 className="text-2xl font-light text-[#1c1c1c]">
+                    {plan.name}
+                  </h2>
                 </div>
-              </div>
+
+                <div className="mb-8">
+                  <span className="text-[36px] font-light text-[#1c1c1c] font-mono tracking-tight">
+                    {plan.price}
+                  </span>
+                  <span className="text-[#adb5bd] text-sm ml-1">
+                    {plan.period}
+                  </span>
+                </div>
+
+                <ul className="space-y-4 mb-10 flex-grow">
+                  {plan.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-center gap-3">
+                      {feature.included ? (
+                        <BlueprintIcon icon="tick" size={14} className="text-[#e07a4a]" />
+                      ) : (
+                        <BlueprintIcon icon="cross" size={14} className="text-[#ced4da]" />
+                      )}
+                      <span className={feature.included ? "text-[#5a5a5a] text-sm" : "text-[#ced4da] text-sm"}>
+                        {feature.name}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handlePlanSelect(plan.name)}
+                  className={`w-full py-3 text-sm flex items-center justify-center gap-2 ${
+                    plan.popular 
+                      ? 'pltr-btn-primary' 
+                      : 'pltr-btn-secondary'
+                  }`}
+                >
+                  {plan.cta}
+                  <BlueprintIcon icon="arrow-top-right" size={14} />
+                </motion.button>
+              </motion.div>
             ))}
           </div>
+        </div>
+      </section>
 
-          {/* Bottom CTA */}
-          <div className="mt-16 text-center">
-            <p className="text-neutral-400 mb-6">
-              Not sure which plan is right for you?
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                variant="outline"
-                className="border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-300"
+      <section className="pltr-section py-20 sm:py-24 lg:py-32 bg-[#ffffff] pltr-grain">
+        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
+            >
+              <p className="pltr-label mb-5">ENTERPRISE</p>
+              <h2 className="text-[26px] sm:text-[32px] lg:text-[40px] font-light text-[#1c1c1c] leading-[1.12] tracking-[-0.02em] mb-5 sm:mb-6">
+                Custom solutions for large organizations
+              </h2>
+              <p className="text-[#5a5a5a] text-base sm:text-lg leading-relaxed mb-6 sm:mb-8">
+                Need a custom plan? We offer tailored solutions with dedicated support, custom integrations, and flexible pricing for enterprise requirements.
+              </p>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => router.push('/contact')}
+                className="pltr-btn-primary px-6 py-3 inline-flex items-center gap-2"
               >
-                Talk to Sales
-                <Users className="ml-2 h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                className="border-white/20 text-white hover:bg-white/10 hover:border-white/30 transition-all duration-300"
-                onClick={() => router.push('/login')}
-              >
-                Try Demo
-                <Zap className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+                Contact Sales
+                <BlueprintIcon icon="arrow-top-right" size={14} />
+              </motion.button>
+            </motion.div>
 
-          {/* Bottom links */}
-          <div className="mt-12 text-center">
-            <p className="text-xs text-neutral-500">
-              By purchasing, you agree to our{' '}
-              <a href="/terms-of-service" className="text-white/60 hover:text-white transition-colors">
-                Terms of Service
-              </a>{' '}
-              and{' '}
-              <a href="/privacy-policy" className="text-white/60 hover:text-white transition-colors">
-                Privacy Policy
-              </a>
-            </p>
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.7, delay: 0.15, ease: [0.25, 0.4, 0.25, 1] }}
+              className="space-y-0"
+            >
+              {[
+                { label: "Dedicated Support", desc: "24/7 priority support with dedicated account manager" },
+                { label: "Custom Integrations", desc: "SIEM, SOAR, and custom API integrations" },
+                { label: "Volume Pricing", desc: "Flexible pricing based on your usage" },
+                { label: "SLA Guarantees", desc: "99.9% uptime with contractual guarantees" },
+              ].map((item, index) => (
+                <motion.div
+                  key={item.label}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: 0.25 + index * 0.08 }}
+                  className="py-4 sm:py-5 border-b border-[#e9ecef] cursor-default group"
+                >
+                  <div className="text-[#1c1c1c] font-medium mb-1 group-hover:text-[#e07a4a] transition-colors duration-200">
+                    {item.label}
+                  </div>
+                  <div className="text-[#adb5bd] text-sm">
+                    {item.desc}
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
           </div>
         </div>
-      </main>
+      </section>
+
+      <section className="pltr-section py-24 sm:py-32 lg:py-40 bg-[#f7f6f3] relative overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+          className="absolute inset-0 pointer-events-none"
+        >
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[600px] h-[500px] sm:h-[600px] bg-[#e07a4a]/[0.04] rounded-full blur-3xl" />
+        </motion.div>
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
+          >
+            <p className="pltr-label mb-5">QUESTIONS</p>
+            <h2 className="text-[26px] sm:text-[32px] lg:text-[44px] font-light text-[#1c1c1c] leading-[1.1] tracking-[-0.02em] mb-8 max-w-2xl mx-auto">
+              Not sure which plan is right for you?
+            </h2>
+            <motion.div 
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+              className="flex flex-col sm:flex-row gap-3 justify-center"
+            >
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push('/contact')}
+                className="pltr-btn-secondary px-8 py-3 inline-flex items-center justify-center gap-2"
+              >
+                Talk to Sales
+                <BlueprintIcon icon="arrow-top-right" size={14} />
+              </motion.button>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+      
+      <Footer />
     </div>
   )
 }

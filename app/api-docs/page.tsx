@@ -3,12 +3,62 @@
 import { useState } from "react"
 import Header from "@/components/navigation/header"
 import Footer from "@/components/navigation/footer"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Code, Key, Shield, Database, Zap, ArrowRight, Copy, Check, Terminal } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { motion } from "motion/react"
+
+function BlueprintIcon({ icon, size = 16, className = "" }: { icon: string; size?: number; className?: string }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 16 16" fill="currentColor">
+      {icon === "arrow-top-right" && (
+        <path d="M5 3h8v8l-1-1V4.41L4.41 12l-.7-.71L11.29 4H6L5 3z" fillRule="evenodd" />
+      )}
+      {icon === "key" && (
+        <path d="M11 0a5 5 0 0 0-4.916 5.916L0 12v3a1 1 0 0 0 1 1h1v-2h2v-2h2v-2h2.084A5 5 0 1 0 11 0zm1 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" fillRule="evenodd" />
+      )}
+      {icon === "shield" && (
+        <path d="M8 0l7 3v4c0 3.53-2.61 6.74-7 8-4.39-1.26-7-4.47-7-8V3l7-3zm0 1.11L2 3.72V7c0 2.89 2.2 5.55 6 6.72 3.8-1.17 6-3.83 6-6.72V3.72L8 1.11z" fillRule="evenodd" />
+      )}
+      {icon === "database" && (
+        <path d="M2 3.5C2 1.57 4.69 0 8 0s6 1.57 6 3.5V5c0 1.93-2.69 3.5-6 3.5S2 6.93 2 5V3.5zm0 4.35V11c0 1.93 2.69 3.5 6 3.5s6-1.57 6-3.5V7.85c-1.33 1.04-3.53 1.65-6 1.65s-4.67-.61-6-1.65zM8 1C5.24 1 3 2.12 3 3.5S5.24 6 8 6s5-1.12 5-2.5S10.76 1 8 1z" fillRule="evenodd" />
+      )}
+      {icon === "code" && (
+        <path d="M5.41 4L.71 8.71l-.02-.02L0 9.4 5.41 14.8l.7-.7L1.42 9.4l4.69-4.69-.7-.7zm5.18 0-.7.71L14.58 9.4l-4.69 4.69.7.71L16 9.4l-.69-.71-.02.02L10.59 4zM7.07 14.31l2-12 .98.16-2 12-.98-.16z" fillRule="evenodd" />
+      )}
+      {icon === "flash" && (
+        <path d="M5.56 16c-.11 0-.21-.01-.31-.03a1.5 1.5 0 0 1-.82-.58 1.49 1.49 0 0 1-.17-.99l.9-5.4H3c-.83 0-1.58-.67-1.58-1.5 0-.39.14-.75.37-1.03L8.5.41C8.96-.06 9.68-.13 10.22.14c.39.2.66.58.76 1.01.08.32.04.64-.1.9L9.22 6H13c.55 0 1.04.29 1.32.75.27.45.28 1 .02 1.46l-6.6 7.52c-.28.35-.71.52-1.18.27z" fillRule="evenodd" />
+      )}
+      {icon === "terminal" && (
+        <path d="M15 15H1c-.55 0-1-.45-1-1V2c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v12c0 .55-.45 1-1 1zM2 13h12V4H2v9zm2.71-5.29L7.41 10l-2.7 2.71-.71-.71L6 9.98l-2-2 .71-.7v.02zm2.79 3.29h3v1H7.5v-1z" fillRule="evenodd" />
+      )}
+      {icon === "copy" && (
+        <path d="M15 0H5c-.55 0-1 .45-1 1v2h2V2h8v10h-1v2h2c.55 0 1-.45 1-1V1c0-.55-.45-1-1-1zm-4 4H1c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h10c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1zm-1 10H2V6h8v8z" fillRule="evenodd" />
+      )}
+      {icon === "tick" && (
+        <path d="M14 3c-.28 0-.53.11-.71.29L6 10.59l-3.29-3.3a1.003 1.003 0 0 0-1.42 1.42l4 4c.18.18.43.29.71.29s.53-.11.71-.29l8-8A1.003 1.003 0 0 0 14 3z" fillRule="evenodd" />
+      )}
+      {icon === "arrow-right" && (
+        <path d="M10.71 7.29l-4-4-.71.71L9.59 7.5H1v1h8.59L6 12l.71.71 4-4a.5.5 0 0 0 0-.71z" fillRule="evenodd" />
+      )}
+    </svg>
+  )
+}
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0 }
+}
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren: 0.1
+    }
+  }
+}
 
 const endpoints = [
   {
@@ -136,6 +186,7 @@ const rateLimits = [
 export default function APIDocsPage() {
   const router = useRouter()
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<{ [key: number]: string }>({})
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
@@ -143,288 +194,379 @@ export default function APIDocsPage() {
     setTimeout(() => setCopiedCode(null), 2000)
   }
 
+  const getActiveTab = (index: number) => activeTab[index] || 'parameters'
+
   return (
-    <div className="min-h-screen bg-neutral-950">
+    <div className="min-h-screen bg-[#f7f6f3]">
       <Header />
 
-      {/* Hero Section */}
-      <section className="relative py-20 px-4 sm:px-6 bg-gradient-to-b from-neutral-900 to-neutral-950">
-        <div className="container mx-auto max-w-6xl text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6">
-            API Documentation
-          </h1>
-          <p className="text-lg sm:text-xl text-neutral-200 max-w-3xl mx-auto mb-8">
-            Integrate Obscura Labs identity intelligence into your security infrastructure 
-            with our comprehensive REST API.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-white text-black hover:bg-neutral-200"
-              onClick={() => router.push('/login')}
+      <section className="relative pt-32 pb-16 px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div 
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+          >
+            <motion.p 
+              variants={fadeInUp}
+              transition={{ duration: 0.6 }}
+              className="pltr-label mb-5"
             >
-              Get API Key
-              <Key className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/20 text-white hover:bg-white/10"
-              onClick={() => router.push('/contact')}
+              DOCUMENTATION
+            </motion.p>
+            <motion.h1 
+              variants={fadeInUp}
+              transition={{ duration: 0.6 }}
+              className="text-[32px] sm:text-[40px] lg:text-[52px] font-light text-[#1c1c1c] leading-[1.08] tracking-[-0.03em] mb-5"
             >
-              Contact Sales
-            </Button>
-          </div>
+              API Documentation
+            </motion.h1>
+            <motion.p 
+              variants={fadeInUp}
+              transition={{ duration: 0.6 }}
+              className="text-[#5a5a5a] text-base sm:text-lg max-w-2xl mb-8"
+            >
+              Integrate Obscura Labs identity intelligence into your security infrastructure with our comprehensive REST API.
+            </motion.p>
+            <motion.div 
+              variants={fadeInUp}
+              transition={{ duration: 0.6 }}
+              className="flex flex-col sm:flex-row gap-3"
+            >
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push('/login')}
+                className="pltr-btn-primary px-6 py-3 flex items-center justify-center gap-2"
+              >
+                Get API Key
+                <BlueprintIcon icon="key" size={14} />
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => router.push('/contact')}
+                className="pltr-btn-secondary px-6 py-3"
+              >
+                Contact Sales
+              </motion.button>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Quick Start Section */}
-      <section className="py-16 px-4 sm:px-6 bg-neutral-950">
-        <div className="container mx-auto max-w-6xl">
-          <Card className="bg-neutral-900/60 border-white/10">
-            <CardHeader>
-              <CardTitle className="text-2xl text-white flex items-center gap-3">
-                <Zap className="h-6 w-6" />
-                Quick Start
-              </CardTitle>
-              <CardDescription className="text-neutral-300">
-                Get started with the Obscura Labs API in minutes
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
+      <section className="pltr-section py-16 px-6 lg:px-8 bg-[#ffffff] pltr-grain">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
+            className="border border-[#e9ecef] rounded-lg p-8 lg:p-10"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <BlueprintIcon icon="flash" size={20} className="text-[#e07a4a]" />
+              <h2 className="text-[24px] sm:text-[28px] font-light text-[#1c1c1c]">Quick Start</h2>
+            </div>
+            <p className="text-[#868e96] text-sm mb-8">Get started with the Obscura Labs API in minutes</p>
+            
+            <div className="space-y-8">
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">1. Get your API key</h3>
-                <p className="text-neutral-300 mb-3">
+                <h3 className="text-base font-medium text-[#1c1c1c] mb-3">1. Get your API key</h3>
+                <p className="text-[#5a5a5a] text-sm">
                   Sign up for an account and generate your API key from the dashboard settings.
                 </p>
               </div>
               
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">2. Make your first request</h3>
-                <div className="bg-neutral-800 rounded-lg p-4 relative">
-                  <code className="text-sm text-green-400 block">
-                    {`curl -X GET "https://api.obscuralabs.io/v1/search?query=test@example.com" \\
-  -H "Authorization: Bearer YOUR_API_KEY"`}
-                  </code>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="absolute top-2 right-2 text-white/60 hover:text-white"
+                <h3 className="text-base font-medium text-[#1c1c1c] mb-3">2. Make your first request</h3>
+                <div className="bg-[#1c1c1c] rounded-lg p-4 relative">
+                  <pre className="text-sm text-[#a8e6cf] overflow-x-auto font-mono">
+                    <code>{`curl -X GET "https://api.obscuralabs.io/v1/search?query=test@example.com" \\
+  -H "Authorization: Bearer YOUR_API_KEY"`}</code>
+                  </pre>
+                  <button
+                    className="absolute top-3 right-3 p-2 text-[#868e96] hover:text-white transition-colors"
                     onClick={() => copyToClipboard(
                       `curl -X GET "https://api.obscuralabs.io/v1/search?query=test@example.com" -H "Authorization: Bearer YOUR_API_KEY"`,
                       'quickstart'
                     )}
                   >
-                    {copiedCode === 'quickstart' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
+                    {copiedCode === 'quickstart' ? (
+                      <BlueprintIcon icon="tick" size={14} className="text-[#a8e6cf]" />
+                    ) : (
+                      <BlueprintIcon icon="copy" size={14} />
+                    )}
+                  </button>
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">3. Handle the response</h3>
-                <p className="text-neutral-300">
+                <h3 className="text-base font-medium text-[#1c1c1c] mb-3">3. Handle the response</h3>
+                <p className="text-[#5a5a5a] text-sm">
                   All responses are returned in JSON format with consistent structure for easy parsing.
                 </p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Authentication Section */}
-      <section className="py-16 px-4 sm:px-6 bg-neutral-900/50">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <Shield className="h-8 w-8" />
-            Authentication
-          </h2>
+      <section className="pltr-section py-16 lg:py-20 px-6 lg:px-8 bg-[#f7f6f3]">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
+            className="mb-10"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <BlueprintIcon icon="shield" size={20} className="text-[#e07a4a]" />
+              <h2 className="text-[24px] sm:text-[28px] font-light text-[#1c1c1c]">Authentication</h2>
+            </div>
+          </motion.div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[#dee2e6] rounded-lg overflow-hidden">
             {authMethods.map((method, index) => (
-              <Card key={index} className="bg-neutral-900/60 border-white/10">
-                <CardHeader>
-                  <CardTitle className="text-xl text-white">{method.name}</CardTitle>
-                  <CardDescription className="text-neutral-300">
-                    {method.description}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-neutral-800 rounded-lg p-3">
-                    <code className="text-sm text-blue-400">{method.example}</code>
-                  </div>
-                </CardContent>
-              </Card>
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+                className="bg-[#ffffff] p-6 lg:p-8"
+              >
+                <h3 className="text-base font-medium text-[#1c1c1c] mb-2">{method.name}</h3>
+                <p className="text-[#868e96] text-sm mb-4">{method.description}</p>
+                <div className="bg-[#f7f6f3] rounded p-3">
+                  <code className="text-sm text-[#e07a4a] font-mono">{method.example}</code>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Endpoints Section */}
-      <section className="py-16 px-4 sm:px-6 bg-neutral-950">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <Terminal className="h-8 w-8" />
-            API Endpoints
-          </h2>
+      <section className="pltr-section py-16 lg:py-20 px-6 lg:px-8 bg-[#ffffff] pltr-grain">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
+            className="mb-10"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <BlueprintIcon icon="terminal" size={20} className="text-[#e07a4a]" />
+              <h2 className="text-[24px] sm:text-[28px] font-light text-[#1c1c1c]">API Endpoints</h2>
+            </div>
+          </motion.div>
 
-          <div className="space-y-8">
+          <div className="space-y-6">
             {endpoints.map((endpoint, index) => (
-              <Card key={index} className="bg-neutral-900/60 border-white/10">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className={`px-3 py-1 rounded text-xs font-semibold ${
-                          endpoint.method === 'GET' ? 'bg-blue-500/20 text-blue-400' : 'bg-green-500/20 text-green-400'
-                        }`}>
-                          {endpoint.method}
-                        </span>
-                        <code className="text-lg text-white font-mono">{endpoint.path}</code>
-                      </div>
-                      <CardDescription className="text-neutral-300">
-                        {endpoint.description}
-                      </CardDescription>
-                    </div>
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.4, 0.25, 1] }}
+                className="border border-[#e9ecef] rounded-lg overflow-hidden"
+              >
+                <div className="p-6 lg:p-8 bg-[#fafafa]">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className={`px-3 py-1 rounded text-xs font-medium font-mono ${
+                      endpoint.method === 'GET' 
+                        ? 'bg-[#e0f7fa] text-[#00838f]' 
+                        : 'bg-[#e8f5e9] text-[#2e7d32]'
+                    }`}>
+                      {endpoint.method}
+                    </span>
+                    <code className="text-base text-[#1c1c1c] font-mono">{endpoint.path}</code>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <Tabs defaultValue="parameters" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 bg-neutral-800">
-                      <TabsTrigger value="parameters" className="text-white data-[state=active]:bg-neutral-700">
-                        Parameters
-                      </TabsTrigger>
-                      <TabsTrigger value="example" className="text-white data-[state=active]:bg-neutral-700">
-                        Example
-                      </TabsTrigger>
-                      <TabsTrigger value="response" className="text-white data-[state=active]:bg-neutral-700">
-                        Response
-                      </TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="parameters" className="mt-4">
-                      <div className="space-y-3">
+                  <p className="text-[#5a5a5a] text-sm">{endpoint.description}</p>
+                </div>
+                
+                <div className="border-t border-[#e9ecef]">
+                  <div className="flex border-b border-[#e9ecef]">
+                    {['parameters', 'example', 'response'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab({ ...activeTab, [index]: tab })}
+                        className={`px-6 py-3 text-sm font-medium transition-colors ${
+                          getActiveTab(index) === tab
+                            ? 'text-[#e07a4a] border-b-2 border-[#e07a4a] -mb-px bg-white'
+                            : 'text-[#868e96] hover:text-[#1c1c1c]'
+                        }`}
+                      >
+                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                  
+                  <div className="p-6 lg:p-8 bg-white">
+                    {getActiveTab(index) === 'parameters' && (
+                      <div className="space-y-4">
                         {endpoint.parameters.map((param, paramIndex) => (
                           <div key={paramIndex} className="flex items-start gap-4">
-                            <div className="flex-shrink-0">
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                param.required ? 'bg-red-500/20 text-red-400' : 'bg-gray-500/20 text-gray-400'
-                              }`}>
-                                {param.required ? 'Required' : 'Optional'}
-                              </span>
-                            </div>
-                            <div className="flex-grow">
+                            <span className={`text-xs px-2 py-1 rounded flex-shrink-0 ${
+                              param.required 
+                                ? 'bg-[#ffebee] text-[#c62828]' 
+                                : 'bg-[#f5f5f5] text-[#757575]'
+                            }`}>
+                              {param.required ? 'Required' : 'Optional'}
+                            </span>
+                            <div>
                               <div className="flex items-center gap-2 mb-1">
-                                <code className="text-sm text-white font-mono">{param.name}</code>
-                                <span className="text-xs text-neutral-400">({param.type})</span>
+                                <code className="text-sm text-[#1c1c1c] font-mono">{param.name}</code>
+                                <span className="text-xs text-[#adb5bd]">({param.type})</span>
                               </div>
-                              <p className="text-sm text-neutral-300">{param.description}</p>
+                              <p className="text-sm text-[#5a5a5a]">{param.description}</p>
                             </div>
                           </div>
                         ))}
                       </div>
-                    </TabsContent>
+                    )}
                     
-                    <TabsContent value="example" className="mt-4">
-                      <div className="bg-neutral-800 rounded-lg p-4 relative">
-                        <pre className="text-sm text-green-400 overflow-x-auto">
+                    {getActiveTab(index) === 'example' && (
+                      <div className="bg-[#1c1c1c] rounded-lg p-4 relative">
+                        <pre className="text-sm text-[#a8e6cf] overflow-x-auto font-mono">
                           <code>{endpoint.example}</code>
                         </pre>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="absolute top-2 right-2 text-white/60 hover:text-white"
+                        <button
+                          className="absolute top-3 right-3 p-2 text-[#868e96] hover:text-white transition-colors"
                           onClick={() => copyToClipboard(endpoint.example, `example-${index}`)}
                         >
-                          {copiedCode === `example-${index}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
+                          {copiedCode === `example-${index}` ? (
+                            <BlueprintIcon icon="tick" size={14} className="text-[#a8e6cf]" />
+                          ) : (
+                            <BlueprintIcon icon="copy" size={14} />
+                          )}
+                        </button>
                       </div>
-                    </TabsContent>
+                    )}
                     
-                    <TabsContent value="response" className="mt-4">
-                      <div className="bg-neutral-800 rounded-lg p-4 relative">
-                        <pre className="text-sm text-blue-400 overflow-x-auto">
+                    {getActiveTab(index) === 'response' && (
+                      <div className="bg-[#1c1c1c] rounded-lg p-4 relative">
+                        <pre className="text-sm text-[#90caf9] overflow-x-auto font-mono">
                           <code>{endpoint.response}</code>
                         </pre>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="absolute top-2 right-2 text-white/60 hover:text-white"
+                        <button
+                          className="absolute top-3 right-3 p-2 text-[#868e96] hover:text-white transition-colors"
                           onClick={() => copyToClipboard(endpoint.response, `response-${index}`)}
                         >
-                          {copiedCode === `response-${index}` ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                        </Button>
+                          {copiedCode === `response-${index}` ? (
+                            <BlueprintIcon icon="tick" size={14} className="text-[#90caf9]" />
+                          ) : (
+                            <BlueprintIcon icon="copy" size={14} />
+                          )}
+                        </button>
                       </div>
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Rate Limits Section */}
-      <section className="py-16 px-4 sm:px-6 bg-neutral-900/50">
-        <div className="container mx-auto max-w-6xl">
-          <h2 className="text-3xl font-bold text-white mb-8 flex items-center gap-3">
-            <Database className="h-8 w-8" />
-            Rate Limits
-          </h2>
+      <section className="pltr-section py-16 lg:py-20 px-6 lg:px-8 bg-[#f7f6f3]">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
+            className="mb-10"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <BlueprintIcon icon="database" size={20} className="text-[#e07a4a]" />
+              <h2 className="text-[24px] sm:text-[28px] font-light text-[#1c1c1c]">Rate Limits</h2>
+            </div>
+          </motion.div>
           
-          <Card className="bg-neutral-900/60 border-white/10">
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-white/10">
-                      <th className="text-left p-4 text-white font-semibold">Plan</th>
-                      <th className="text-left p-4 text-white font-semibold">Rate Limit</th>
-                      <th className="text-left p-4 text-white font-semibold">Daily Limit</th>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, ease: [0.25, 0.4, 0.25, 1] }}
+            className="border border-[#e9ecef] rounded-lg overflow-hidden bg-white"
+          >
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-[#e9ecef] bg-[#fafafa]">
+                    <th className="text-left p-4 text-[#1c1c1c] font-medium text-sm">Plan</th>
+                    <th className="text-left p-4 text-[#1c1c1c] font-medium text-sm">Rate Limit</th>
+                    <th className="text-left p-4 text-[#1c1c1c] font-medium text-sm">Daily Limit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rateLimits.map((limit, index) => (
+                    <tr key={index} className="border-b border-[#f1f3f5] last:border-b-0">
+                      <td className="p-4 text-[#5a5a5a] text-sm">{limit.plan}</td>
+                      <td className="p-4 text-[#5a5a5a] text-sm font-mono">{limit.limit}</td>
+                      <td className="p-4 text-[#5a5a5a] text-sm font-mono">{limit.daily}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {rateLimits.map((limit, index) => (
-                      <tr key={index} className="border-b border-white/5">
-                        <td className="p-4 text-neutral-300">{limit.plan}</td>
-                        <td className="p-4 text-neutral-300">{limit.limit}</td>
-                        <td className="p-4 text-neutral-300">{limit.daily}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 bg-gradient-to-b from-neutral-900 to-neutral-950">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6">
-            Ready to integrate?
-          </h2>
-          <p className="text-lg text-neutral-200 mb-8">
-            Get your API key and start building with Obscura Labs today.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-white text-black hover:bg-neutral-200 px-8"
-              onClick={() => router.push('/login')}
+      <section className="pltr-section py-24 sm:py-32 lg:py-40 bg-[#ffffff] pltr-grain relative overflow-hidden">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+          className="absolute inset-0 pointer-events-none"
+        >
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] sm:w-[600px] h-[500px] sm:h-[600px] bg-[#e07a4a]/[0.04] rounded-full blur-3xl" />
+        </motion.div>
+
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 text-center relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
+          >
+            <p className="pltr-label mb-5">GET STARTED</p>
+            <h2 className="text-[26px] sm:text-[32px] lg:text-[44px] font-light text-[#1c1c1c] leading-[1.1] tracking-[-0.02em] mb-8 max-w-2xl mx-auto">
+              Ready to integrate?
+            </h2>
+            <motion.div 
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.25 }}
+              className="flex flex-col sm:flex-row gap-3 justify-center"
             >
-              Access Dashboard
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white/20 text-white hover:bg-white/10 px-8"
-              onClick={() => router.push('/contact')}
-            >
-              Contact Support
-            </Button>
-          </div>
+              <Link href="/login">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="pltr-btn-primary px-8 py-3 w-full sm:w-auto inline-flex items-center justify-center gap-2"
+                >
+                  Access Dashboard
+                  <BlueprintIcon icon="arrow-right" size={14} />
+                </motion.button>
+              </Link>
+              <Link href="/contact">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="pltr-btn-secondary px-8 py-3 w-full sm:w-auto"
+                >
+                  Contact Support
+                </motion.button>
+              </Link>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
