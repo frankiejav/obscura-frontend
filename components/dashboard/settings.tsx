@@ -402,7 +402,6 @@ export function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-            </div>
         </TabsContent>
 
         {/* Security Tab */}
@@ -544,7 +543,6 @@ export function SettingsPage() {
             )}
           </Button>
         </div>
-      </div>
     </div>
   )
 }
