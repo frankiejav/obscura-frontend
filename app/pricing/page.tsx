@@ -126,9 +126,10 @@ export default function PricingPage() {
   const handlePlanSelect = (plan: PricingPlan) => {
     if (plan.tier === "enterprise") {
       router.push("/contact")
-    } else if (plan.pricing) {
-      const price = billingCycle === 'yearly' ? plan.pricing.yearly : plan.pricing.monthly
-      router.push(`/checkout?plan=${plan.name}&price=${price}&cycle=${billingCycle}`)
+    } else {
+      // Redirect to login - authenticated users will be directed to dashboard
+      // where they can manage subscriptions
+      router.push("/login")
     }
   }
 

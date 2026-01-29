@@ -5,6 +5,9 @@ import { auth0 } from "./lib/auth0";
 // Routes that require IP check (login/signup pages)
 const IP_RESTRICTED_ROUTES = ['/login', '/signup']
 
+// Routes that are completely disabled (redirect to restricted)
+const DISABLED_ROUTES = ['/checkout']
+
 // Parse allowed IPs from environment variable
 function getAllowedIPs(): Set<string> {
   const ipList = process.env.IP_ADDRESS || ''
@@ -40,6 +43,16 @@ function getClientIP(request: NextRequest): string | null {
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
+  
+  // Check if this route is completely disabled
+  const isDisabledRoute = DISABLED_ROUTES.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
+  )
+  
+  if (isDisabledRoute) {
+    // Redirect disabled routes to restricted page
+    return NextResponse.redirect(new URL('/restricted', request.url))
+  }
   
   // Check if this is an IP-restricted route (login/signup pages ONLY)
   const isIPRestrictedRoute = IP_RESTRICTED_ROUTES.some(route => 
