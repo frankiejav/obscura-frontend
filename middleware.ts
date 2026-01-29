@@ -2,8 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from 'next/server';
 import { auth0 } from "./lib/auth0";
 
-// Routes that require IP check (login/signup pages)
-const IP_RESTRICTED_ROUTES = ['/login', '/signup']
+// Routes that require IP check (login/signup/auth pages)
+const IP_RESTRICTED_ROUTES = ['/login', '/signup', '/auth/login', '/auth/callback']
 
 // Routes that are completely disabled (redirect to restricted)
 const DISABLED_ROUTES = ['/checkout']
