@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, Send, Users, AlertTriangle } from "lucide-react"
+import { BlueprintIcon } from "@/components/ui/blueprint-icon"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -87,7 +87,7 @@ export function AdminNotificationForm({ user, onSubmit }: AdminNotificationFormP
           size="sm" 
           className="border-white/30 text-white hover:bg-white/10"
         >
-          <Bell className="w-4 h-4 mr-2" />
+          <BlueprintIcon icon="notifications" size={16} className="mr-2" />
           Send Alert
         </Button>
       </DialogTrigger>
@@ -194,7 +194,7 @@ export function AdminNotificationForm({ user, onSubmit }: AdminNotificationFormP
               type="submit"
               className="bg-red-600 hover:bg-red-700 text-white font-mono"
             >
-              <Send className="w-4 h-4 mr-2" />
+              <BlueprintIcon icon="send-message" size={16} className="mr-2" />
               Send Alert
             </Button>
             <Button

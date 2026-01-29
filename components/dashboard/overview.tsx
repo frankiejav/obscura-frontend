@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts"
-import { Activity, Database, Search, Users, Shield, Target, Globe } from "lucide-react"
+import { BlueprintIcon } from "@/components/ui/blueprint-icon"
 
 interface DataSource {
   id: string
@@ -149,7 +149,7 @@ export function DashboardOverview() {
             <CardTitle className="text-sm font-medium text-muted-foreground tracking-wider font-mono">
               24H ACTIVITY
             </CardTitle>
-            <Search className="h-4 w-4 text-primary" />
+            <BlueprintIcon icon="search" size={16} className="text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary font-mono">{stats.last24hActivity.toLocaleString()}</div>
@@ -164,7 +164,7 @@ export function DashboardOverview() {
             <CardTitle className="text-sm font-medium text-muted-foreground tracking-wider font-mono">
               INTEL RECORDS
             </CardTitle>
-            <Database className="h-4 w-4 text-primary" />
+            <BlueprintIcon icon="database" size={16} className="text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary font-mono">{stats.totalRecords.toLocaleString()}</div>
@@ -179,7 +179,7 @@ export function DashboardOverview() {
             <CardTitle className="text-sm font-medium text-muted-foreground tracking-wider font-mono">
               ACTIVE SOURCES
             </CardTitle>
-            <Users className="h-4 w-4 text-primary" />
+            <BlueprintIcon icon="people" size={16} className="text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary font-mono">{stats.activeSources}</div>
@@ -194,7 +194,7 @@ export function DashboardOverview() {
             <CardTitle className="text-sm font-medium text-muted-foreground tracking-wider font-mono">
               SYSTEM STATUS
             </CardTitle>
-            <Shield className="h-4 w-4 text-white" />
+            <BlueprintIcon icon="shield" size={16} className="text-white" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-white font-mono">ONLINE</div>
@@ -267,7 +267,7 @@ export function DashboardOverview() {
         <Card className="tactical-card">
           <CardHeader>
             <CardTitle className="text-primary font-mono tracking-wider flex items-center gap-2">
-              <Target className="h-4 w-4" />
+              <BlueprintIcon icon="target" size={16} />
               DATA SOURCES
             </CardTitle>
           </CardHeader>
@@ -290,7 +290,7 @@ export function DashboardOverview() {
         <Card className="tactical-card">
           <CardHeader>
             <CardTitle className="text-primary font-mono tracking-wider flex items-center gap-2">
-              <Activity className="h-4 w-4" />
+              <BlueprintIcon icon="pulse" size={16} />
               SYSTEM STATUS
             </CardTitle>
           </CardHeader>
@@ -322,7 +322,7 @@ export function DashboardOverview() {
         <Card className="tactical-card">
           <CardHeader>
             <CardTitle className="text-primary font-mono tracking-wider flex items-center gap-2">
-              <Globe className="h-4 w-4" />
+              <BlueprintIcon icon="globe" size={16} />
               RECENT RECORDS
             </CardTitle>
           </CardHeader>

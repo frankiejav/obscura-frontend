@@ -2,7 +2,7 @@
 
 import { useFeatures } from '@/hooks/useFeatures'
 import { AccountType } from '@/lib/account-types'
-import { Zap, Shield, Building2, CheckCircle, AlertCircle } from 'lucide-react'
+import { BlueprintIcon } from '@/components/ui/blueprint-icon'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -29,13 +29,13 @@ export function SubscriptionStatus() {
   const getIcon = (accountType: AccountType) => {
     switch (accountType) {
       case AccountType.STARTER:
-        return <Shield className="h-6 w-6" />
+        return <BlueprintIcon icon="shield" size={24} />
       case AccountType.PROFESSIONAL:
-        return <Zap className="h-6 w-6" />
+        return <BlueprintIcon icon="lightning" size={24} />
       case AccountType.ENTERPRISE:
-        return <Building2 className="h-6 w-6" />
+        return <BlueprintIcon icon="office" size={24} />
       default:
-        return <Shield className="h-6 w-6" />
+        return <BlueprintIcon icon="shield" size={24} />
     }
   }
 
@@ -147,27 +147,27 @@ export function SubscriptionStatus() {
         <div className="pt-4 border-t border-white/10">
           <p className="text-sm text-neutral-400 mb-3">Active Features</p>
           <div className="flex flex-wrap gap-2">
-            {features.features.SEARCH && (
+            {features.features.search && (
               <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                <CheckCircle className="h-3 w-3 mr-1" />
+                <BlueprintIcon icon="tick-circle" size={12} className="mr-1" />
                 Search
               </Badge>
             )}
-            {features.features.DATA_EXPORT && (
+            {features.features.data_export && (
               <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                <CheckCircle className="h-3 w-3 mr-1" />
+                <BlueprintIcon icon="tick-circle" size={12} className="mr-1" />
                 Export
               </Badge>
             )}
-            {features.features.CREDENTIAL_MONITORING && (
+            {features.features.credential_monitoring && (
               <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                <CheckCircle className="h-3 w-3 mr-1" />
+                <BlueprintIcon icon="tick-circle" size={12} className="mr-1" />
                 Monitoring
               </Badge>
             )}
-            {features.features.API_ACCESS && (
+            {features.features.api_access && (
               <Badge variant="secondary" className="bg-green-500/20 text-green-400 border-green-500/30">
-                <CheckCircle className="h-3 w-3 mr-1" />
+                <BlueprintIcon icon="tick-circle" size={12} className="mr-1" />
                 API
               </Badge>
             )}
@@ -178,7 +178,7 @@ export function SubscriptionStatus() {
         {(features.accountType === AccountType.FREE || features.accountType === AccountType.STARTER) && (
           <div className="mt-4 p-3 bg-white/5 rounded-lg">
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 text-yellow-400 mt-0.5" />
+              <BlueprintIcon icon="error" size={16} className="text-yellow-400 mt-0.5" />
               <div className="flex-1">
                 <p className="text-sm text-yellow-400 font-medium">
                   Unlock more features

@@ -10,20 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
-import { 
-  Mail, 
-  Globe, 
-  Phone, 
-  Search, 
-  RefreshCw, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock,
-  Plus,
-  Trash2,
-  Shield,
-  Activity
-} from "lucide-react"
+import { BlueprintIcon } from "@/components/ui/blueprint-icon"
 
 type MonitoringTarget = {
   id: string
@@ -285,10 +272,10 @@ export function Monitoring() {
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "clean": return <CheckCircle className="h-4 w-4 text-green-500" />
-      case "found": return <AlertTriangle className="h-4 w-4 text-red-500" />
-      case "scanning": return <RefreshCw className="h-4 w-4 text-blue-500 animate-spin" />
-      default: return <Clock className="h-4 w-4 text-gray-500" />
+      case "clean": return <BlueprintIcon icon="tick-circle" size={16} className="text-green-500" />
+      case "found": return <BlueprintIcon icon="warning-sign" size={16} className="text-red-500" />
+      case "scanning": return <BlueprintIcon icon="refresh" size={16} className="text-blue-500 animate-spin" />
+      default: return <BlueprintIcon icon="time" size={16} className="text-gray-500" />
     }
   }
 
@@ -312,12 +299,12 @@ export function Monitoring() {
           >
             {scanning ? (
               <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
+                <BlueprintIcon icon="refresh" size={16} className="animate-spin" />
                 Scanning...
               </>
             ) : (
               <>
-                <Search className="h-4 w-4" />
+                <BlueprintIcon icon="search" size={16} />
                 Scan All Now
               </>
             )}
@@ -329,7 +316,7 @@ export function Monitoring() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monitored Items</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
+            <BlueprintIcon icon="shield" size={16} className="text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{(monitoringTargets || []).length}</div>
@@ -341,7 +328,7 @@ export function Monitoring() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Breaches Found</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+            <BlueprintIcon icon="warning-sign" size={16} className="text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{scanStats.breachesFound}</div>
@@ -353,7 +340,7 @@ export function Monitoring() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Scans</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <BlueprintIcon icon="pulse" size={16} className="text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{scanStats.totalScans}</div>
@@ -365,7 +352,7 @@ export function Monitoring() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last Scan</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <BlueprintIcon icon="time" size={16} className="text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -386,15 +373,15 @@ export function Monitoring() {
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="emails" className="gap-2">
-            <Mail className="h-4 w-4" />
+            <BlueprintIcon icon="envelope" size={16} />
             Emails ({getTargetsByType("email").length})
           </TabsTrigger>
           <TabsTrigger value="domains" className="gap-2">
-            <Globe className="h-4 w-4" />
+            <BlueprintIcon icon="globe" size={16} />
             Domains ({getTargetsByType("domain").length})
           </TabsTrigger>
           <TabsTrigger value="phones" className="gap-2">
-            <Phone className="h-4 w-4" />
+            <BlueprintIcon icon="phone" size={16} />
             Phones ({getTargetsByType("phone").length})
           </TabsTrigger>
           <TabsTrigger value="breaches">Breach History</TabsTrigger>
@@ -428,7 +415,7 @@ export function Monitoring() {
                   onKeyPress={(e) => e.key === 'Enter' && handleAddTarget()}
                 />
                 <Button onClick={handleAddTarget} disabled={loading}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <BlueprintIcon icon="plus" size={16} className="mr-2" />
                   Add
                 </Button>
               </div>
@@ -448,7 +435,7 @@ export function Monitoring() {
                 rows={5}
               />
               <Button onClick={handleBulkAdd} disabled={loading || !bulkInput.trim()}>
-                <Plus className="h-4 w-4 mr-2" />
+                <BlueprintIcon icon="plus" size={16} className="mr-2" />
                 Import All
               </Button>
             </CardContent>
@@ -468,7 +455,7 @@ export function Monitoring() {
                 <div className="space-y-2">
                   {getRecentBreaches().map((result) => (
                     <Alert key={result.id} className="py-2">
-                      <AlertTriangle className="h-4 w-4" />
+                      <BlueprintIcon icon="warning-sign" size={16} />
                       <AlertDescription className="flex items-center justify-between">
                         <div>
                           <span className="font-medium">{result.targetValue}</span> found in{" "}
@@ -503,7 +490,7 @@ export function Monitoring() {
                   </span>
                   <div className="flex gap-2">
                     <Button size="sm" variant="outline" onClick={handleScanSelected}>
-                      <Search className="h-4 w-4 mr-2" />
+                      <BlueprintIcon icon="search" size={16} className="mr-2" />
                       Scan Selected
                     </Button>
                     <Button 
@@ -514,7 +501,7 @@ export function Monitoring() {
                         setSelectedTargets([])
                       }}
                     >
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <BlueprintIcon icon="trash" size={16} className="mr-2" />
                       Delete Selected
                     </Button>
                   </div>
@@ -587,14 +574,14 @@ export function Monitoring() {
                             onClick={() => handleScanNow(target.id)}
                             disabled={scanning}
                           >
-                            <Search className="h-4 w-4" />
+                            <BlueprintIcon icon="search" size={16} />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="outline"
                             onClick={() => handleDeleteTarget(target.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <BlueprintIcon icon="trash" size={16} />
                           </Button>
                         </div>
                       </TableCell>
@@ -659,14 +646,14 @@ export function Monitoring() {
                             onClick={() => handleScanNow(target.id)}
                             disabled={scanning}
                           >
-                            <Search className="h-4 w-4" />
+                            <BlueprintIcon icon="search" size={16} />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="outline"
                             onClick={() => handleDeleteTarget(target.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <BlueprintIcon icon="trash" size={16} />
                           </Button>
                         </div>
                       </TableCell>
@@ -731,14 +718,14 @@ export function Monitoring() {
                             onClick={() => handleScanNow(target.id)}
                             disabled={scanning}
                           >
-                            <Search className="h-4 w-4" />
+                            <BlueprintIcon icon="search" size={16} />
                           </Button>
                           <Button 
                             size="sm" 
                             variant="outline"
                             onClick={() => handleDeleteTarget(target.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <BlueprintIcon icon="trash" size={16} />
                           </Button>
                         </div>
                       </TableCell>

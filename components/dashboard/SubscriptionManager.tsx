@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Loader2, CreditCard, CheckCircle, XCircle, AlertCircle, Zap, Bitcoin } from 'lucide-react'
+import { BlueprintIcon } from '@/components/ui/blueprint-icon'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -219,7 +219,7 @@ export default function SubscriptionManager() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-white" />
+        <BlueprintIcon icon="refresh" size={32} className="animate-spin text-white" />
       </div>
     )
   }
@@ -274,17 +274,17 @@ export default function SubscriptionManager() {
                 <div className="flex items-center gap-2">
                   {subscription.isActive ? (
                     <>
-                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <BlueprintIcon icon="tick-circle" size={16} className="text-green-500" />
                       <span className="text-white font-semibold">Active</span>
                     </>
                   ) : subscription.isPastDue ? (
                     <>
-                      <AlertCircle className="h-4 w-4 text-yellow-500" />
+                      <BlueprintIcon icon="error" size={16} className="text-yellow-500" />
                       <span className="text-white font-semibold">Past Due</span>
                     </>
                   ) : (
                     <>
-                      <XCircle className="h-4 w-4 text-red-500" />
+                      <BlueprintIcon icon="cross-circle" size={16} className="text-red-500" />
                       <span className="text-white font-semibold">Inactive</span>
                     </>
                   )}
@@ -321,9 +321,9 @@ export default function SubscriptionManager() {
                 className="bg-white text-black hover:bg-neutral-200"
               >
                 {processing ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <BlueprintIcon icon="refresh" size={16} className="mr-2 animate-spin" />
                 ) : (
-                  <CreditCard className="mr-2 h-4 w-4" />
+                  <BlueprintIcon icon="credit-card" size={16} className="mr-2" />
                 )}
                 Manage Billing
               </Button>
@@ -424,7 +424,7 @@ export default function SubscriptionManager() {
                             <ul className="space-y-1">
                               {plan.features.map((feature, i) => (
                                 <li key={i} className="text-sm text-neutral-300 flex items-center gap-2">
-                                  <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                                  <BlueprintIcon icon="tick-circle" size={12} className="text-green-500 flex-shrink-0" />
                                   {feature}
                                 </li>
                               ))}
@@ -446,7 +446,7 @@ export default function SubscriptionManager() {
                   }`}>
                     <Label htmlFor="stripe" className="flex items-center gap-4 cursor-pointer">
                       <RadioGroupItem value="stripe" id="stripe" />
-                      <CreditCard className="h-5 w-5 text-white" />
+                      <BlueprintIcon icon="credit-card" size={20} className="text-white" />
                       <div className="flex-1">
                         <p className="font-semibold text-white">Credit Card</p>
                         <p className="text-sm text-neutral-400">Pay with Stripe (Visa, Mastercard, etc.)</p>
@@ -461,7 +461,7 @@ export default function SubscriptionManager() {
                   }`}>
                     <Label htmlFor="crypto" className="flex items-center gap-4 cursor-pointer">
                       <RadioGroupItem value="crypto" id="crypto" />
-                      <Bitcoin className="h-5 w-5 text-white" />
+                      <BlueprintIcon icon="bitcoin" size={20} className="text-white" />
                       <div className="flex-1">
                         <p className="font-semibold text-white">Cryptocurrency</p>
                         <p className="text-sm text-neutral-400">Pay with Bitcoin, Ethereum, USDT, and more</p>
@@ -476,14 +476,14 @@ export default function SubscriptionManager() {
           <CardFooter className="flex flex-col gap-4">
             {error && (
               <Alert variant="destructive" className="w-full">
-                <AlertCircle className="h-4 w-4" />
+                <BlueprintIcon icon="error" size={16} />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
             )}
             
             {success && (
               <Alert className="w-full border-green-500 bg-green-500/10">
-                <CheckCircle className="h-4 w-4 text-green-500" />
+                <BlueprintIcon icon="tick-circle" size={16} className="text-green-500" />
                 <AlertDescription className="text-green-500">{success}</AlertDescription>
               </Alert>
             )}
@@ -495,9 +495,9 @@ export default function SubscriptionManager() {
               size="lg"
             >
               {processing ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                <BlueprintIcon icon="refresh" size={20} className="mr-2 animate-spin" />
               ) : (
-                <Zap className="mr-2 h-5 w-5" />
+                <BlueprintIcon icon="lightning" size={20} className="mr-2" />
               )}
               Upgrade to {PLANS[selectedPlan].name} ({billingCycle === 'yearly' ? 'Annual' : 'Monthly'})
             </Button>

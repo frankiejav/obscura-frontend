@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Bell, X, AlertTriangle, Shield, User, Database, Settings, Check, Trash2 } from "lucide-react"
+import { BlueprintIcon } from "@/components/ui/blueprint-icon"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -28,16 +28,16 @@ const getNotificationIcon = (type: NotificationType) => {
     case 'ACCOUNT_CHANGE':
     case 'PASSWORD_CHANGE':
     case 'EMAIL_CHANGE':
-      return <User className="w-4 h-4" />
+      return <BlueprintIcon icon="user" size={16} />
     case 'NEW_RECORD':
-      return <Database className="w-4 h-4" />
+      return <BlueprintIcon icon="database" size={16} />
     case 'ADMIN_ALERT':
     case 'SYSTEM_ALERT':
-      return <Settings className="w-4 h-4" />
+      return <BlueprintIcon icon="cog" size={16} />
     case 'SECURITY_ALERT':
-      return <Shield className="w-4 h-4" />
+      return <BlueprintIcon icon="shield" size={16} />
     default:
-      return <Bell className="w-4 h-4" />
+      return <BlueprintIcon icon="notifications" size={16} />
   }
 }
 
@@ -109,7 +109,7 @@ export function NotificationsPanel({ user }: NotificationsPanelProps) {
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/10">
-          <Bell className="w-4 h-4" />
+          <BlueprintIcon icon="notifications" size={16} />
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
           )}
@@ -121,7 +121,7 @@ export function NotificationsPanel({ user }: NotificationsPanelProps) {
       >
         <div className="flex items-center justify-between p-4 border-b border-white/20">
           <div className="flex items-center gap-2">
-            <Bell className="w-4 h-4" />
+            <BlueprintIcon icon="notifications" size={16} />
             <h3 className="font-mono text-sm font-bold">NOTIFICATIONS</h3>
             {unreadCount > 0 && (
               <Badge variant="outline" className="border-red-500 text-red-500 text-xs">
@@ -146,7 +146,7 @@ export function NotificationsPanel({ user }: NotificationsPanelProps) {
               onClick={() => setIsOpen(false)}
               className="text-gray-400 hover:text-white hover:bg-white/10"
             >
-              <X className="w-3 h-3" />
+              <BlueprintIcon icon="cross" size={12} />
             </Button>
           </div>
         </div>
@@ -160,7 +160,7 @@ export function NotificationsPanel({ user }: NotificationsPanelProps) {
               </div>
             ) : notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                <Bell className="w-8 h-8 mb-2" />
+                <BlueprintIcon icon="notifications" size={32} className="mb-2" />
                 <p className="font-mono text-sm">No notifications</p>
               </div>
             ) : (
@@ -265,7 +265,7 @@ function NotificationItem({ notification, onMarkAsRead, onDelete, user }: Notifi
                       onClick={() => onMarkAsRead(notification.id)}
                       className="text-xs text-gray-400 hover:text-white hover:bg-white/10 p-1 h-6"
                     >
-                      <Check className="w-3 h-3" />
+                      <BlueprintIcon icon="tick" size={12} />
                     </Button>
                   )}
                   {(isAdmin || notification.createdBy?.id === user.id) && (
@@ -275,7 +275,7 @@ function NotificationItem({ notification, onMarkAsRead, onDelete, user }: Notifi
                       onClick={() => onDelete(notification.id)}
                       className="text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 p-1 h-6"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <BlueprintIcon icon="trash" size={12} />
                     </Button>
                   )}
                 </div>

@@ -1,7 +1,7 @@
 "use client"
 
-import { User, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { BlueprintIcon } from "@/components/ui/blueprint-icon"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -59,23 +59,23 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                <User className="w-4 h-4" />
+                <BlueprintIcon icon="user" size={16} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 bg-black/95 border-white/20 text-white">
               <DropdownMenuLabel className="font-mono text-xs text-white">USER PROFILE</DropdownMenuLabel>
               <DropdownMenuSeparator className="bg-white/20" />
               <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
-                <User className="w-3 h-3 mr-2" />
+                <BlueprintIcon icon="user" size={12} className="mr-2" />
                 {user.email}
               </DropdownMenuItem>
               <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
-                <Shield className="w-3 h-3 mr-2" />
+                <BlueprintIcon icon="shield" size={12} className="mr-2" />
                 Role: {userRole.toUpperCase()}
               </DropdownMenuItem>
               {shouldShowClearance && (
                 <DropdownMenuItem className="font-mono text-xs hover:bg-white/10">
-                  <Shield className="w-3 h-3 mr-2" />
+                  <BlueprintIcon icon="shield" size={12} className="mr-2" />
                   Clearance: {user.clearance_level}
                 </DropdownMenuItem>
               )}

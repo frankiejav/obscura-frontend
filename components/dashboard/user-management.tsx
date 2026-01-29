@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useToast } from "@/components/ui/use-toast"
-import { Edit, Plus, Trash2 } from "lucide-react"
+import { BlueprintIcon } from "@/components/ui/blueprint-icon"
 
 type User = {
   id: string
@@ -220,7 +220,7 @@ export function UserManagement() {
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
           <DialogTrigger asChild>
             <Button>
-              <Plus className="mr-2 h-4 w-4" />
+              <BlueprintIcon icon="plus" size={16} className="mr-2" />
               Add User
             </Button>
           </DialogTrigger>
@@ -326,7 +326,7 @@ export function UserManagement() {
                       >
                         <DialogTrigger asChild>
                           <Button variant="outline" size="icon">
-                            <Edit className="h-4 w-4" />
+                            <BlueprintIcon icon="edit" size={16} />
                             <span className="sr-only">Edit</span>
                           </Button>
                         </DialogTrigger>
@@ -404,7 +404,7 @@ export function UserManagement() {
                       >
                         <DialogTrigger asChild>
                           <Button variant="destructive" size="icon">
-                            <Trash2 className="h-4 w-4" />
+                            <BlueprintIcon icon="trash" size={16} />
                             <span className="sr-only">Delete</span>
                           </Button>
                         </DialogTrigger>

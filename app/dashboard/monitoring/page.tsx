@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Activity, Shield, AlertTriangle, CheckCircle, Clock, TrendingUp, Monitor, Zap } from 'lucide-react'
+import { BlueprintIcon } from '@/components/ui/blueprint-icon'
 
 export default function MonitoringPage() {
   const [loading, setLoading] = useState(true)
@@ -59,7 +59,7 @@ export default function MonitoringPage() {
             size="lg"
             className="group bg-white text-black hover:bg-neutral-200 shadow-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] transition-all duration-500"
           >
-            <Shield className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+            <BlueprintIcon icon="shield" size={16} className="mr-2 group-hover:scale-110 transition-transform" />
             Configure Alerts
           </Button>
         </div>
@@ -72,7 +72,7 @@ export default function MonitoringPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-neutral-300">Total Targets</CardTitle>
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Monitor className="h-5 w-5 text-white" />
+                  <BlueprintIcon icon="desktop" size={20} className="text-white" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -92,7 +92,7 @@ export default function MonitoringPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-neutral-300">Active Monitors</CardTitle>
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Activity className="h-5 w-5 text-white" />
+                  <BlueprintIcon icon="pulse" size={20} className="text-white" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -115,7 +115,7 @@ export default function MonitoringPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-neutral-300">Alerts Triggered</CardTitle>
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <AlertTriangle className="h-5 w-5 text-white" />
+                  <BlueprintIcon icon="warning-sign" size={20} className="text-white" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -135,7 +135,7 @@ export default function MonitoringPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-neutral-300">Last Scan</CardTitle>
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Clock className="h-5 w-5 text-white" />
+                  <BlueprintIcon icon="time" size={20} className="text-white" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -143,7 +143,7 @@ export default function MonitoringPage() {
                   Just now
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="h-3 w-3 text-green-400" />
+                  <BlueprintIcon icon="tick-circle" size={12} className="text-green-400" />
                   <p className="text-xs text-neutral-400">
                     All systems operational
                   </p>
@@ -159,7 +159,7 @@ export default function MonitoringPage() {
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Shield className="w-5 h-5 text-white" />
+                  <BlueprintIcon icon="shield" size={20} className="text-white" />
                 </div>
                 <span className="text-xl text-white">Monitoring Status</span>
               </div>
@@ -171,7 +171,7 @@ export default function MonitoringPage() {
           <CardContent className="p-6">
             <div className="text-center py-8">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500/10 rounded-2xl mb-4">
-                <Zap className="w-8 h-8 text-green-400" />
+                <BlueprintIcon icon="lightning" size={32} className="text-green-400" />
               </div>
               <p className="text-white text-lg font-semibold mb-2">All Systems Operational</p>
               <p className="text-neutral-400">Monitoring is active and scanning for threats</p>

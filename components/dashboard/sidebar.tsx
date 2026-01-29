@@ -1,9 +1,7 @@
 "use client"
 
-import { Home, Search, Users, Settings, LogOut, Shield, Zap } from "lucide-react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
 import {
   Sidebar,
   SidebarContent,
@@ -15,10 +13,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import { BlueprintIcon } from "@/components/ui/blueprint-icon"
 
 interface DashboardSidebarProps {
   user: {
@@ -33,44 +31,44 @@ interface DashboardSidebarProps {
 const navigationItems: Array<{
   title: string
   url: string
-  icon: any
+  icon: string
   roles: string[]
   external?: boolean
 }> = [
   {
     title: "Overview",
     url: "/dashboard",
-    icon: Home,
+    icon: "home",
     roles: ["admin", "client"],
   },
   {
     title: "Search",
     url: "/dashboard/search",
-    icon: Search,
+    icon: "search",
     roles: ["admin", "client"],
   },
   {
     title: "Monitoring",
     url: "/dashboard/monitoring",
-    icon: Shield,
+    icon: "shield",
     roles: ["admin", "client"],
   },
   {
     title: "User Management",
     url: "/dashboard/users",
-    icon: Users,
+    icon: "people",
     roles: ["admin"],
   },
   {
     title: "Settings",
     url: "/dashboard/settings",
-    icon: Settings,
+    icon: "cog",
     roles: ["admin", "client"],
   },
   {
     title: "API",
     url: "https://docs.obscuralabs.io/api",
-    icon: Zap,
+    icon: "lightning",
     roles: ["admin", "client"],
     external: true,
   },
@@ -119,12 +117,12 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
                   >
                     {item.external ? (
                       <a href={item.url} target="_blank" rel="noopener noreferrer">
-                        <item.icon className="w-4 h-4" />
+                        <BlueprintIcon icon={item.icon} size={16} />
                         <span>{item.title}</span>
                       </a>
                     ) : (
                       <Link href={item.url}>
-                        <item.icon className="w-4 h-4" />
+                        <BlueprintIcon icon={item.icon} size={16} />
                         <span>{item.title}</span>
                       </Link>
                     )}
@@ -143,7 +141,7 @@ export function DashboardSidebar({ user }: DashboardSidebarProps) {
           size="sm"
           className="w-full font-mono text-xs border-white/30 text-white hover:bg-white/10 hover:border-white bg-transparent"
         >
-          <LogOut className="w-3 h-3 mr-2" />
+          <BlueprintIcon icon="log-out" size={12} className="mr-2" />
           LOGOUT
         </Button>
       </SidebarFooter>

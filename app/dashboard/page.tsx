@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Database, Activity, TrendingUp, Globe, Search, Zap, Shield } from 'lucide-react'
+import { BlueprintIcon } from '@/components/ui/blueprint-icon'
 
 interface DataSource {
   id: string
@@ -205,7 +205,7 @@ export default function DashboardPage() {
               size="lg"
               className="group bg-white text-black hover:bg-neutral-200 shadow-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.5)] transition-all duration-500"
             >
-              <Search className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
+              <BlueprintIcon icon="search" size={16} className="mr-2 group-hover:scale-110 transition-transform" />
               Search Database
             </Button>
           </Link>
@@ -219,7 +219,7 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-neutral-300">Total Records</CardTitle>
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Database className="h-5 w-5 text-white" />
+                  <BlueprintIcon icon="database" size={20} className="text-white" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -227,7 +227,7 @@ export default function DashboardPage() {
                   {stats.totalRecords.toLocaleString()}
                 </div>
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-3 w-3 text-green-400" />
+                  <BlueprintIcon icon="trending-up" size={12} className="text-green-400" />
                   <p className="text-xs text-neutral-400">
                     Leaked Databases + Stealer Logs
                   </p>
@@ -242,7 +242,7 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-neutral-300">Data Sources</CardTitle>
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Globe className="h-5 w-5 text-white" />
+                  <BlueprintIcon icon="globe" size={20} className="text-white" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -265,7 +265,7 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-neutral-300">Recent Activity</CardTitle>
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Activity className="h-5 w-5 text-white" />
+                  <BlueprintIcon icon="pulse" size={20} className="text-white" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -273,7 +273,7 @@ export default function DashboardPage() {
                   {stats.last24hActivity.toLocaleString()}
                 </div>
                 <div className="flex items-center gap-2">
-                  <Zap className="h-3 w-3 text-yellow-400" />
+                  <BlueprintIcon icon="lightning" size={12} className="text-yellow-400" />
                   <p className="text-xs text-neutral-400">
                     Records in last 7 days
                   </p>
@@ -288,7 +288,7 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-neutral-300">API Status</CardTitle>
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Shield className="h-5 w-5 text-white" />
+                  <BlueprintIcon icon="shield" size={20} className="text-white" />
                 </div>
               </CardHeader>
               <CardContent>
@@ -314,7 +314,7 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-white">
                   <div className="p-2 bg-green-500/20 rounded-lg">
-                    <Shield className="w-5 h-5 text-green-400" />
+                    <BlueprintIcon icon="shield" size={20} className="text-green-400" />
                   </div>
                   Breach Search API Active
                 </CardTitle>
@@ -334,7 +334,7 @@ export default function DashboardPage() {
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Activity className="w-5 h-5 text-white" />
+                  <BlueprintIcon icon="pulse" size={20} className="text-white" />
                 </div>
                 <span className="text-xl text-white">Recent Records</span>
               </div>
@@ -350,7 +350,7 @@ export default function DashboardPage() {
             {recentRecords.length === 0 ? (
               <div className="text-center py-16">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-white/5 rounded-2xl mb-4">
-                  <Database className="w-8 h-8 text-white/40" />
+                  <BlueprintIcon icon="database" size={32} className="text-white/40" />
                 </div>
                 <p className="text-neutral-400">No recent records found</p>
                 <p className="text-sm text-neutral-500 mt-1">Data will appear here as it's processed</p>

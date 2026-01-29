@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Badge } from '@/components/ui/badge'
-import { Search, Filter, Calendar, Database, User, Mail, Globe, Hash, Shield, AlertTriangle, ChevronLeft, ChevronRight, Key, Download, Sparkles, Lock } from 'lucide-react'
-import { RedactionNotice, RedactedField, RedactedBadge } from '@/components/redaction/RedactionNotice'
+import { BlueprintIcon } from '@/components/ui/blueprint-icon'
+import { RedactionNotice } from '@/components/redaction/RedactionNotice'
 
 interface DataRecord {
   id: string
@@ -285,17 +285,17 @@ export default function SearchPage() {
   const getSearchTypeIcon = (type: string) => {
     switch (type) {
       case 'NAME':
-        return <User className="w-4 h-4" />
+        return <BlueprintIcon icon="user" size={16} />
       case 'EMAIL':
-        return <Mail className="w-4 h-4" />
+        return <BlueprintIcon icon="envelope" size={16} />
       case 'IP':
-        return <Hash className="w-4 h-4" />
+        return <BlueprintIcon icon="hash" size={16} />
       case 'DOMAIN':
-        return <Globe className="w-4 h-4" />
+        return <BlueprintIcon icon="globe" size={16} />
       case 'SOURCE':
-        return <Database className="w-4 h-4" />
+        return <BlueprintIcon icon="database" size={16} />
       default:
-        return <Search className="w-4 h-4" />
+        return <BlueprintIcon icon="search" size={16} />
     }
   }
 
@@ -370,7 +370,7 @@ export default function SearchPage() {
             </div>
           {(results || breachResults) && totalResults > 0 && (
             <Button onClick={handleSaveToJson} variant="outline" size="sm">
-              <Download className="w-4 h-4 mr-2" />
+              <BlueprintIcon icon="download" size={16} className="mr-2" />
               Save to JSON
             </Button>
           )}
@@ -384,7 +384,7 @@ export default function SearchPage() {
             <CardHeader className="border-b border-white/10">
               <CardTitle className="flex items-center gap-3 text-white">
                 <div className="p-2 bg-white/10 rounded-lg">
-                  <Filter className="w-5 h-5 text-white" />
+                  <BlueprintIcon icon="filter" size={20} className="text-white" />
                 </div>
                 Search Filters
               </CardTitle>
@@ -456,7 +456,7 @@ export default function SearchPage() {
                 disabled={loading || breachLoading} 
                 className="px-8 bg-white text-black hover:bg-neutral-200 transition-all duration-300 shadow-lg hover:shadow-[0_0_30px_rgba(255,255,255,0.3)]"
               >
-                <Search className="w-4 h-4 mr-2" />
+                <BlueprintIcon icon="search" size={16} className="mr-2" />
                 {loading || breachLoading ? 'Searching...' : 'Search All Sources'}
               </Button>
             </div>
@@ -494,7 +494,7 @@ export default function SearchPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Database className="w-5 h-5" />
+                  <BlueprintIcon icon="database" size={20} />
                   Internal Data Results
                   <Badge variant="outline">
                     {results.pagination.total} results
@@ -537,10 +537,10 @@ export default function SearchPage() {
                             {record.password && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
-                                  <Key className="w-3 h-3" />
+                                  <BlueprintIcon icon="key" size={12} />
                                   Password
                                   {record.password_redacted && (
-                                    <Lock className="w-3 h-3 text-yellow-500" />
+                                    <BlueprintIcon icon="lock" size={12} className="text-yellow-500" />
                                   )}
                                 </span>
                                 {record.password_redacted ? (
@@ -575,7 +575,7 @@ export default function SearchPage() {
                         
                         <div className="text-right text-sm text-gray-500 flex-shrink-0">
                           <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
+                            <BlueprintIcon icon="calendar" size={16} />
                             {formatDate(record.timestamp)}
                           </div>
                         </div>
@@ -593,7 +593,7 @@ export default function SearchPage() {
                           onClick={() => handlePageChange(Math.max(1, results.pagination.current - 1))}
                           disabled={results.pagination.current === 1}
                         >
-                          <ChevronLeft className="w-4 h-4" />
+                          <BlueprintIcon icon="chevron-left" size={16} />
                           Previous
                         </Button>
                         
@@ -621,7 +621,7 @@ export default function SearchPage() {
                           disabled={results.pagination.current === results.pagination.pages}
                         >
                           Next
-                          <ChevronRight className="w-4 h-4" />
+                          <BlueprintIcon icon="chevron-right" size={16} />
                         </Button>
                       </div>
                     </div>
@@ -636,7 +636,7 @@ export default function SearchPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
+                  <BlueprintIcon icon="user" size={20} />
                   Profile Credentials
                   <Badge variant="outline">
                     {results.profileResults.length} credentials found
@@ -658,7 +658,7 @@ export default function SearchPage() {
                       return (
                         <Card className="p-4 hover:shadow-md transition-shadow">
                           <div className="flex items-center gap-2 mb-3">
-                            <Globe className="w-4 h-4" />
+                            <BlueprintIcon icon="globe" size={16} />
                             <h3 className="font-semibold">System Information</h3>
                             <Badge variant="secondary" className="flex-shrink-0">System</Badge>
                           </div>
@@ -762,10 +762,10 @@ export default function SearchPage() {
                             {record.password && (
                               <div className="flex flex-col">
                                 <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
-                                  <Key className="w-3 h-3" />
+                                  <BlueprintIcon icon="key" size={12} />
                                   Password
                                   {record.password_redacted && (
-                                    <Lock className="w-3 h-3 text-yellow-500" />
+                                    <BlueprintIcon icon="lock" size={12} className="text-yellow-500" />
                                   )}
                                 </span>
                                 {record.password_redacted ? (
@@ -846,7 +846,7 @@ export default function SearchPage() {
                         
                         <div className="text-right text-sm text-gray-500 flex-shrink-0">
                           <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
+                            <BlueprintIcon icon="calendar" size={16} />
                             {formatDate(record.timestamp)}
                           </div>
                         </div>
@@ -864,7 +864,7 @@ export default function SearchPage() {
                           onClick={() => setProfileCurrentPage(Math.max(1, profileCurrentPage - 1))}
                           disabled={profileCurrentPage === 1}
                         >
-                          <ChevronLeft className="w-4 h-4" />
+                          <BlueprintIcon icon="chevron-left" size={16} />
                           Previous
                         </Button>
                         
@@ -892,7 +892,7 @@ export default function SearchPage() {
                           disabled={profileCurrentPage === results.profilePagination.pages}
                         >
                           Next
-                          <ChevronRight className="w-4 h-4" />
+                          <BlueprintIcon icon="chevron-right" size={16} />
                         </Button>
                       </div>
                     </div>
@@ -907,7 +907,7 @@ export default function SearchPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Globe className="w-5 h-5" />
+                  <BlueprintIcon icon="globe" size={20} />
                   Profile Cookies
                   <Badge variant="outline">
                     {results.profileCookies.length} cookies found
@@ -924,7 +924,7 @@ export default function SearchPage() {
                       <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-3">
-                            <Globe className="w-4 h-4" />
+                            <BlueprintIcon icon="globe" size={16} />
                             <h3 className="font-semibold break-words">
                               {record.domain}
                             </h3>
@@ -951,7 +951,7 @@ export default function SearchPage() {
                                 <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
                                   Value
                                   {record.cookies_redacted && (
-                                    <Lock className="w-3 h-3 text-yellow-500" />
+                                    <BlueprintIcon icon="lock" size={12} className="text-yellow-500" />
                                   )}
                                 </span>
                                 {record.cookies_redacted ? (
@@ -997,7 +997,7 @@ export default function SearchPage() {
                         
                         <div className="text-right text-sm text-gray-500 flex-shrink-0">
                           <div className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
+                            <BlueprintIcon icon="calendar" size={16} />
                             {formatDate(record.timestamp)}
                           </div>
                         </div>
@@ -1015,7 +1015,7 @@ export default function SearchPage() {
                           onClick={() => setCookieCurrentPage(Math.max(1, cookieCurrentPage - 1))}
                           disabled={cookieCurrentPage === 1}
                         >
-                          <ChevronLeft className="w-4 h-4" />
+                          <BlueprintIcon icon="chevron-left" size={16} />
                           Previous
                         </Button>
                         
@@ -1043,7 +1043,7 @@ export default function SearchPage() {
                           disabled={cookieCurrentPage === results.cookiePagination.pages}
                         >
                           Next
-                          <ChevronRight className="w-4 h-4" />
+                          <BlueprintIcon icon="chevron-right" size={16} />
                         </Button>
                       </div>
                     </div>
@@ -1058,7 +1058,7 @@ export default function SearchPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
+                  <BlueprintIcon icon="shield" size={20} />
                   Data Breach Results
                   <Badge variant="destructive">
                     {breachResults.found} breaches found
@@ -1101,7 +1101,7 @@ export default function SearchPage() {
                                 <span className="font-medium text-xs text-muted-foreground flex items-center gap-1">
                                   Password
                                   {breach.password_redacted && (
-                                    <Lock className="w-3 h-3 text-yellow-500" />
+                                    <BlueprintIcon icon="lock" size={12} className="text-yellow-500" />
                                   )}
                                 </span>
                                 {breach.password_redacted ? (
@@ -1204,7 +1204,7 @@ export default function SearchPage() {
                         <div className="text-right text-sm text-gray-500 flex-shrink-0">
                           {breach.source.breach_date && (
                             <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
+                              <BlueprintIcon icon="calendar" size={16} />
                               {breach.source.breach_date}
                             </div>
                           )}
@@ -1223,7 +1223,7 @@ export default function SearchPage() {
                           onClick={() => handleBreachPageChange(Math.max(1, breachCurrentPage - 1))}
                           disabled={breachCurrentPage === 1}
                         >
-                          <ChevronLeft className="w-4 h-4" />
+                          <BlueprintIcon icon="chevron-left" size={16} />
                           Previous
                         </Button>
                         
@@ -1251,7 +1251,7 @@ export default function SearchPage() {
                           disabled={breachCurrentPage === totalBreachPages}
                         >
                           Next
-                          <ChevronRight className="w-4 h-4" />
+                          <BlueprintIcon icon="chevron-right" size={16} />
                         </Button>
                       </div>
                     </div>

@@ -1,20 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { 
-  Key, 
-  Plus, 
-  Trash2, 
-  Edit2, 
-  Check, 
-  X, 
-  Loader2,
-  Shield,
-  Smartphone,
-  Usb,
-  Fingerprint,
-  AlertCircle
-} from 'lucide-react'
+import { BlueprintIcon } from '@/components/ui/blueprint-icon'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -247,15 +234,15 @@ export default function SecurityKeys() {
 
   const getDeviceIcon = (deviceType: string, transports: string[]) => {
     if (deviceType === 'platform') {
-      return <Fingerprint className="h-5 w-5" />
+      return <BlueprintIcon icon="hand" size={20} />
     }
     if (transports?.includes('usb')) {
-      return <Usb className="h-5 w-5" />
+      return <BlueprintIcon icon="usb" size={20} />
     }
     if (transports?.includes('hybrid') || transports?.includes('ble')) {
-      return <Smartphone className="h-5 w-5" />
+      return <BlueprintIcon icon="mobile-phone" size={20} />
     }
-    return <Key className="h-5 w-5" />
+    return <BlueprintIcon icon="key" size={20} />
   }
 
   const formatDate = (dateString?: string) => {
@@ -271,7 +258,7 @@ export default function SecurityKeys() {
     return (
       <Card className="bg-neutral-900/60 backdrop-blur-sm border-white/10">
         <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-white/60" />
+          <BlueprintIcon icon="refresh" size={32} className="animate-spin text-white/60" />
         </CardContent>
       </Card>
     )
@@ -283,7 +270,7 @@ export default function SecurityKeys() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="text-xl text-white flex items-center gap-2">
-              <Shield className="h-5 w-5" />
+              <BlueprintIcon icon="shield" size={20} />
               Security Keys
             </CardTitle>
             <CardDescription className="text-neutral-400 mt-1">
@@ -297,7 +284,7 @@ export default function SecurityKeys() {
                 className="bg-white text-black hover:bg-neutral-200"
                 disabled={!webAuthnSupported}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <BlueprintIcon icon="plus" size={16} className="mr-2" />
                 Add Security Key
               </Button>
             </DialogTrigger>
@@ -346,7 +333,7 @@ export default function SecurityKeys() {
                         : 'border-white/20 text-white hover:bg-white/10'
                       }
                     >
-                      <Usb className="h-4 w-4 mr-1" />
+                      <BlueprintIcon icon="usb" size={16} className="mr-1" />
                       USB Key
                     </Button>
                     <Button
@@ -359,7 +346,7 @@ export default function SecurityKeys() {
                         : 'border-white/20 text-white hover:bg-white/10 disabled:opacity-50'
                       }
                     >
-                      <Fingerprint className="h-4 w-4 mr-1" />
+                      <BlueprintIcon icon="hand" size={16} className="mr-1" />
                       Built-in
                     </Button>
                   </div>
@@ -389,12 +376,12 @@ export default function SecurityKeys() {
                 >
                   {registering ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <BlueprintIcon icon="refresh" size={16} className="mr-2 animate-spin" />
                       Waiting for key...
                     </>
                   ) : (
                     <>
-                      <Key className="h-4 w-4 mr-2" />
+                      <BlueprintIcon icon="key" size={16} className="mr-2" />
                       Register Key
                     </>
                   )}
@@ -408,7 +395,7 @@ export default function SecurityKeys() {
       <CardContent className="pt-6">
         {!webAuthnSupported && (
           <Alert className="mb-4 bg-yellow-500/10 border-yellow-500/30">
-            <AlertCircle className="h-4 w-4 text-yellow-500" />
+            <BlueprintIcon icon="error" size={16} className="text-yellow-500" />
             <AlertDescription className="text-yellow-200">
               Your browser does not support security keys. Please use a modern browser like Chrome, Firefox, Safari, or Edge.
             </AlertDescription>
@@ -417,7 +404,7 @@ export default function SecurityKeys() {
 
         {credentials.length === 0 ? (
           <div className="text-center py-8">
-            <Key className="h-12 w-12 text-neutral-600 mx-auto mb-4" />
+            <BlueprintIcon icon="key" size={48} className="text-neutral-600 mx-auto mb-4" />
             <p className="text-neutral-400 mb-2">No security keys registered</p>
             <p className="text-neutral-500 text-sm">
               Add a hardware security key for stronger account protection
@@ -449,7 +436,7 @@ export default function SecurityKeys() {
                           onClick={() => handleRename(credential.credentialId)}
                           className="h-8 w-8 p-0 text-green-500 hover:text-green-400 hover:bg-green-500/10"
                         >
-                          <Check className="h-4 w-4" />
+                          <BlueprintIcon icon="tick" size={16} />
                         </Button>
                         <Button
                           size="sm"
@@ -460,7 +447,7 @@ export default function SecurityKeys() {
                           }}
                           className="h-8 w-8 p-0 text-neutral-400 hover:text-white hover:bg-white/10"
                         >
-                          <X className="h-4 w-4" />
+                          <BlueprintIcon icon="cross" size={16} />
                         </Button>
                       </div>
                     ) : (
@@ -498,7 +485,7 @@ export default function SecurityKeys() {
                       }}
                       className="text-neutral-400 hover:text-white hover:bg-white/10"
                     >
-                      <Edit2 className="h-4 w-4" />
+                      <BlueprintIcon icon="edit" size={16} />
                     </Button>
                     
                     {deleteConfirmId === credential.credentialId ? (
@@ -509,7 +496,7 @@ export default function SecurityKeys() {
                           onClick={() => handleDelete(credential.credentialId)}
                           className="text-red-500 hover:text-red-400 hover:bg-red-500/10"
                         >
-                          <Check className="h-4 w-4" />
+                          <BlueprintIcon icon="tick" size={16} />
                         </Button>
                         <Button
                           size="sm"
@@ -517,7 +504,7 @@ export default function SecurityKeys() {
                           onClick={() => setDeleteConfirmId(null)}
                           className="text-neutral-400 hover:text-white hover:bg-white/10"
                         >
-                          <X className="h-4 w-4" />
+                          <BlueprintIcon icon="cross" size={16} />
                         </Button>
                       </div>
                     ) : (
@@ -528,7 +515,7 @@ export default function SecurityKeys() {
                         className="text-neutral-400 hover:text-red-500 hover:bg-red-500/10"
                         disabled={credentials.length <= 1}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <BlueprintIcon icon="trash" size={16} />
                       </Button>
                     )}
                   </div>
@@ -542,13 +529,13 @@ export default function SecurityKeys() {
           <h4 className="text-sm font-medium text-white mb-2">Supported Authenticators</h4>
           <ul className="text-xs text-neutral-400 space-y-1">
             <li className="flex items-center gap-2">
-              <Usb className="h-3 w-3" /> YubiKey, Google Titan, Feitian, and other FIDO2 keys
+              <BlueprintIcon icon="usb" size={12} /> YubiKey, Google Titan, Feitian, and other FIDO2 keys
             </li>
             <li className="flex items-center gap-2">
-              <Fingerprint className="h-3 w-3" /> Touch ID, Face ID, Windows Hello
+              <BlueprintIcon icon="hand" size={12} /> Touch ID, Face ID, Windows Hello
             </li>
             <li className="flex items-center gap-2">
-              <Smartphone className="h-3 w-3" /> Phone passkeys via QR code
+              <BlueprintIcon icon="mobile-phone" size={12} /> Phone passkeys via QR code
             </li>
           </ul>
         </div>

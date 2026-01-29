@@ -18,7 +18,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { Loader2, Search } from "lucide-react"
+import { BlueprintIcon } from "@/components/ui/blueprint-icon"
 
 type SearchResult = {
   id: string
@@ -111,12 +111,12 @@ export function SearchInterface() {
             <Button type="submit" disabled={isLoading || !searchTerm.trim()}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <BlueprintIcon icon="refresh" size={16} className="mr-2 animate-spin" />
                   Searching...
                 </>
               ) : (
                 <>
-                  <Search className="mr-2 h-4 w-4" />
+                  <BlueprintIcon icon="search" size={16} className="mr-2" />
                   Search
                 </>
               )}

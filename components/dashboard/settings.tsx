@@ -10,20 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
-import { 
-  Loader2, 
-  Save, 
-  User, 
-  Bell, 
-  Monitor,
-  Mail,
-  Lock,
-  Palette,
-  AlertCircle,
-  Settings,
-  CreditCard,
-  Shield
-} from "lucide-react"
+import { BlueprintIcon } from "@/components/ui/blueprint-icon"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import dynamic from 'next/dynamic'
@@ -231,7 +218,7 @@ export function SettingsPage() {
       <div className="min-h-screen bg-neutral-950">
         <div className="container mx-auto px-4 sm:px-6 py-8">
           <Alert className="bg-neutral-900/60 border-white/10 text-white">
-            <AlertCircle className="h-4 w-4" />
+            <BlueprintIcon icon="error" size={16} />
             <AlertDescription>
               Please log in to access settings
             </AlertDescription>
@@ -252,23 +239,23 @@ export function SettingsPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <TabsList className="grid w-full grid-cols-5 bg-neutral-900/60 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
             <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <User className="h-4 w-4 mr-2" />
+              <BlueprintIcon icon="user" size={16} className="mr-2" />
               Profile
             </TabsTrigger>
             <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <Shield className="h-4 w-4 mr-2" />
+              <BlueprintIcon icon="shield" size={16} className="mr-2" />
               Security
             </TabsTrigger>
             <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <CreditCard className="h-4 w-4 mr-2" />
+              <BlueprintIcon icon="credit-card" size={16} className="mr-2" />
               Subscription
             </TabsTrigger>
             <TabsTrigger value="notifications" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <Bell className="h-4 w-4 mr-2" />
+              <BlueprintIcon icon="notifications" size={16} className="mr-2" />
               Notifications
             </TabsTrigger>
             <TabsTrigger value="display" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
-              <Monitor className="h-4 w-4 mr-2" />
+              <BlueprintIcon icon="desktop" size={16} className="mr-2" />
               Display
             </TabsTrigger>
           </TabsList>
@@ -316,7 +303,7 @@ export function SettingsPage() {
                       onClick={() => setShowEmailChange(!showEmailChange)}
                       className="border-gray-300 hover:bg-gray-50"
                     >
-                      <Mail className="h-4 w-4 mr-2" />
+                      <BlueprintIcon icon="envelope" size={16} className="mr-2" />
                       Change
                     </Button>
                   </div>
@@ -341,7 +328,7 @@ export function SettingsPage() {
                       >
                         {changingEmail ? (
                           <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            <BlueprintIcon icon="refresh" size={16} className="mr-2 animate-spin" />
                             Updating...
                           </>
                         ) : (
@@ -370,7 +357,7 @@ export function SettingsPage() {
                 <Label>Password</Label>
                 <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Lock className="h-4 w-4" />
+                    <BlueprintIcon icon="lock" size={16} />
                     <span>Password authentication via Auth0</span>
                   </div>
                   <Button
@@ -415,7 +402,7 @@ export function SettingsPage() {
                     </SelectItem>
                     <SelectItem value="system">
                       <div className="flex items-center gap-2">
-                        <Palette className="h-4 w-4" />
+                        <BlueprintIcon icon="style" size={16} />
                         System
                       </div>
                     </SelectItem>
@@ -555,12 +542,12 @@ export function SettingsPage() {
           >
             {saving ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <BlueprintIcon icon="refresh" size={16} className="mr-2 animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                <Save className="mr-2 h-4 w-4" />
+                <BlueprintIcon icon="floppy-disk" size={16} className="mr-2" />
                 Save Changes
               </>
             )}
