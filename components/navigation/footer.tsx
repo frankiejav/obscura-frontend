@@ -20,7 +20,6 @@ const footerSections = {
       { label: "Dashboard", href: "/login" },
       { label: "API Documentation", href: "/api-docs" },
       { label: "Pricing", href: "/pricing" },
-      { label: "Status", href: "/status" },
     ]
   },
   solutions: {
@@ -29,15 +28,12 @@ const footerSections = {
       { label: "Enterprise Security", href: "/enterprise" },
       { label: "Threat Intelligence", href: "/threat-intelligence" },
       { label: "Identity Monitoring", href: "/monitoring" },
-      { label: "Compliance", href: "/compliance" },
     ]
   },
   company: {
     title: "Company",
     links: [
       { label: "About", href: "/about" },
-      { label: "Blog", href: "/blog" },
-      { label: "Careers", href: "/careers" },
       { label: "Contact", href: "/contact" },
     ]
   },
@@ -72,28 +68,9 @@ export default function Footer() {
               </span>
             </Link>
             
-            <p className="text-[#868e96] text-sm leading-relaxed max-w-xs mb-6">
+            <p className="text-[#868e96] text-sm leading-relaxed max-w-xs">
               Identity threat intelligence platform for security teams, researchers, and law enforcement.
             </p>
-
-            <div className="flex items-center gap-3">
-              <a 
-                href="https://github.com/obscuralabs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pltr-btn-secondary !px-4 !py-2 text-xs"
-              >
-                GITHUB
-              </a>
-              <a 
-                href="https://linkedin.com/company/obscuralabs"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pltr-btn-secondary !px-4 !py-2 text-xs"
-              >
-                LINKEDIN
-              </a>
-            </div>
           </div>
 
           {Object.entries(footerSections).map(([key, section]) => (
@@ -119,9 +96,14 @@ export default function Footer() {
         </div>
 
         <div className="mt-14 pt-6 border-t border-[#e9ecef]/60 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-[#adb5bd]">
-            {currentYear} Obscura Labs LLC
-          </p>
+          <div className="text-center sm:text-left">
+            <p className="text-xs text-[#adb5bd]">
+              © {currentYear} Obscura Labs. All rights reserved.
+            </p>
+            <p className="text-[10px] text-[#ced4da] mt-1">
+              Operated by CyberVault LLC
+            </p>
+          </div>
           
           <div className="flex items-center gap-6">
             <Link href="/privacy-policy" className="text-xs text-[#adb5bd] hover:text-[#5a5a5a] transition-colors duration-200">

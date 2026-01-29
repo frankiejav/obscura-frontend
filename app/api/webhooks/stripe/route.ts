@@ -4,9 +4,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe, mapPriceToPlan } from '@/lib/billing';
-import { sql, updateSubscription, Plan } from '@/lib/db';
+import { stripe, mapPriceToPlan, normalizePlanName } from '@/lib/billing';
+import { sql, updateSubscription } from '@/lib/db';
 import { setAppMetadataPlan, isPersonalAccount } from '@/lib/auth';
+
+type Plan = 'free' | 'starter' | 'professional' | 'enterprise';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
@@ -106,11 +108,12 @@ async function handleSubscriptionChange(subscription: any) {
     return;
   }
   
-  // Get Auth0 user ID from customer mapping
-  const { rows } = await sql`
+  const result = await sql`
     SELECT auth0_user_id FROM billing_customers 
     WHERE stripe_customer_id = ${customerId}
   `;
+  
+  const rows = Array.isArray(result) ? result : [];
   
   if (rows.length === 0) {
     console.error(`No user found for Stripe customer: ${customerId}`);
@@ -119,20 +122,16 @@ async function handleSubscriptionChange(subscription: any) {
   
   const userId = rows[0].auth0_user_id as string;
   
-  // Determine plan from price ID
-  let plan = mapPriceToPlan(priceId);
+  let plan: Plan = mapPriceToPlan(priceId);
   
-  // Override for personal account
   if (isPersonalAccount(userId)) {
     plan = 'enterprise';
   }
   
-  // Update subscription in database
-  await updateSubscription(userId, plan, status, currentPeriodEnd);
+  await updateSubscription(userId, plan as any, status, currentPeriodEnd);
   
-  // Update Auth0 metadata
   try {
-    await setAppMetadataPlan(userId, plan);
+    await setAppMetadataPlan(userId, plan as any);
   } catch (error) {
     console.error('Failed to update Auth0 metadata:', error);
   }
@@ -143,11 +142,12 @@ async function handleSubscriptionChange(subscription: any) {
 async function handleSubscriptionDeleted(subscription: any) {
   const customerId = subscription.customer;
   
-  // Get Auth0 user ID
-  const { rows } = await sql`
+  const result = await sql`
     SELECT auth0_user_id FROM billing_customers 
     WHERE stripe_customer_id = ${customerId}
   `;
+  
+  const rows = Array.isArray(result) ? result : [];
   
   if (rows.length === 0) {
     console.error(`No user found for Stripe customer: ${customerId}`);
@@ -156,15 +156,12 @@ async function handleSubscriptionDeleted(subscription: any) {
   
   const userId = rows[0].auth0_user_id as string;
   
-  // Check for personal account override
   const plan: Plan = isPersonalAccount(userId) ? 'enterprise' : 'free';
   
-  // Update to free plan (or enterprise for personal)
-  await updateSubscription(userId, plan, 'cancelled', undefined);
+  await updateSubscription(userId, plan as any, 'cancelled', undefined);
   
-  // Update Auth0 metadata
   try {
-    await setAppMetadataPlan(userId, plan);
+    await setAppMetadataPlan(userId, plan as any);
   } catch (error) {
     console.error('Failed to update Auth0 metadata:', error);
   }
@@ -188,22 +185,21 @@ async function handleInvoicePaymentSucceeded(invoice: any) {
 async function handleInvoicePaymentFailed(invoice: any) {
   const customerId = invoice.customer;
   
-  // Get Auth0 user ID
-  const { rows } = await sql`
+  const result = await sql`
     SELECT auth0_user_id FROM billing_customers 
     WHERE stripe_customer_id = ${customerId}
   `;
+  
+  const rows = Array.isArray(result) ? result : [];
   
   if (rows.length === 0) return;
   
   const userId = rows[0].auth0_user_id as string;
   
-  // Update subscription status to reflect payment failure
-  const { rows: subRows } = await sql`
+  await sql`
     UPDATE subscriptions 
     SET status = 'past_due', updated_at = now()
     WHERE auth0_user_id = ${userId}
-    RETURNING *
   `;
   
   console.log(`Payment failed for user ${userId}, marked as past_due`);

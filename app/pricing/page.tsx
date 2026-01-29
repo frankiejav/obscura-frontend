@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "motion/react"
 import Header from "@/components/navigation/header"
@@ -37,34 +38,60 @@ const staggerContainer = {
   }
 }
 
-const pricingPlans = [
+type BillingCycle = 'monthly' | 'yearly'
+
+interface PlanPricing {
+  monthly: number
+  yearly: number
+  yearlySavings: string
+}
+
+interface PricingPlan {
+  name: string
+  tier: 'starter' | 'professional' | 'enterprise'
+  description: string
+  pricing: PlanPricing | null
+  features: { name: string; included: boolean }[]
+  popular: boolean
+  cta: string
+}
+
+const pricingPlans: PricingPlan[] = [
   {
     name: "Starter",
-    description: "For individuals",
-    price: "$19.99",
-    period: "/month",
+    tier: "starter",
+    description: "For individuals and researchers",
+    pricing: {
+      monthly: 19.99,
+      yearly: 191.88,
+      yearlySavings: "Save 20%"
+    },
     features: [
       { name: "200 lookups per day", included: true },
       { name: "Dashboard access", included: true },
       { name: "CSV/JSON exports", included: true },
+      { name: "30-day data retention", included: true },
       { name: "Credential Monitoring", included: false },
       { name: "API access", included: false },
-      { name: "Priority support", included: false },
     ],
     popular: false,
     cta: "Get Started",
   },
   {
     name: "Professional",
+    tier: "professional",
     description: "For security teams",
-    price: "$99",
-    period: "/quarter",
+    pricing: {
+      monthly: 49,
+      yearly: 349,
+      yearlySavings: "Save 25%"
+    },
     features: [
-      { name: "10,000 API credits /month", included: true },
       { name: "Unlimited lookups", included: true },
-      { name: "CSV/JSON exports", included: true },
-      { name: "Credential Monitoring", included: true },
-      { name: "API access", included: true },
+      { name: "10,000 API credits/month", included: true },
+      { name: "Credential Monitoring (100 targets)", included: true },
+      { name: "Full API access", included: true },
+      { name: "Team collaboration (5 members)", included: true },
       { name: "Priority support", included: true },
     ],
     popular: true,
@@ -72,16 +99,20 @@ const pricingPlans = [
   },
   {
     name: "Enterprise",
-    description: "Custom solutions",
-    price: "Custom",
-    period: "",
+    tier: "enterprise",
+    description: "For large organizations",
+    pricing: {
+      monthly: 299,
+      yearly: 2868,
+      yearlySavings: "Save 20%"
+    },
     features: [
+      { name: "Everything in Professional", included: true },
       { name: "Unlimited API credits", included: true },
-      { name: "Real-time feeds", included: true },
-      { name: "Full API access", included: true },
+      { name: "Real-time data feeds", included: true },
       { name: "Custom analytics", included: true },
-      { name: "24/7 support", included: true },
-      { name: "SLA guarantees", included: true },
+      { name: "Unlimited monitoring targets", included: true },
+      { name: "24/7 dedicated support", included: true },
     ],
     popular: false,
     cta: "Contact Sales",
@@ -90,12 +121,32 @@ const pricingPlans = [
 
 export default function PricingPage() {
   const router = useRouter()
+  const [billingCycle, setBillingCycle] = useState<BillingCycle>('yearly')
 
-  const handlePlanSelect = (planName: string) => {
-    if (planName === "Enterprise") {
+  const handlePlanSelect = (plan: PricingPlan) => {
+    if (plan.tier === "enterprise") {
       router.push("/contact")
-    } else {
-      router.push("/login")
+    } else if (plan.pricing) {
+      const price = billingCycle === 'yearly' ? plan.pricing.yearly : plan.pricing.monthly
+      router.push(`/checkout?plan=${plan.name}&price=${price}&cycle=${billingCycle}`)
+    }
+  }
+
+  const formatPrice = (plan: PricingPlan) => {
+    if (!plan.pricing) return { price: "Custom", period: "" }
+    
+    if (billingCycle === 'yearly') {
+      const monthlyEquivalent = Math.round(plan.pricing.yearly / 12 * 100) / 100
+      return { 
+        price: `$${monthlyEquivalent.toFixed(0)}`, 
+        period: "/mo",
+        billed: `$${plan.pricing.yearly}/year`
+      }
+    }
+    return { 
+      price: `$${plan.pricing.monthly}`, 
+      period: "/mo",
+      billed: "billed monthly"
     }
   }
 
@@ -134,69 +185,138 @@ export default function PricingPage() {
             </motion.p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#dee2e6] rounded-lg overflow-hidden">
-            {pricingPlans.map((plan, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1, ease: [0.25, 0.4, 0.25, 1] }}
-                className={`p-8 lg:p-10 flex flex-col relative ${
-                  plan.popular ? 'bg-[#ffffff]' : 'bg-[#fafafa]'
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex justify-center mb-10"
+          >
+            <div className="inline-flex items-center bg-white rounded-full p-1 border border-[#dee2e6]">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-5 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
+                  billingCycle === 'monthly'
+                    ? 'bg-[#1c1c1c] text-white'
+                    : 'text-[#5a5a5a] hover:text-[#1c1c1c]'
                 }`}
               >
-                {plan.popular && (
-                  <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#e07a4a]" />
-                )}
-                  
-                <div className="mb-8">
-                  <p className="text-xs text-[#adb5bd] uppercase tracking-wider mb-2">
-                    {plan.description}
-                  </p>
-                  <h2 className="text-2xl font-light text-[#1c1c1c]">
-                    {plan.name}
-                  </h2>
-                </div>
+                Monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle('yearly')}
+                className={`px-5 py-2 text-sm font-medium rounded-full transition-all duration-200 flex items-center gap-2 ${
+                  billingCycle === 'yearly'
+                    ? 'bg-[#1c1c1c] text-white'
+                    : 'text-[#5a5a5a] hover:text-[#1c1c1c]'
+                }`}
+              >
+                Yearly
+                <span className={`text-xs px-2 py-0.5 rounded-full ${
+                  billingCycle === 'yearly' 
+                    ? 'bg-[#e07a4a] text-white' 
+                    : 'bg-[#e07a4a]/10 text-[#e07a4a]'
+                }`}>
+                  Save 20%+
+                </span>
+              </button>
+            </div>
+          </motion.div>
 
-                <div className="mb-8">
-                  <span className="text-[36px] font-light text-[#1c1c1c] font-mono tracking-tight">
-                    {plan.price}
-                  </span>
-                  <span className="text-[#adb5bd] text-sm ml-1">
-                    {plan.period}
-                  </span>
-                </div>
-
-                <ul className="space-y-4 mb-10 flex-grow">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center gap-3">
-                      {feature.included ? (
-                        <BlueprintIcon icon="tick" size={14} className="text-[#e07a4a]" />
-                      ) : (
-                        <BlueprintIcon icon="cross" size={14} className="text-[#ced4da]" />
-                      )}
-                      <span className={feature.included ? "text-[#5a5a5a] text-sm" : "text-[#ced4da] text-sm"}>
-                        {feature.name}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => handlePlanSelect(plan.name)}
-                  className={`w-full py-3 text-sm flex items-center justify-center gap-2 ${
-                    plan.popular 
-                      ? 'pltr-btn-primary' 
-                      : 'pltr-btn-secondary'
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-[#dee2e6] rounded-lg overflow-hidden">
+            {pricingPlans.map((plan, index) => {
+              const priceInfo = formatPrice(plan)
+              return (
+                <motion.div 
+                  key={index}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+                  className={`p-8 lg:p-10 flex flex-col relative ${
+                    plan.popular ? 'bg-[#ffffff]' : 'bg-[#fafafa]'
                   }`}
                 >
-                  {plan.cta}
-                  <BlueprintIcon icon="arrow-top-right" size={14} />
-                </motion.button>
-              </motion.div>
-            ))}
+                  {plan.popular && (
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-[#e07a4a]" />
+                  )}
+                  
+                  {plan.popular && (
+                    <div className="absolute top-4 right-4">
+                      <span className="text-xs font-medium text-[#e07a4a] bg-[#e07a4a]/10 px-2 py-1 rounded-full">
+                        Most Popular
+                      </span>
+                    </div>
+                  )}
+                    
+                  <div className="mb-8">
+                    <p className="text-xs text-[#adb5bd] uppercase tracking-wider mb-2">
+                      {plan.description}
+                    </p>
+                    <h2 className="text-2xl font-light text-[#1c1c1c]">
+                      {plan.name}
+                    </h2>
+                  </div>
+
+                  <div className="mb-2">
+                    <span className="text-[36px] font-light text-[#1c1c1c] font-mono tracking-tight">
+                      {priceInfo.price}
+                    </span>
+                    <span className="text-[#adb5bd] text-sm ml-1">
+                      {priceInfo.period}
+                    </span>
+                  </div>
+                  
+                  {plan.pricing && (
+                    <div className="mb-8">
+                      <span className="text-xs text-[#868e96]">
+                        {priceInfo.billed}
+                      </span>
+                      {billingCycle === 'yearly' && plan.pricing.yearlySavings && (
+                        <span className="ml-2 text-xs text-[#e07a4a] font-medium">
+                          {plan.pricing.yearlySavings}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {!plan.pricing && (
+                    <div className="mb-8">
+                      <span className="text-xs text-[#868e96]">
+                        Contact us for pricing
+                      </span>
+                    </div>
+                  )}
+
+                  <ul className="space-y-4 mb-10 flex-grow">
+                    {plan.features.map((feature, featureIndex) => (
+                      <li key={featureIndex} className="flex items-center gap-3">
+                        {feature.included ? (
+                          <BlueprintIcon icon="tick" size={14} className="text-[#e07a4a] flex-shrink-0" />
+                        ) : (
+                          <BlueprintIcon icon="cross" size={14} className="text-[#ced4da] flex-shrink-0" />
+                        )}
+                        <span className={feature.included ? "text-[#5a5a5a] text-sm" : "text-[#ced4da] text-sm"}>
+                          {feature.name}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handlePlanSelect(plan)}
+                    className={`w-full py-3 text-sm flex items-center justify-center gap-2 ${
+                      plan.popular 
+                        ? 'pltr-btn-primary' 
+                        : 'pltr-btn-secondary'
+                    }`}
+                  >
+                    {plan.cta}
+                    <BlueprintIcon icon="arrow-top-right" size={14} />
+                  </motion.button>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>

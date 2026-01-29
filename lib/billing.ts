@@ -5,7 +5,6 @@
 
 import Stripe from 'stripe';
 
-// Lazy initialize Stripe to avoid build-time errors
 let stripeInstance: Stripe | null = null;
 
 export function getStripe(): Stripe {
@@ -21,14 +20,125 @@ export function getStripe(): Stripe {
   return stripeInstance;
 }
 
-// Export stripe getter for use in other files
 export { getStripe as stripe };
 
-// Pricing configuration
-export const PRICING = {
+export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
+export type PlanTier = 'starter' | 'professional' | 'enterprise';
+
+export interface PricingTier {
+  name: string;
+  description: string;
+  prices: {
+    monthly?: { amount: number; priceId: string };
+    quarterly?: { amount: number; priceId: string; savings: string };
+    yearly?: { amount: number; priceId: string; savings: string };
+  };
+  features: string[];
+  limits: {
+    lookupsPerDay?: number;
+    lookupsPerMonth?: number;
+    apiCreditsPerMonth?: number;
+    monitoringTargets?: number;
+  };
+  popular?: boolean;
+}
+
+export const PRICING_CONFIG: Record<PlanTier, PricingTier> = {
+  starter: {
+    name: 'Starter',
+    description: 'For individuals and researchers',
+    prices: {
+      monthly: { 
+        amount: 19.99, 
+        priceId: process.env.STRIPE_PRICE_STARTER_MONTHLY! 
+      },
+      yearly: { 
+        amount: 191.88, 
+        priceId: process.env.STRIPE_PRICE_STARTER_YEARLY!,
+        savings: 'Save 20%'
+      },
+    },
+    features: [
+      '200 lookups per day',
+      'Dashboard access',
+      'CSV/JSON exports',
+      '30-day data retention',
+      'Email support',
+    ],
+    limits: {
+      lookupsPerDay: 200,
+    },
+  },
+  professional: {
+    name: 'Professional',
+    description: 'For security teams',
+    prices: {
+      monthly: { 
+        amount: 49, 
+        priceId: process.env.STRIPE_PRICE_PRO_MONTHLY! 
+      },
+      quarterly: { 
+        amount: 99, 
+        priceId: process.env.STRIPE_PRICE_PRO_QUARTERLY!,
+        savings: 'Best value'
+      },
+      yearly: { 
+        amount: 349, 
+        priceId: process.env.STRIPE_PRICE_PRO_YEARLY!,
+        savings: 'Save 25%'
+      },
+    },
+    features: [
+      'Unlimited lookups',
+      '10,000 API credits/month',
+      'Credential monitoring (100 targets)',
+      'Full API access',
+      'Team collaboration (5 members)',
+      'Priority support',
+    ],
+    limits: {
+      lookupsPerMonth: -1,
+      apiCreditsPerMonth: 10000,
+      monitoringTargets: 100,
+    },
+    popular: true,
+  },
+  enterprise: {
+    name: 'Enterprise',
+    description: 'For large organizations',
+    prices: {
+      monthly: { 
+        amount: 299, 
+        priceId: process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY! 
+      },
+      yearly: { 
+        amount: 2868, 
+        priceId: process.env.STRIPE_PRICE_ENTERPRISE_YEARLY!,
+        savings: 'Save 20%'
+      },
+    },
+    features: [
+      'Everything in Professional',
+      'Unlimited API credits',
+      'Real-time data feeds',
+      'Custom analytics',
+      'Unlimited monitoring targets',
+      'Unlimited team members',
+      '24/7 dedicated support',
+      'SLA guarantees',
+    ],
+    limits: {
+      lookupsPerMonth: -1,
+      apiCreditsPerMonth: -1,
+      monitoringTargets: -1,
+    },
+  },
+};
+
+export const LEGACY_PRICING = {
   pro: {
-    monthly: process.env.STRIPE_PRICE_PRO!,
-    display: '$99/month',
+    monthly: process.env.STRIPE_PRICE_PRO || process.env.STRIPE_PRICE_PRO_QUARTERLY!,
+    display: '$99/quarter',
     features: [
       'Full credential access',
       'Basic monitoring',
@@ -38,7 +148,7 @@ export const PRICING = {
     ]
   },
   enterprise: {
-    monthly: process.env.STRIPE_PRICE_ENTERPRISE!,
+    monthly: process.env.STRIPE_PRICE_ENTERPRISE || process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY!,
     display: '$299/month',
     features: [
       'Everything in Pro',
@@ -52,25 +162,71 @@ export const PRICING = {
 };
 
 /**
- * Map Stripe price ID to plan
+ * Map Stripe price ID to plan tier
  */
-export function mapPriceToPlan(priceId: string): 'free' | 'pro' | 'enterprise' {
-  if (priceId === process.env.STRIPE_PRICE_ENTERPRISE) {
+export function mapPriceToPlan(priceId: string): 'free' | 'starter' | 'professional' | 'enterprise' {
+  const starterPrices = [
+    process.env.STRIPE_PRICE_STARTER_MONTHLY,
+    process.env.STRIPE_PRICE_STARTER_YEARLY,
+  ];
+  
+  const proPrices = [
+    process.env.STRIPE_PRICE_PRO,
+    process.env.STRIPE_PRICE_PRO_MONTHLY,
+    process.env.STRIPE_PRICE_PRO_QUARTERLY,
+    process.env.STRIPE_PRICE_PRO_YEARLY,
+  ];
+  
+  const enterprisePrices = [
+    process.env.STRIPE_PRICE_ENTERPRISE,
+    process.env.STRIPE_PRICE_ENTERPRISE_MONTHLY,
+    process.env.STRIPE_PRICE_ENTERPRISE_YEARLY,
+  ];
+  
+  if (enterprisePrices.includes(priceId)) {
     return 'enterprise';
   }
-  if (priceId === process.env.STRIPE_PRICE_PRO) {
-    return 'pro';
+  if (proPrices.includes(priceId)) {
+    return 'professional';
+  }
+  if (starterPrices.includes(priceId)) {
+    return 'starter';
   }
   return 'free';
 }
 
 /**
- * Map plan to Stripe price ID
+ * Get price ID for a plan and billing cycle
  */
-export function mapPlanToPrice(plan: 'pro' | 'enterprise'): string {
-  return plan === 'enterprise' 
-    ? process.env.STRIPE_PRICE_ENTERPRISE! 
-    : process.env.STRIPE_PRICE_PRO!;
+export function getPriceId(plan: PlanTier, cycle: BillingCycle): string | null {
+  const tier = PRICING_CONFIG[plan];
+  if (!tier) return null;
+  
+  const price = tier.prices[cycle];
+  return price?.priceId || null;
+}
+
+/**
+ * Get price amount for a plan and billing cycle
+ */
+export function getPriceAmount(plan: PlanTier, cycle: BillingCycle): number {
+  const tier = PRICING_CONFIG[plan];
+  if (!tier) return 0;
+  
+  const price = tier.prices[cycle];
+  return price?.amount || 0;
+}
+
+/**
+ * Map old plan names to new ones for backwards compatibility
+ */
+export function normalizePlanName(plan: string): 'free' | 'starter' | 'professional' | 'enterprise' {
+  const normalized = plan.toLowerCase();
+  if (normalized === 'pro') return 'professional';
+  if (['free', 'starter', 'professional', 'enterprise'].includes(normalized)) {
+    return normalized as 'free' | 'starter' | 'professional' | 'enterprise';
+  }
+  return 'free';
 }
 
 /**

@@ -9,24 +9,43 @@ import StripeCheckout from "@/components/payments/StripeCheckout"
 import CryptoCheckout from "@/components/payments/CryptoCheckout"
 import { Button } from "@/components/ui/button"
 
+type BillingCycle = 'monthly' | 'quarterly' | 'yearly'
+
+interface PlanDetails {
+  name: string
+  price: number
+  cycle: BillingCycle
+  displayCycle: string
+}
+
 function CheckoutContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   
   const [paymentMethod, setPaymentMethod] = useState<'fiat' | 'crypto' | null>(null)
-  const [planDetails, setPlanDetails] = useState({
+  const [planDetails, setPlanDetails] = useState<PlanDetails>({
     name: '',
     price: 0,
+    cycle: 'monthly',
+    displayCycle: 'month',
   })
 
   useEffect(() => {
-    // Get plan details from URL params
     const planName = searchParams?.get('plan') || 'Professional'
     const planPrice = parseFloat(searchParams?.get('price') || '99')
+    const cycle = (searchParams?.get('cycle') as BillingCycle) || 'monthly'
+    
+    const cycleDisplay: Record<BillingCycle, string> = {
+      monthly: 'month',
+      quarterly: 'quarter',
+      yearly: 'year',
+    }
     
     setPlanDetails({
       name: planName,
       price: planPrice,
+      cycle,
+      displayCycle: cycleDisplay[cycle] || 'month',
     })
   }, [searchParams])
 
@@ -102,6 +121,7 @@ function CheckoutContent() {
                 <StripeCheckout
                   planName={planDetails.name}
                   planPrice={planDetails.price}
+                  billingCycle={planDetails.cycle}
                 />
               </div>
             )}
@@ -111,6 +131,7 @@ function CheckoutContent() {
                 <CryptoCheckout
                   planName={planDetails.name}
                   planPrice={planDetails.price}
+                  billingCycle={planDetails.cycle}
                 />
               </div>
             )}

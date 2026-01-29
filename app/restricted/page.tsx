@@ -1,128 +1,76 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import Header from '@/components/navigation/header'
-import { Shield, Lock, Mail, AlertCircle, Users, Clock } from "lucide-react"
+import { motion } from "motion/react"
+import Image from "next/image"
 
 export default function RestrictedPage() {
   const router = useRouter()
-  const features = [
-    { icon: <Shield className="h-5 w-5" />, text: "Early access to threat intelligence" },
-    { icon: <Users className="h-5 w-5" />, text: "Join our beta testing program" },
-    { icon: <Clock className="h-5 w-5" />, text: "Be notified when we launch" },
-  ]
-
-  const handleBetaAccessClick = () => {
-    console.log('Button clicked, navigating to contact page...')
-    router.push('/contact?reason=beta')
-  }
 
   return (
-    <div className="min-h-screen bg-neutral-950">
-      <Header />
+    <div className="min-h-screen bg-[#e9ecef] flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div 
+          className="absolute top-1/4 left-1/4 w-[600px] h-[600px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(206,212,218,0.5) 0%, transparent 70%)' }}
+        />
+        <div 
+          className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] rounded-full"
+          style={{ background: 'radial-gradient(circle, rgba(173,181,189,0.3) 0%, transparent 70%)' }}
+        />
+      </div>
 
-      <main className="flex items-center justify-center min-h-[calc(100vh-80px)] px-4 sm:px-6 py-12">
-        <div className="w-full max-w-md">
-          {/* Glow effect container */}
-          <div className="relative">
-            {/* Background glow - orange/red theme for restricted */}
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-500/20 rounded-3xl blur-3xl"></div>
-            
-            {/* Main card */}
-            <div className="relative bg-neutral-900/60 backdrop-blur-xl rounded-3xl ring-1 ring-white/10 p-8 sm:p-10 hover:ring-white/20 transition-all duration-500">
-              {/* Logo and title */}
-              <div className="text-center mb-8">
-                <div className="relative inline-flex items-center justify-center w-20 h-20 mb-6">
-                  <div className="absolute inset-0 bg-orange-500 rounded-2xl blur-xl opacity-30"></div>
-                  <div className="relative bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-4">
-                    <Lock className="h-10 w-10 text-white" />
-                  </div>
-                </div>
-                <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">
-                  Coming Soon
-                </h1>
-                <p className="text-neutral-400 text-sm sm:text-base">
-                  We're currently in private beta
-                </p>
-              </div>
+      <div className="relative z-10 flex flex-col items-center justify-center flex-1 w-full max-w-md text-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
+          className="mb-8"
+        >
+          <Image 
+            src="/images/symbol.svg" 
+            alt="Obscura Labs" 
+            width={64} 
+            height={64}
+            className="opacity-40"
+          />
+        </motion.div>
 
-              {/* Alert message */}
-              <div className="mb-6 p-4 bg-orange-500/10 border border-orange-500/20 rounded-xl">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-orange-400 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-orange-300 font-semibold mb-1">
-                      Restricted Access
-                    </p>
-                    <p className="text-xs text-orange-300/80">
-                      Access to Obscura Labs is currently limited to approved testers and partners.
-                    </p>
-                  </div>
-                </div>
-              </div>
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: [0.25, 0.4, 0.25, 1] }}
+          className="text-[28px] sm:text-[36px] font-light text-[#495057] tracking-[-0.02em] mb-4"
+        >
+          Access Restricted
+        </motion.h1>
 
-              {/* Contact section */}
-              <div className="space-y-4">
-                <div className="text-center">
-                  <p className="text-white mb-4">
-                    Interested in becoming a beta tester?
-                  </p>
-                  <p className="text-neutral-400 text-sm mb-6">
-                    Contact us to request early access to our identity intelligence platform.
-                  </p>
-                </div>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
+          className="text-[#868e96] text-sm sm:text-base leading-relaxed max-w-sm"
+        >
+          This platform is currently in private beta. Access is limited to approved partners and testers.
+        </motion.p>
+      </div>
 
-                <Button 
-                  type="button"
-                  onClick={handleBetaAccessClick}
-                  className="group relative w-full py-4 text-base sm:text-lg font-semibold bg-white text-black hover:bg-neutral-200 transition-all duration-500 hover:shadow-[0_0_40px_rgba(255,255,255,0.4)] overflow-hidden"
-                  size="lg"
-                >
-                  <span className="relative z-10 flex items-center justify-center">
-                    <Mail className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform duration-300" />
-                    Request Beta Access
-                  </span>
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                </Button>
-              </div>
-
-              {/* Features list */}
-              <div className="mt-8 space-y-3">
-                {features.map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3 text-neutral-400">
-                    <div className="p-1.5 bg-white/10 rounded-lg">
-                      {feature.icon}
-                    </div>
-                    <span className="text-sm">{feature.text}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Additional info */}
-              <div className="mt-8 p-4 bg-neutral-800/50 border border-white/10 rounded-xl">
-                <p className="text-sm text-neutral-300 text-center">
-                  <span className="font-semibold">Why Restricted Access?</span>
-                  <br />
-                  <span className="text-xs text-neutral-400 mt-1 block">
-                    We're carefully onboarding users to ensure the highest quality service and security standards during our beta phase.
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom links */}
-          <div className="mt-8 text-center space-y-2">
-            <p className="text-xs text-neutral-500">
-              Learn more about our{' '}
-              <a href="/about" className="text-white/60 hover:text-white transition-colors">
-                mission and solutions
-              </a>
-            </p>
-          </div>
-        </div>
-      </main>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, delay: 0.4 }}
+        className="relative z-10 pb-12"
+      >
+        <button 
+          onClick={() => router.push('/')}
+          className="text-[#868e96] hover:text-[#495057] text-sm transition-colors duration-200 flex items-center gap-2"
+        >
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M5.29 7.29L1.29 11.29c-.18.18-.29.43-.29.71s.11.53.29.71l4 4 1.41-1.41L3.41 12H15v-2H3.41l3.29-3.29-1.41-1.42z" fillRule="evenodd" />
+          </svg>
+          Return to Home
+        </button>
+      </motion.div>
     </div>
   )
 }

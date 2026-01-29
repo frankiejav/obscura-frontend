@@ -122,8 +122,11 @@ export default function AboutPage() {
               <p className="text-[#5a5a5a] text-base sm:text-lg leading-relaxed mb-6">
                 Obscura Labs provides identity exposure intelligence by aggregating and normalizing data from infostealers, ransomware leaks, database breaches, and underground forums.
               </p>
-              <p className="text-[#5a5a5a] text-base sm:text-lg leading-relaxed">
+              <p className="text-[#5a5a5a] text-base sm:text-lg leading-relaxed mb-6">
                 Our goal is to prevent account takeover, fraud, and identity theft by giving vetted organizations and researchers access to real-time threat data.
+              </p>
+              <p className="text-[#868e96] text-sm leading-relaxed">
+                Obscura Labs is a project operated by CyberVault LLC.
               </p>
             </motion.div>
           </div>

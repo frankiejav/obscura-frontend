@@ -4,12 +4,46 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyNowPaymentsSignature } from '@/lib/billing';
-import { sql, updateSubscription, Plan, ensureUser } from '@/lib/db';
+import { verifyNowPaymentsSignature, normalizePlanName } from '@/lib/billing';
+import { sql, updateSubscription, ensureUser } from '@/lib/db';
 import { setAppMetadataPlan, isPersonalAccount } from '@/lib/auth';
 
 export const runtime = 'edge';
 export const dynamic = 'force-dynamic';
+
+interface OrderIdParts {
+  userId: string;
+  plan: string;
+  cycle: string;
+  durationDays: number;
+  timestamp: string;
+}
+
+function parseOrderId(orderId: string): OrderIdParts | null {
+  const parts = orderId.split(':');
+  
+  if (parts.length === 2) {
+    return {
+      userId: parts[0],
+      plan: parts[1],
+      cycle: 'monthly',
+      durationDays: 30,
+      timestamp: Date.now().toString(),
+    };
+  }
+  
+  if (parts.length >= 4) {
+    return {
+      userId: parts[0],
+      plan: parts[1],
+      cycle: parts[2],
+      durationDays: parseInt(parts[3]) || 30,
+      timestamp: parts[4] || Date.now().toString(),
+    };
+  }
+  
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,16 +54,19 @@ export async function POST(req: NextRequest) {
       return new NextResponse('No signature', { status: 400 });
     }
     
-    // Verify IPN signature
-    const isValidSignature = await verifyNowPaymentsSignature(payload, signature, process.env.NP_IPN_KEY!);
+    const isValidSignature = await verifyNowPaymentsSignature(
+      payload, 
+      signature, 
+      process.env.NP_IPN_KEY!
+    );
+    
     if (!isValidSignature) {
       console.error('Invalid NowPayments signature');
       return new NextResponse('Invalid signature', { status: 401 });
     }
     
-    console.log('NowPayments IPN received:', payload.payment_status);
+    console.log('NowPayments IPN received:', payload.payment_status, 'Order:', payload.order_id);
     
-    // Process payment based on status
     switch (payload.payment_status) {
       case 'finished':
       case 'confirmed':
@@ -45,8 +82,11 @@ export async function POST(req: NextRequest) {
       case 'waiting':
       case 'confirming':
       case 'sending':
-        // Payment in progress, ignore for now
         console.log(`Payment ${payload.payment_id} in progress: ${payload.payment_status}`);
+        break;
+        
+      case 'partially_paid':
+        console.log(`Payment ${payload.payment_id} partially paid`);
         break;
         
       default:
@@ -63,45 +103,38 @@ export async function POST(req: NextRequest) {
 async function handlePaymentSuccess(payload: any) {
   const orderId = payload.order_id;
   const paymentId = payload.payment_id;
-  const amount = payload.price_amount;
   
-  // Parse order ID to get user and plan info
-  // Format: "auth0_userId:plan:timestamp"
-  const [userId, planName] = orderId.split(':');
+  const parsed = parseOrderId(orderId);
   
-  if (!userId || !planName) {
+  if (!parsed) {
     console.error('Invalid order ID format:', orderId);
     return;
   }
+
+  const { userId, plan, durationDays } = parsed;
   
-  // Validate plan
-  const plan = planName as Plan;
-  if (!['pro', 'enterprise'].includes(plan)) {
+  const normalizedPlan = normalizePlanName(plan);
+  
+  if (normalizedPlan === 'free') {
     console.error('Invalid plan in order:', plan);
     return;
   }
   
-  // Check for personal account override
-  const effectivePlan = isPersonalAccount(userId) ? 'enterprise' : plan;
+  const effectivePlan = isPersonalAccount(userId) ? 'enterprise' : normalizedPlan;
   
-  // Calculate subscription end date (30 days from now for crypto payments)
   const currentPeriodEnd = new Date();
-  currentPeriodEnd.setDate(currentPeriodEnd.getDate() + 30);
+  currentPeriodEnd.setDate(currentPeriodEnd.getDate() + durationDays);
   
-  // Ensure user exists (might need email from somewhere)
-  // For now, we'll need to store email in order_description or fetch from Auth0
   try {
-    // Try to get user from Auth0 if needed
     const { getUserFromAuth0 } = await import('@/lib/auth');
     const auth0User = await getUserFromAuth0(userId);
-    if (auth0User && auth0User.email) {
+    if (auth0User?.email) {
       await ensureUser(userId, auth0User.email);
     }
   } catch (error) {
     console.error('Could not ensure user exists:', error);
   }
   
-  // Store NowPayments customer ID if not exists
   await sql`
     INSERT INTO billing_customers (auth0_user_id, np_customer_id)
     VALUES (${userId}, ${paymentId})
@@ -109,32 +142,74 @@ async function handlePaymentSuccess(payload: any) {
     SET np_customer_id = EXCLUDED.np_customer_id
   `;
   
-  // Update subscription
-  await updateSubscription(userId, effectivePlan, 'active', currentPeriodEnd);
+  await sql`
+    INSERT INTO crypto_payments (
+      auth0_user_id, 
+      payment_id, 
+      order_id, 
+      plan, 
+      amount, 
+      currency, 
+      status, 
+      period_end
+    )
+    VALUES (
+      ${userId}, 
+      ${paymentId}, 
+      ${orderId}, 
+      ${effectivePlan}, 
+      ${payload.price_amount || 0}, 
+      ${payload.pay_currency || 'unknown'}, 
+      'completed',
+      ${currentPeriodEnd}
+    )
+    ON CONFLICT (payment_id) DO UPDATE
+    SET status = 'completed', period_end = EXCLUDED.period_end
+  `;
   
-  // Update Auth0 metadata
+  await updateSubscription(userId, effectivePlan as any, 'active', currentPeriodEnd);
+  
   try {
-    await setAppMetadataPlan(userId, effectivePlan);
+    await setAppMetadataPlan(userId, effectivePlan as any);
   } catch (error) {
     console.error('Failed to update Auth0 metadata:', error);
   }
   
-  console.log(`NowPayments: Activated ${effectivePlan} subscription for user ${userId}`);
+  console.log(`NowPayments: Activated ${effectivePlan} subscription for user ${userId} until ${currentPeriodEnd.toISOString()}`);
 }
 
 async function handlePaymentFailed(payload: any) {
   const orderId = payload.order_id;
-  const [userId] = orderId.split(':');
+  const parsed = parseOrderId(orderId);
   
-  if (!userId) {
+  if (!parsed) {
     console.error('Invalid order ID format:', orderId);
     return;
   }
   
-  // Log the failure
+  const { userId } = parsed;
+  
   console.log(`NowPayments: Payment failed for user ${userId}, status: ${payload.payment_status}`);
   
-  // Optional: Update subscription status if it was pending
+  await sql`
+    INSERT INTO crypto_payments (
+      auth0_user_id, 
+      payment_id, 
+      order_id, 
+      plan, 
+      status
+    )
+    VALUES (
+      ${userId}, 
+      ${payload.payment_id}, 
+      ${orderId}, 
+      'none', 
+      ${payload.payment_status}
+    )
+    ON CONFLICT (payment_id) DO UPDATE
+    SET status = EXCLUDED.status
+  `;
+  
   const { rows } = await sql`
     SELECT * FROM subscriptions 
     WHERE auth0_user_id = ${userId} AND status = 'pending'
@@ -146,11 +221,10 @@ async function handlePaymentFailed(payload: any) {
   }
 }
 
-// Optional: GET endpoint to verify webhook is accessible
 export async function GET(req: NextRequest) {
   return NextResponse.json({ 
     status: 'ok',
     webhook: 'nowpayments',
-    configured: !!process.env.NP_API_KEY
+    configured: !!process.env.NOWPAYMENTS_API_KEY
   });
 }

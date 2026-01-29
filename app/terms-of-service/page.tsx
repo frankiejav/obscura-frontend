@@ -51,7 +51,8 @@ export default function TermsOfServicePage() {
               transition={{ duration: 0.6 }}
               className="text-[#5a5a5a] text-base sm:text-lg"
             >
-              <strong className="text-[#1c1c1c]">Obscura Labs LLC</strong>
+              <strong className="text-[#1c1c1c]">CyberVault LLC</strong>
+              <span className="text-[#868e96]"> (operating as Obscura Labs)</span>
             </motion.p>
           </motion.div>
         </div>
@@ -68,7 +69,7 @@ export default function TermsOfServicePage() {
           >
             <div className="prose max-w-none">
               <p className="text-[#5a5a5a] leading-relaxed mb-8">
-                By accessing or using Obscura Labs' services, you agree to these Terms of Service.
+                These Terms of Service ("Terms") govern your access to and use of Obscura Labs, a service operated by CyberVault LLC ("CyberVault," "we," "us," or "our"). By accessing or using Obscura Labs' services, you agree to these Terms.
               </p>
 
               <h2 className="text-[22px] font-light text-[#1c1c1c] mt-10 mb-4 tracking-[-0.02em]">1. Authorized Use</h2>
@@ -106,8 +107,11 @@ export default function TermsOfServicePage() {
               </p>
 
               <h2 className="text-[22px] font-light text-[#1c1c1c] mt-10 mb-4 tracking-[-0.02em]">7. Contact Information</h2>
-              <p className="text-[#5a5a5a] text-sm leading-relaxed">
-                For questions about these Terms of Service, please contact us at <a href="mailto:legal@obscuralabs.com" className="text-[#e07a4a] hover:underline">legal@obscuralabs.com</a>.
+              <p className="text-[#5a5a5a] text-sm leading-relaxed mb-4">
+                For questions about these Terms of Service, please contact us at <a href="mailto:legal@obscuralabs.io" className="text-[#e07a4a] hover:underline">legal@obscuralabs.io</a>.
+              </p>
+              <p className="text-[#868e96] text-xs leading-relaxed">
+                Obscura Labs is operated by CyberVault LLC.
               </p>
 
               <h2 className="text-[22px] font-light text-[#1c1c1c] mt-10 mb-4 tracking-[-0.02em]">8. Changes to Terms</h2>

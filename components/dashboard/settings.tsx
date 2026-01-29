@@ -21,7 +21,8 @@ import {
   Palette,
   AlertCircle,
   Settings,
-  CreditCard
+  CreditCard,
+  Shield
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -29,6 +30,11 @@ import dynamic from 'next/dynamic'
 
 const SubscriptionManager = dynamic(
   () => import('@/components/dashboard/SubscriptionManager'),
+  { ssr: false }
+)
+
+const SecurityKeys = dynamic(
+  () => import('@/components/dashboard/SecurityKeys'),
   { ssr: false }
 )
 
@@ -244,10 +250,14 @@ export function SettingsPage() {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-4 bg-neutral-900/60 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
+          <TabsList className="grid w-full grid-cols-5 bg-neutral-900/60 backdrop-blur-sm border border-white/10 p-1 rounded-xl">
             <TabsTrigger value="profile" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
               <User className="h-4 w-4 mr-2" />
               Profile
+            </TabsTrigger>
+            <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
+              <Shield className="h-4 w-4 mr-2" />
+              Security
             </TabsTrigger>
             <TabsTrigger value="subscription" className="data-[state=active]:bg-white data-[state=active]:text-black text-white/60 hover:text-white transition-all duration-300">
               <CreditCard className="h-4 w-4 mr-2" />
@@ -415,6 +425,11 @@ export function SettingsPage() {
             </CardContent>
           </Card>
             </div>
+        </TabsContent>
+
+        {/* Security Tab */}
+        <TabsContent value="security" className="space-y-4">
+          <SecurityKeys />
         </TabsContent>
 
         {/* Notifications Tab */}

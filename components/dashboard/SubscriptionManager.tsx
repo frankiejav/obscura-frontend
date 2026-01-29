@@ -11,42 +11,69 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Label } from '@/components/ui/label'
 
-const PLANS = {
+type PlanKey = 'free' | 'starter' | 'professional' | 'enterprise'
+
+interface PlanInfo {
+  name: string
+  price: string
+  period: string
+  priceMonthly?: number
+  priceYearly?: number
+  features: string[]
+}
+
+const PLANS: Record<PlanKey, PlanInfo> = {
   free: {
     name: 'Free',
     price: '$0',
     period: 'forever',
     features: [
       'Basic search (redacted)',
-      '100 searches/month',
+      '10 searches/day',
       'Community support',
     ]
   },
-  pro: {
-    name: 'Professional',
-    price: '$99',
+  starter: {
+    name: 'Starter',
+    price: '$19.99',
     period: '/month',
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO,
+    priceMonthly: 19.99,
+    priceYearly: 191.88,
     features: [
-      'Full credential access',
-      'Basic monitoring',
-      'API access',
-      '10,000 searches/month',
+      '200 lookups/day',
+      'Dashboard access',
+      'CSV/JSON exports',
       'Email support',
+    ]
+  },
+  professional: {
+    name: 'Professional',
+    price: '$49',
+    period: '/month',
+    priceMonthly: 49,
+    priceYearly: 349,
+    features: [
+      'Unlimited lookups',
+      '10,000 API credits/month',
+      'Credential monitoring',
+      'Full API access',
+      'Team collaboration',
+      'Priority support',
     ]
   },
   enterprise: {
     name: 'Enterprise',
     price: '$299',
     period: '/month',
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_ENTERPRISE,
+    priceMonthly: 299,
+    priceYearly: 2868,
     features: [
-      'Everything in Pro',
-      'Advanced monitoring',
+      'Everything in Professional',
+      'Unlimited API credits',
       'Real-time feeds',
       'Custom analytics',
-      'Unlimited searches',
-      'Priority support',
+      'Unlimited monitoring',
+      '24/7 dedicated support',
     ]
   }
 }
@@ -55,10 +82,11 @@ export default function SubscriptionManager() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
-  const [currentPlan, setCurrentPlan] = useState<string>('free')
+  const [currentPlan, setCurrentPlan] = useState<PlanKey>('free')
   const [subscription, setSubscription] = useState<any>(null)
   const [entitlements, setEntitlements] = useState<any>(null)
-  const [selectedPlan, setSelectedPlan] = useState<'pro' | 'enterprise'>('pro')
+  const [selectedPlan, setSelectedPlan] = useState<'starter' | 'professional' | 'enterprise'>('professional')
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly')
   const [paymentMethod, setPaymentMethod] = useState<'stripe' | 'crypto'>('stripe')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
@@ -67,9 +95,18 @@ export default function SubscriptionManager() {
     fetchEntitlements()
   }, [])
 
+  const normalizePlan = (plan: string): PlanKey => {
+    const normalized = plan?.toLowerCase() || 'free'
+    if (normalized === 'pro') return 'professional'
+    if (['free', 'starter', 'professional', 'enterprise'].includes(normalized)) {
+      return normalized as PlanKey
+    }
+    return 'free'
+  }
+
   const fetchEntitlements = async () => {
     try {
-      const token = localStorage.getItem('auth_token') // Or get from your auth context
+      const token = localStorage.getItem('auth_token')
       const res = await fetch('/api/entitlements', {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -82,7 +119,7 @@ export default function SubscriptionManager() {
       
       const data = await res.json()
       setEntitlements(data)
-      setCurrentPlan(data.plan)
+      setCurrentPlan(normalizePlan(data.plan))
       setSubscription(data.subscription)
     } catch (err: any) {
       console.error('Error fetching entitlements:', err)
@@ -92,15 +129,24 @@ export default function SubscriptionManager() {
     }
   }
 
+  const getSelectedPrice = () => {
+    const plan = PLANS[selectedPlan]
+    if (billingCycle === 'yearly' && plan.priceYearly) {
+      return plan.priceYearly
+    }
+    return plan.priceMonthly || 0
+  }
+
   const handleCheckout = async () => {
     setProcessing(true)
     setError(null)
     
     try {
       const token = localStorage.getItem('auth_token')
+      const price = getSelectedPrice()
+      const planDisplayName = selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)
       
       if (paymentMethod === 'stripe') {
-        // Stripe checkout
         const res = await fetch('/api/billing/checkout', {
           method: 'POST',
           headers: {
@@ -108,7 +154,9 @@ export default function SubscriptionManager() {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            priceId: PLANS[selectedPlan].priceId,
+            planName: planDisplayName,
+            planPrice: price,
+            billingCycle,
             successUrl: `${window.location.origin}/dashboard/settings?success=true`,
             cancelUrl: `${window.location.origin}/dashboard/settings?cancelled=true`
           })
@@ -126,8 +174,7 @@ export default function SubscriptionManager() {
         const { url } = await res.json()
         window.location.href = url
       } else {
-        // Crypto payment (NowPayments)
-        setError('Crypto payments coming soon!')
+        window.location.href = `/checkout?plan=${planDisplayName}&price=${price}&cycle=${billingCycle}`
       }
     } catch (err: any) {
       console.error('Checkout error:', err)
@@ -179,6 +226,22 @@ export default function SubscriptionManager() {
 
   const isFreePlan = currentPlan === 'free'
   const canUpgrade = currentPlan !== 'enterprise'
+  const currentPlanInfo = PLANS[currentPlan]
+  
+  const getUpgradePlans = (): ('starter' | 'professional' | 'enterprise')[] => {
+    switch (currentPlan) {
+      case 'free':
+        return ['starter', 'professional', 'enterprise']
+      case 'starter':
+        return ['professional', 'enterprise']
+      case 'professional':
+        return ['enterprise']
+      default:
+        return []
+    }
+  }
+  
+  const upgradePlans = getUpgradePlans()
 
   return (
     <div className="space-y-6">
@@ -198,7 +261,7 @@ export default function SubscriptionManager() {
               variant={currentPlan === 'enterprise' ? 'default' : 'secondary'}
               className="text-lg px-4 py-1"
             >
-              {PLANS[currentPlan as keyof typeof PLANS].name}
+              {currentPlanInfo.name}
             </Badge>
           </div>
         </CardHeader>
@@ -289,54 +352,98 @@ export default function SubscriptionManager() {
               </TabsList>
               
               <TabsContent value="plans" className="space-y-4 mt-6">
-                <RadioGroup value={selectedPlan} onValueChange={(v) => setSelectedPlan(v as 'pro' | 'enterprise')}>
-                  {currentPlan === 'free' && (
-                    <div className="border border-white/20 rounded-lg p-4 hover:bg-neutral-800/30 transition-colors">
-                      <Label htmlFor="pro" className="flex items-start gap-4 cursor-pointer">
-                        <RadioGroupItem value="pro" id="pro" className="mt-1" />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-lg font-semibold text-white">Professional</span>
-                            <span className="text-2xl font-bold text-white">$99<span className="text-sm text-neutral-400">/mo</span></span>
-                          </div>
-                          <ul className="space-y-1">
-                            {PLANS.pro.features.map((feature, i) => (
-                              <li key={i} className="text-sm text-neutral-300 flex items-center gap-2">
-                                <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </Label>
-                    </div>
-                  )}
-                  
-                  <div className="border border-white/20 rounded-lg p-4 hover:bg-neutral-800/30 transition-colors">
-                    <Label htmlFor="enterprise" className="flex items-start gap-4 cursor-pointer">
-                      <RadioGroupItem value="enterprise" id="enterprise" className="mt-1" />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-lg font-semibold text-white">Enterprise</span>
-                          <span className="text-2xl font-bold text-white">$299<span className="text-sm text-neutral-400">/mo</span></span>
-                        </div>
-                        <ul className="space-y-1">
-                          {PLANS.enterprise.features.map((feature, i) => (
-                            <li key={i} className="text-sm text-neutral-300 flex items-center gap-2">
-                              <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
-                              {feature}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </Label>
+                <div className="flex justify-center mb-4">
+                  <div className="inline-flex items-center bg-neutral-800/50 rounded-full p-1">
+                    <button
+                      onClick={() => setBillingCycle('monthly')}
+                      className={`px-4 py-2 text-sm font-medium rounded-full transition-all ${
+                        billingCycle === 'monthly'
+                          ? 'bg-white text-black'
+                          : 'text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      onClick={() => setBillingCycle('yearly')}
+                      className={`px-4 py-2 text-sm font-medium rounded-full transition-all flex items-center gap-2 ${
+                        billingCycle === 'yearly'
+                          ? 'bg-white text-black'
+                          : 'text-neutral-400 hover:text-white'
+                      }`}
+                    >
+                      Yearly
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        billingCycle === 'yearly' 
+                          ? 'bg-green-500 text-white' 
+                          : 'bg-green-500/20 text-green-400'
+                      }`}>
+                        Save 20%+
+                      </span>
+                    </button>
                   </div>
+                </div>
+                
+                <RadioGroup 
+                  value={selectedPlan} 
+                  onValueChange={(v) => setSelectedPlan(v as 'starter' | 'professional' | 'enterprise')}
+                >
+                  {upgradePlans.map((planKey) => {
+                    const plan = PLANS[planKey]
+                    const price = billingCycle === 'yearly' && plan.priceYearly 
+                      ? Math.round(plan.priceYearly / 12) 
+                      : plan.priceMonthly || 0
+                    const yearlyTotal = plan.priceYearly || 0
+                    
+                    return (
+                      <div 
+                        key={planKey}
+                        className={`border rounded-lg p-4 transition-colors ${
+                          selectedPlan === planKey 
+                            ? 'border-white/40 bg-neutral-800/50' 
+                            : 'border-white/20 hover:bg-neutral-800/30'
+                        }`}
+                      >
+                        <Label htmlFor={planKey} className="flex items-start gap-4 cursor-pointer">
+                          <RadioGroupItem value={planKey} id={planKey} className="mt-1" />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-lg font-semibold text-white">{plan.name}</span>
+                              <div className="text-right">
+                                <span className="text-2xl font-bold text-white">
+                                  ${price}
+                                  <span className="text-sm text-neutral-400">/mo</span>
+                                </span>
+                                {billingCycle === 'yearly' && (
+                                  <div className="text-xs text-neutral-500">
+                                    ${yearlyTotal}/year
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <ul className="space-y-1">
+                              {plan.features.map((feature, i) => (
+                                <li key={i} className="text-sm text-neutral-300 flex items-center gap-2">
+                                  <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                                  {feature}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </Label>
+                      </div>
+                    )
+                  })}
                 </RadioGroup>
               </TabsContent>
               
               <TabsContent value="payment" className="space-y-4 mt-6">
                 <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'stripe' | 'crypto')}>
-                  <div className="border border-white/20 rounded-lg p-4 hover:bg-neutral-800/30 transition-colors">
+                  <div className={`border rounded-lg p-4 transition-colors ${
+                    paymentMethod === 'stripe' 
+                      ? 'border-white/40 bg-neutral-800/50' 
+                      : 'border-white/20 hover:bg-neutral-800/30'
+                  }`}>
                     <Label htmlFor="stripe" className="flex items-center gap-4 cursor-pointer">
                       <RadioGroupItem value="stripe" id="stripe" />
                       <CreditCard className="h-5 w-5 text-white" />
@@ -347,13 +454,17 @@ export default function SubscriptionManager() {
                     </Label>
                   </div>
                   
-                  <div className="border border-white/20 rounded-lg p-4 hover:bg-neutral-800/30 transition-colors opacity-50">
+                  <div className={`border rounded-lg p-4 transition-colors ${
+                    paymentMethod === 'crypto' 
+                      ? 'border-white/40 bg-neutral-800/50' 
+                      : 'border-white/20 hover:bg-neutral-800/30'
+                  }`}>
                     <Label htmlFor="crypto" className="flex items-center gap-4 cursor-pointer">
-                      <RadioGroupItem value="crypto" id="crypto" disabled />
+                      <RadioGroupItem value="crypto" id="crypto" />
                       <Bitcoin className="h-5 w-5 text-white" />
                       <div className="flex-1">
                         <p className="font-semibold text-white">Cryptocurrency</p>
-                        <p className="text-sm text-neutral-400">Pay with Bitcoin, Ethereum (Coming Soon)</p>
+                        <p className="text-sm text-neutral-400">Pay with Bitcoin, Ethereum, USDT, and more</p>
                       </div>
                     </Label>
                   </div>
@@ -388,7 +499,7 @@ export default function SubscriptionManager() {
               ) : (
                 <Zap className="mr-2 h-5 w-5" />
               )}
-              Upgrade to {PLANS[selectedPlan as keyof typeof PLANS].name}
+              Upgrade to {PLANS[selectedPlan].name} ({billingCycle === 'yearly' ? 'Annual' : 'Monthly'})
             </Button>
           </CardFooter>
         </Card>

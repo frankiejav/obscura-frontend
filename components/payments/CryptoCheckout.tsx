@@ -10,10 +10,13 @@ import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import QRCode from 'qrcode'
 
+type BillingCycle = 'monthly' | 'quarterly' | 'yearly'
+
 interface CryptoCheckoutProps {
   planName: string
   planPrice: number
   userEmail?: string
+  billingCycle?: BillingCycle
 }
 
 const SUPPORTED_CURRENCIES = [
@@ -29,7 +32,8 @@ const SUPPORTED_CURRENCIES = [
 export default function CryptoCheckout({ 
   planName, 
   planPrice,
-  userEmail = ''
+  userEmail = '',
+  billingCycle = 'monthly'
 }: CryptoCheckoutProps) {
   const [selectedCurrency, setSelectedCurrency] = useState('btc')
   const [email, setEmail] = useState(userEmail)
@@ -61,6 +65,7 @@ export default function CryptoCheckout({
           currency: selectedCurrency,
           planName,
           userEmail: email,
+          billingCycle,
         }),
       })
 

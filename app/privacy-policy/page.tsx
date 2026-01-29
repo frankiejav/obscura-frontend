@@ -51,7 +51,8 @@ export default function PrivacyPolicyPage() {
               transition={{ duration: 0.6 }}
               className="text-[#5a5a5a] text-base sm:text-lg"
             >
-              <strong className="text-[#1c1c1c]">Obscura Labs LLC</strong>
+              <strong className="text-[#1c1c1c]">CyberVault LLC</strong>
+              <span className="text-[#868e96]"> (operating as Obscura Labs)</span>
             </motion.p>
           </motion.div>
         </div>
@@ -68,7 +69,7 @@ export default function PrivacyPolicyPage() {
           >
             <div className="prose max-w-none">
               <p className="text-[#5a5a5a] leading-relaxed mb-8">
-                Obscura Labs LLC ("Obscura Labs," "we," "us," or "our") is committed to protecting the security and privacy of the data we process. Our mission is to provide credential and breach intelligence to vetted organizations, security researchers, and law enforcement for the purpose of preventing account takeover, fraud, and other cybercrimes.
+                CyberVault LLC, operating as Obscura Labs ("Obscura Labs," "we," "us," or "our"), is committed to protecting the security and privacy of the data we process. Our mission is to provide credential and breach intelligence to vetted organizations, security researchers, and law enforcement for the purpose of preventing account takeover, fraud, and other cybercrimes.
               </p>
 
               <h2 className="text-[22px] font-light text-[#1c1c1c] mt-10 mb-4 tracking-[-0.02em]">1. Data We Collect</h2>
@@ -107,12 +108,20 @@ export default function PrivacyPolicyPage() {
               <h2 className="text-[22px] font-light text-[#1c1c1c] mt-10 mb-4 tracking-[-0.02em]">6. Retention & Removal</h2>
               <div className="space-y-4 text-[#5a5a5a] text-sm leading-relaxed">
                 <p>Data is retained for as long as necessary to provide cybersecurity defense services.</p>
-                <p>Individuals may request information about whether their data has appeared in our datasets by contacting us at <a href="mailto:privacy@obscuralabs.com" className="text-[#e07a4a] hover:underline">privacy@obscuralabs.com</a>.</p>
+                <p>Individuals may request information about whether their data has appeared in our datasets by contacting us at <a href="mailto:privacy@obscuralabs.io" className="text-[#e07a4a] hover:underline">privacy@obscuralabs.io</a>.</p>
               </div>
 
               <h2 className="text-[22px] font-light text-[#1c1c1c] mt-10 mb-4 tracking-[-0.02em]">7. Compliance</h2>
               <p className="text-[#5a5a5a] text-sm leading-relaxed">
                 We process data in alignment with GDPR, CCPA, and other applicable privacy frameworks. While Obscura Labs is not a consumer-facing platform, we respect individual rights to privacy and will cooperate with lawful takedown or erasure requests.
+              </p>
+
+              <h2 className="text-[22px] font-light text-[#1c1c1c] mt-10 mb-4 tracking-[-0.02em]">8. Data Controller</h2>
+              <p className="text-[#5a5a5a] text-sm leading-relaxed mb-4">
+                The data controller for Obscura Labs is CyberVault LLC. For privacy inquiries, please contact us at <a href="mailto:privacy@obscuralabs.io" className="text-[#e07a4a] hover:underline">privacy@obscuralabs.io</a>.
+              </p>
+              <p className="text-[#868e96] text-xs leading-relaxed">
+                Obscura Labs is a service operated by CyberVault LLC.
               </p>
             </div>
           </motion.div>

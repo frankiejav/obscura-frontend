@@ -10,14 +10,18 @@ import { Loader2 } from "lucide-react"
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
+type BillingCycle = 'monthly' | 'quarterly' | 'yearly'
+
 interface StripeCheckoutProps {
   planName: string
   planPrice: number
+  billingCycle?: BillingCycle
 }
 
 export default function StripeCheckout({ 
   planName, 
-  planPrice 
+  planPrice,
+  billingCycle = 'monthly'
 }: StripeCheckoutProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -36,6 +40,7 @@ export default function StripeCheckout({
         body: JSON.stringify({
           planName,
           planPrice,
+          billingCycle,
         }),
       })
 
@@ -51,7 +56,7 @@ export default function StripeCheckout({
     } finally {
       setLoading(false)
     }
-  }, [planName, planPrice])
+  }, [planName, planPrice, billingCycle])
 
   useEffect(() => {
     fetchClientSecret()

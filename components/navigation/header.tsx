@@ -29,11 +29,17 @@ function BlueprintIcon({ icon, size = 16, className = "" }: { icon: string; size
   )
 }
 
-export default function Header() {
+interface HeaderProps {
+  variant?: "light" | "dark"
+}
+
+export default function Header({ variant = "light" }: HeaderProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  const isDark = variant === "dark"
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,7 +69,9 @@ export default function Header() {
           transition={{ duration: 0.6, ease: [0.25, 0.4, 0.25, 1] }}
           className={`mx-auto max-w-7xl rounded-xl transition-all duration-500 ${
             isScrolled 
-              ? 'bg-[#f7f6f3]/80 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.04)] border border-[#e9ecef]/60' 
+              ? isDark
+                ? 'bg-[#1c1c1c]/90 backdrop-blur-xl border border-[#333]/60' 
+                : 'bg-[#f7f6f3]/80 backdrop-blur-xl shadow-[0_2px_20px_rgba(0,0,0,0.04)] border border-[#e9ecef]/60'
               : 'bg-transparent border border-transparent'
           }`}
         >
@@ -76,9 +84,9 @@ export default function Header() {
                   width={34} 
                   height={34} 
                   priority 
-                  className="opacity-85 group-hover:opacity-100 transition-opacity duration-300"
+                  className={`group-hover:opacity-100 transition-opacity duration-300 ${isDark ? 'opacity-70 invert' : 'opacity-85'}`}
                 />
-                <span className="text-[17px] font-medium text-[#1c1c1c] tracking-tight">
+                <span className={`text-[17px] font-medium tracking-tight ${isDark ? 'text-white' : 'text-[#1c1c1c]'}`}>
                   Obscura Labs
                 </span>
               </Link>
@@ -88,8 +96,12 @@ export default function Header() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`pltr-link ${
-                      pathname === item.href ? 'text-[#e07a4a]' : ''
+                    className={`text-sm transition-colors duration-200 ${
+                      pathname === item.href 
+                        ? 'text-[#e07a4a]' 
+                        : isDark 
+                          ? 'text-[#9ca3af] hover:text-white' 
+                          : 'text-[#5a5a5a] hover:text-[#1c1c1c]'
                     }`}
                   >
                     {item.label}
@@ -100,14 +112,24 @@ export default function Header() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => router.push('/login')}
-                  className="pltr-btn-primary hidden sm:flex items-center gap-1.5"
+                  className={`hidden sm:flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                    isDark
+                      ? 'bg-white text-[#1c1c1c] hover:bg-[#f1f3f5]'
+                      : 'bg-[#1c1c1c] text-white hover:bg-[#2a2a2a]'
+                  }`}
                 >
                   Get Started
                   <BlueprintIcon icon="arrow-top-right" size={14} />
                 </button>
                 
                 <button
-                  className={`pltr-btn-icon lg:hidden ${!isScrolled ? 'bg-white/40 border-[#dee2e6]/40' : ''}`}
+                  className={`w-10 h-10 flex items-center justify-center border rounded transition-colors lg:hidden ${
+                    isDark
+                      ? 'border-[#333] text-white hover:bg-[#333]'
+                      : isScrolled 
+                        ? 'border-[#e9ecef] text-[#5a5a5a] hover:bg-[#f7f6f3]' 
+                        : 'bg-white/40 border-[#dee2e6]/40 text-[#5a5a5a]'
+                  }`}
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 >
                   <AnimatePresence mode="wait">
@@ -153,14 +175,14 @@ export default function Header() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[#f7f6f3]/98 backdrop-blur-2xl"
+              className={`absolute inset-0 backdrop-blur-2xl ${isDark ? 'bg-[#1c1c1c]/98' : 'bg-[#f7f6f3]/98'}`}
             />
             
             <div className="relative h-full overflow-y-auto pt-24">
               <div className="px-6 py-12">
                 <div className="space-y-8">
                   <div>
-                    <h3 className="pltr-label mb-6">Navigation</h3>
+                    <h3 className={`text-[10px] uppercase tracking-[0.15em] mb-6 ${isDark ? 'text-[#868e96]' : 'text-[#adb5bd]'}`}>Navigation</h3>
                     <ul className="space-y-4">
                       {navItems.map((item, index) => (
                         <motion.li
@@ -173,7 +195,9 @@ export default function Header() {
                           <Link
                             href={item.href}
                             className={`block text-2xl font-light transition-colors hover:text-[#e07a4a] ${
-                              pathname === item.href ? 'text-[#e07a4a]' : 'text-[#1c1c1c]'
+                              pathname === item.href 
+                                ? 'text-[#e07a4a]' 
+                                : isDark ? 'text-white' : 'text-[#1c1c1c]'
                             }`}
                             onClick={() => setIsMobileMenuOpen(false)}
                           >
@@ -184,13 +208,17 @@ export default function Header() {
                     </ul>
                   </div>
 
-                  <div className="pt-8 border-t border-[#e9ecef]">
+                  <div className={`pt-8 border-t ${isDark ? 'border-[#333]' : 'border-[#e9ecef]'}`}>
                     <button
                       onClick={() => {
                         setIsMobileMenuOpen(false)
                         router.push('/login')
                       }}
-                      className="pltr-btn-primary w-full py-3.5 flex items-center justify-center gap-2"
+                      className={`w-full py-3.5 flex items-center justify-center gap-2 text-sm font-medium ${
+                        isDark
+                          ? 'bg-white text-[#1c1c1c]'
+                          : 'bg-[#1c1c1c] text-white'
+                      }`}
                     >
                       Get Started
                       <BlueprintIcon icon="arrow-top-right" size={14} />

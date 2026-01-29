@@ -18,12 +18,6 @@ function BlueprintIcon({ icon, size = 16, className = "" }: { icon: string; size
       {icon === "arrow-top-right" && (
         <path d="M5 3h8v8l-1-1V4.41L4.41 12l-.7-.71L11.29 4H6L5 3z" fillRule="evenodd" />
       )}
-      {icon === "id-number" && (
-        <path d="M14 3H2c-.55 0-1 .45-1 1v8c0 .55.45 1 1 1h12c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zm-6 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2zM4 11c0-1.1 1.79-2 4-2s4 .9 4 2H4z" fillRule="evenodd" />
-      )}
-      {icon === "key" && (
-        <path d="M11 0a5 5 0 0 0-4.916 5.916L0 12v3a1 1 0 0 0 1 1h1v-2h2v-2h2v-2h2.084A5 5 0 1 0 11 0zm1 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" fillRule="evenodd" />
-      )}
     </svg>
   )
 }
@@ -59,12 +53,6 @@ export default function LoginPage() {
       </div>
     )
   }
-
-  const features = [
-    { icon: "shield", text: "Enterprise-grade security" },
-    { icon: "id-number", text: "Multi-factor authentication" },
-    { icon: "key", text: "Secure API access" },
-  ]
 
   return (
     <div className="min-h-screen bg-[#f8f9fa]">
@@ -142,23 +130,6 @@ export default function LoginPage() {
               </motion.button>
             </motion.div>
               </div>
-
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.4 }}
-            className="mt-8 space-y-3"
-          >
-                {features.map((feature, index) => (
-              <div 
-                key={index}
-                className="flex items-center gap-3 text-[#adb5bd]"
-              >
-                <BlueprintIcon icon={feature.icon} size={14} className="text-[#ced4da]" />
-                    <span className="text-sm">{feature.text}</span>
-                  </div>
-                ))}
-          </motion.div>
 
           <motion.p 
             initial={{ opacity: 0 }}
