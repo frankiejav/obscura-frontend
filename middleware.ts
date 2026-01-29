@@ -25,7 +25,15 @@ function getAllowedIPs(): Set<string> {
 
 // Get client IP from various headers
 function getClientIP(request: NextRequest): string | null {
-  // Vercel-specific header (most reliable on Vercel)
+  // Cloudflare header - HIGHEST PRIORITY when behind Cloudflare
+  // This contains the true client IP
+  const cfConnectingIP = request.headers.get('cf-connecting-ip')
+  if (cfConnectingIP) {
+    console.log('[IP Check] Got IP from cf-connecting-ip:', cfConnectingIP.trim())
+    return cfConnectingIP.trim()
+  }
+  
+  // Vercel-specific header
   const vercelForwardedFor = request.headers.get('x-vercel-forwarded-for')
   if (vercelForwardedFor) {
     const ip = vercelForwardedFor.split(',')[0].trim()
@@ -45,12 +53,6 @@ function getClientIP(request: NextRequest): string | null {
   if (realIP) {
     console.log('[IP Check] Got IP from x-real-ip:', realIP.trim())
     return realIP.trim()
-  }
-  
-  const cfConnectingIP = request.headers.get('cf-connecting-ip')
-  if (cfConnectingIP) {
-    console.log('[IP Check] Got IP from cf-connecting-ip:', cfConnectingIP.trim())
-    return cfConnectingIP.trim()
   }
   
   // Fallback to request IP (may not be accurate behind proxies)
